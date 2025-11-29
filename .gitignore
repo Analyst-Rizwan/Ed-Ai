@@ -1,0 +1,15 @@
+﻿__pycache__/
+*.py[cod]
+*.sqlite3
+.env
+.venv/
+node_modules/
+dist/
+build/
+npm-debug.log*
+frontend/dist/
+backend/app/static/dist/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
