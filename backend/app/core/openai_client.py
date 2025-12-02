@@ -1,7 +1,10 @@
 # app/core/openai_client.py
 from openai import AsyncOpenAI
 from typing import AsyncGenerator, Dict, Any
+import logging
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
@@ -26,9 +29,11 @@ async def ask_ai(prompt: str, temperature: float = 0.7, max_tokens: int = 300, m
             temperature=temperature,
             max_tokens=max_tokens,
         )
-        return resp.choices[0].message["content"]
+        # Fixed: use .content instead of ["content"]
+        return resp.choices[0].message.content
     except Exception as e:
-        return f"(AI Error) {e}"
+        logger.error(f"OpenAI API error in ask_ai: {str(e)}")
+        raise Exception(f"AI service error: {str(e)}")
 
 
 async def stream_ai(messages: list, model: str = DEFAULT_MODEL, temperature: float = 0.7, max_tokens: int = 300) -> AsyncGenerator[Dict[str, Any], None]:
@@ -37,16 +42,23 @@ async def stream_ai(messages: list, model: str = DEFAULT_MODEL, temperature: flo
     The frontend can consume these and render them as a typing effect.
     """
     try:
-        # the new SDK uses .chat.completions.stream for streaming (async iterator)
-        async for event in client.chat.completions.stream(
+        stream = await client.chat.completions.create(
             model=model,
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
-        ):
-            # event has structured pieces; adapt to what's returned
-            # yield only textual deltas and final event
-            yield event
+            stream=True
+        )
+        
+        async for chunk in stream:
+            if chunk.choices and chunk.choices[0].delta.content:
+                yield {
+                    "type": "delta",
+                    "text": chunk.choices[0].delta.content
+                }
+        
+        yield {"type": "done"}
+        
     except Exception as e:
+        logger.error(f"OpenAI API error in stream_ai: {str(e)}")
         yield {"type": "error", "error": str(e)}
-        return
