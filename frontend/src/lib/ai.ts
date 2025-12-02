@@ -12,28 +12,40 @@ export async function sendMessageToAI(
   opts?: { temperature?: number; max_tokens?: number }
 ): Promise<string> {
   try {
-    const body: Record<string, unknown> = { message };
+    // Use 'prompt' for /test endpoint instead of 'message' for /chat
+    const body: Record<string, unknown> = { prompt: message };
     if (opts?.temperature !== undefined) body.temperature = opts.temperature;
     if (opts?.max_tokens !== undefined) body.max_tokens = opts.max_tokens;
 
-    const res = await fetch(`${API_BASE_URL}/ai/chat`, {
+    console.log("Sending to AI:", body); // Debug log
+
+    // Using /test endpoint which doesn't require authentication
+    const res = await fetch(`${API_BASE_URL}/ai/test`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json" 
+      },
       body: JSON.stringify(body),
     });
 
+    console.log("Response status:", res.status); // Debug log
+
     if (!res.ok) {
-      // try to log helpful info
       const txt = await res.text().catch(() => "");
       console.error("AI Server Error:", res.status, txt);
-      return "⚠️ AI server returned an error.";
+      return `⚠️ AI server returned an error (${res.status}).`;
     }
 
     const data = await res.json().catch(() => null);
-    if (!data || typeof data.reply !== "string") {
+    console.log("AI Response data:", data); // Debug log
+    
+    // Backend returns 'response'
+    if (!data || typeof data.response !== "string") {
+      console.error("Unexpected AI response format:", data);
       return "⚠️ AI returned an invalid response.";
     }
-    return data.reply.trim() || "⚠️ AI gave an empty response.";
+    
+    return data.response.trim() || "⚠️ AI gave an empty response.";
   } catch (err) {
     console.error("AI Network Error:", err);
     return "⚠️ Could not connect to AI server.";

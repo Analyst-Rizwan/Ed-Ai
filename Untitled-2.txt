@@ -1,0 +1,9 @@
+/api/auth/register
+/api/auth/login
+/api/ai/chat
+/api/progress/
+/api/roadmaps/
+/health
+/health
+/
+/{full_path}
