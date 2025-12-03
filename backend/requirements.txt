@@ -8,3 +8,4 @@ passlib[bcrypt]
 openai
 requests
 pydantic_settings
+pydantic[email]
