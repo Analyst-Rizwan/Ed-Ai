@@ -9,3 +9,4 @@ openai
 requests
 pydantic_settings
 pydantic[email]
+python-multipart
