@@ -21,6 +21,7 @@ router = APIRouter()
 # Request/response models
 # ---------------------------
 
+
 class AskRequest(BaseModel):
     prompt: str
     conversation_id: Optional[int] = None
@@ -50,6 +51,7 @@ class CodeExecRequest(BaseModel):
 # Helper utilities
 # ---------------------------
 
+
 async def _safe_ask_ai(prompt: str, temperature: float = 0.7, max_tokens: int = 450) -> str:
     """
     Wrapper around ask_ai that centralizes error handling.
@@ -65,8 +67,9 @@ async def _safe_ask_ai(prompt: str, temperature: float = 0.7, max_tokens: int = 
 
 
 # ---------------------------
-# Diagnostic root (so /api/ai/ returns useful JSON)
+# Diagnostic root
 # ---------------------------
+
 
 @router.get("/", summary="AI router root (diagnostic)")
 def ai_root():
@@ -77,6 +80,7 @@ def ai_root():
 # Test endpoint (no auth required)
 # ---------------------------
 
+
 @router.post("/test", summary="Test AI (no auth required)")
 async def test_ai(req: AskRequest):
     """
@@ -84,10 +88,9 @@ async def test_ai(req: AskRequest):
     Used for debugging and testing.
     """
     try:
-        # Test with a simple check first
         if not req.prompt:
             return {"response": "Please provide a prompt"}
-        
+
         answer = await _safe_ask_ai(prompt=req.prompt, temperature=0.7, max_tokens=450)
         return {"response": answer}
     except HTTPException:
@@ -101,8 +104,13 @@ async def test_ai(req: AskRequest):
 # Main endpoints
 # ---------------------------
 
+
 @router.post("/ask", summary="Ask the AI (non-streaming)")
-async def ask_question(req: AskRequest, user=Depends(get_current_user), db: Session = Depends(get_db)):
+async def ask_question(
+    req: AskRequest,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """
     Simple non-streaming ask endpoint. Saves to conversation memory if conversation_id provided.
     Request body: { "prompt": "...", "conversation_id": 123 (optional) }
@@ -133,11 +141,11 @@ async def chat_compat(req: ChatPayload, db: Session = Depends(get_db)):
     """
     Backwards-compatible endpoint for older frontends that POST { "message": "..." } to /api/ai/chat.
     Authentication temporarily disabled for testing.
+    The frontend expects: { reply: string, conversation_id: number }
     """
     try:
         conv_id = req.conversation_id
         if conv_id is None:
-            # Create conversation without user_id (set to None for testing)
             conv = tutor_service.create_conversation(db, user_id=None)
             conv_id = conv.id
 
@@ -147,7 +155,8 @@ async def chat_compat(req: ChatPayload, db: Session = Depends(get_db)):
 
         tutor_service.add_message(db, conv_id, "assistant", answer)
 
-        return {"response": answer, "conversation_id": conv_id}
+        # IMPORTANT: 'reply' key matches frontend/src/lib/ai.ts expectation
+        return {"reply": answer, "conversation_id": conv_id}
     except HTTPException:
         raise
     except Exception as e:
@@ -159,8 +168,14 @@ async def chat_compat(req: ChatPayload, db: Session = Depends(get_db)):
 # Streaming (SSE) endpoint
 # ---------------------------
 
+
 @router.get("/stream/{conv_id}", summary="Stream a model response (SSE)")
-async def stream_response(conv_id: int, request: Request, user=Depends(get_current_user), db: Session = Depends(get_db)):
+async def stream_response(
+    conv_id: int,
+    request: Request,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """
     Streams a model response as server-sent events (SSE).
     Example client: use EventSource('/api/ai/stream/123') and parse events.
@@ -197,6 +212,7 @@ async def stream_response(conv_id: int, request: Request, user=Depends(get_curre
 # Conversation endpoints
 # ---------------------------
 
+
 @router.post("/conversations", summary="Create a conversation")
 def create_conversation(user=Depends(get_current_user), db: Session = Depends(get_db)):
     conv = tutor_service.create_conversation(db, user_id=getattr(user, "id", None))
@@ -208,7 +224,12 @@ def get_conversation(conv_id: int, user=Depends(get_current_user), db: Session =
     msgs = tutor_service.get_conversation_messages(db, conv_id)
     return {
         "messages": [
-            {"id": m.id, "role": m.role, "content": m.content, "created_at": m.created_at.isoformat()}
+            {
+                "id": m.id,
+                "role": m.role,
+                "content": m.content,
+                "created_at": m.created_at.isoformat(),
+            }
             for m in msgs
         ]
     }
@@ -218,10 +239,15 @@ def get_conversation(conv_id: int, user=Depends(get_current_user), db: Session =
 # MCQ generator
 # ---------------------------
 
+
 @router.post("/mcq", summary="Generate MCQs for a topic")
 async def create_mcq(req: MCQRequest, user=Depends(get_current_user)):
     try:
-        mcq = await tutor_service.generate_mcq(topic=req.topic, difficulty=req.difficulty, count=req.count)
+        mcq = await tutor_service.generate_mcq(
+            topic=req.topic,
+            difficulty=req.difficulty,
+            count=req.count,
+        )
         return mcq
     except HTTPException:
         raise
@@ -234,11 +260,22 @@ async def create_mcq(req: MCQRequest, user=Depends(get_current_user)):
 # Roadmap endpoint
 # ---------------------------
 
+
 @router.get("/roadmap/{topic}", summary="Get roadmap for a topic")
 def roadmap(topic: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     try:
         items = tutor_service.get_roadmap_for_topic(db, topic)
-        return {"roadmap": [{"id": r.id, "title": r.title, "content": r.content, "ordering": r.ordering} for r in items]}
+        return {
+            "roadmap": [
+                {
+                    "id": r.id,
+                    "title": r.title,
+                    "content": r.content,
+                    "ordering": r.ordering,
+                }
+                for r in items
+            ]
+        }
     except Exception as e:
         logger.exception("roadmap error: %s", e)
         raise HTTPException(status_code=500, detail="Failed to fetch roadmap")
@@ -247,6 +284,7 @@ def roadmap(topic: str, user=Depends(get_current_user), db: Session = Depends(ge
 # ---------------------------
 # Code execution endpoint
 # ---------------------------
+
 
 @router.post("/code", summary="Execute code (safe sandbox for python)")
 def run_code(req: CodeExecRequest, user=Depends(get_current_user)):
