@@ -15,22 +15,25 @@ import {
 } from "@/components/ui/select";
 
 import {
-  Search,
-  Filter,
   MapPin,
   Clock,
   ChevronRight,
   Wand2,
   Loader2,
   FileDown,
+  Trophy,
+  Target,
 } from "lucide-react";
 
-import { roadmaps as mockRoadmaps } from "@/lib/placeholder";
 import {
-  generateRoadmapMarkdown,
+  generateRoadmapWithAi,
   loadSavedRoadmaps,
   saveRoadmapToStorage,
+  updateRoadmapProgress,
   type SavedRoadmap,
+  type Roadmap,
+  type RoadmapDay,
+  type RoadmapDayItem,
 } from "@/lib/roadmaps";
 
 import {
@@ -41,11 +44,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const Roadmaps = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
+const Roadmaps = () => {
   // AI roadmap builder state
   const [topic, setTopic] = useState("");
   const [level, setLevel] = useState<string>("beginner");
@@ -60,38 +65,16 @@ const Roadmaps = () => {
   // Saved AI roadmaps (from localStorage for now)
   const [savedRoadmaps, setSavedRoadmaps] = useState<SavedRoadmap[]>([]);
 
-  // Dialog for viewing a roadmap's markdown
+  // Dialog for viewing/tracking a roadmap
   const [activeAiRoadmap, setActiveAiRoadmap] = useState<SavedRoadmap | null>(
     null,
   );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("progress");
 
   useEffect(() => {
     setSavedRoadmaps(loadSavedRoadmaps());
   }, []);
-
-  // Generate category list dynamically from mock data
-  const categories = Array.from(
-    new Set(mockRoadmaps.map((r) => r.category ?? "General")),
-  );
-
-  // Apply filters for the mock/static roadmap cards
-  const filteredMockRoadmaps = mockRoadmaps.filter((roadmap) => {
-    const title = roadmap.title.toLowerCase();
-    const description = (roadmap.description ?? "").toLowerCase();
-
-    const matchesSearch =
-      title.includes(searchQuery.toLowerCase()) ||
-      description.includes(searchQuery.toLowerCase());
-
-    const matchesDifficulty =
-      difficultyFilter === "all" || roadmap.difficulty === difficultyFilter;
-
-    const matchesCategory =
-      categoryFilter === "all" || roadmap.category === categoryFilter;
-
-    return matchesSearch && matchesDifficulty && matchesCategory;
-  });
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -110,11 +93,11 @@ const Roadmaps = () => {
   };
 
   const mapLevelToDifficulty = (lvl: string): string => {
-    const v = lvl.toLowerCase();
-    if (v === "beginner") return "easy";
-    if (v === "intermediate") return "medium";
-    if (v === "advanced") return "hard";
-    return "medium";
+    const v = (lvl || "").toLowerCase();
+    if (v === "beginner") return "beginner";
+    if (v === "intermediate") return "intermediate";
+    if (v === "advanced") return "advanced";
+    return "intermediate";
   };
 
   const formatEstimatedTime = (weeks: number): string => {
@@ -130,18 +113,15 @@ const Roadmaps = () => {
     const lower = topic.toLowerCase();
     const tags: string[] = [];
 
-    if (lower.includes("web")) tags.push("web");
-    if (lower.includes("frontend")) tags.push("frontend");
-    if (lower.includes("backend")) tags.push("backend");
-    if (lower.includes("react")) tags.push("react");
-    if (lower.includes("javascript") || lower.includes("js"))
-      tags.push("javascript");
-    if (lower.includes("nimcet")) tags.push("nimcet");
-    if (lower.includes("mca")) tags.push("mca");
-    if (lower.includes("dsa")) tags.push("dsa");
+    if (lower.includes("ai")) tags.push("ai");
+    if (lower.includes("machine")) tags.push("machine-learning");
+    if (lower.includes("ml")) tags.push("ml");
+    if (lower.includes("data")) tags.push("data");
+    if (lower.includes("python")) tags.push("python");
+    if (lower.includes("deep")) tags.push("deep-learning");
+    if (lower.includes("nlp")) tags.push("nlp");
 
     if (tags.length === 0) {
-      // fallback: split first 2 topic words as tags
       const pieces = topic.split(/\s+/).filter(Boolean);
       tags.push(...pieces.slice(0, 2).map((p) => p.toLowerCase()));
     }
@@ -159,7 +139,7 @@ const Roadmaps = () => {
 
     try {
       setIsGenerating(true);
-      const markdown = await generateRoadmapMarkdown({
+      const { roadmap, markdown } = await generateRoadmapWithAi({
         topic: topic.trim(),
         level,
         durationWeeks,
@@ -168,9 +148,10 @@ const Roadmaps = () => {
         goal: goal.trim() || undefined,
       });
 
-      const roadmapTitle = `${topic.trim()} – ${durationWeeks} week roadmap (${level})`;
+      const roadmapTitle =
+        roadmap.title || `${topic.trim()} – ${durationWeeks} week roadmap`;
       const saved: SavedRoadmap = {
-        id: `${Date.now()}`,
+        id: roadmap.id || `${Date.now()}`,
         title: roadmapTitle,
         topic: topic.trim(),
         level,
@@ -178,20 +159,27 @@ const Roadmaps = () => {
         hoursPerWeek,
         createdAt: new Date().toISOString(),
         markdown,
+        roadmapJson: roadmap,
+        earnedXp: 0,
+        progress: 0,
       };
 
       saveRoadmapToStorage(saved);
       setSavedRoadmaps((prev) => [saved, ...prev]);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Roadmap generation failed:", err);
-      setGenerationError("Failed to generate roadmap. Please try again.");
+      setGenerationError(
+        err?.message || "Failed to generate roadmap. Please try again.",
+      );
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleDownloadMarkdown = (rm: SavedRoadmap) => {
-    const blob = new Blob([rm.markdown], { type: "text/markdown;charset=utf-8" });
+    const blob = new Blob([rm.markdown], {
+      type: "text/markdown;charset=utf-8",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -202,6 +190,7 @@ const Roadmaps = () => {
 
   const openRoadmapDialog = (rm: SavedRoadmap) => {
     setActiveAiRoadmap(rm);
+    setActiveTab("progress");
     setIsDialogOpen(true);
   };
 
@@ -209,6 +198,96 @@ const Roadmaps = () => {
     setIsDialogOpen(open);
     if (!open) {
       setActiveAiRoadmap(null);
+    }
+  };
+
+  const toggleDayCompletion = (
+    phaseId: string,
+    weekNumber: number,
+    dayNumber: number,
+  ) => {
+    if (!activeAiRoadmap) return;
+
+    const updatedRoadmap: Roadmap = JSON.parse(
+      JSON.stringify(activeAiRoadmap.roadmapJson),
+    );
+    const phase = updatedRoadmap.phases?.find((p) => p.id === phaseId);
+    if (!phase) return;
+
+    const week = phase.weeks?.find((w) => w.week_number === weekNumber);
+    if (!week) return;
+
+    const day = week.days?.find((d) => d.day_number === dayNumber);
+    if (!day) return;
+
+    day.completed = !day.completed;
+
+    if (day.completed) {
+      [
+        ...(day.learn_items || []),
+        ...(day.practice_items || []),
+        ...(day.project_items || []),
+        ...(day.reflection_items || []),
+      ].forEach((item) => {
+        item.completed = true;
+      });
+    }
+
+    updateRoadmapProgress(activeAiRoadmap.id, updatedRoadmap);
+
+    const updated = loadSavedRoadmaps();
+    setSavedRoadmaps(updated);
+    const updatedActive = updated.find((r) => r.id === activeAiRoadmap.id);
+    if (updatedActive) {
+      setActiveAiRoadmap(updatedActive);
+    }
+  };
+
+  const toggleItemCompletion = (
+    phaseId: string,
+    weekNumber: number,
+    dayNumber: number,
+    itemType:
+      | "learn_items"
+      | "practice_items"
+      | "project_items"
+      | "reflection_items",
+    itemIndex: number,
+  ) => {
+    if (!activeAiRoadmap) return;
+
+    const updatedRoadmap: Roadmap = JSON.parse(
+      JSON.stringify(activeAiRoadmap.roadmapJson),
+    );
+    const phase = updatedRoadmap.phases?.find((p) => p.id === phaseId);
+    if (!phase) return;
+
+    const week = phase.weeks?.find((w) => w.week_number === weekNumber);
+    if (!week) return;
+
+    const day = week.days?.find((d) => d.day_number === dayNumber);
+    if (!day) return;
+
+    const items = day[itemType] as RoadmapDayItem[] | undefined;
+    if (!items || !items[itemIndex]) return;
+
+    items[itemIndex].completed = !items[itemIndex].completed;
+
+    const allItems = [
+      ...(day.learn_items || []),
+      ...(day.practice_items || []),
+      ...(day.project_items || []),
+      ...(day.reflection_items || []),
+    ];
+    day.completed = allItems.length > 0 && allItems.every((item) => item.completed);
+
+    updateRoadmapProgress(activeAiRoadmap.id, updatedRoadmap);
+
+    const updated = loadSavedRoadmaps();
+    setSavedRoadmaps(updated);
+    const updatedActive = updated.find((r) => r.id === activeAiRoadmap.id);
+    if (updatedActive) {
+      setActiveAiRoadmap(updatedActive);
     }
   };
 
@@ -221,7 +300,8 @@ const Roadmaps = () => {
             Learning Roadmaps
           </h1>
           <p className="text-muted-foreground mt-1">
-            Structured paths to guide your learning journey.
+            Generate premium AI/ML bootcamp-style roadmaps with XP tracking and
+            follow them day by day.
           </p>
         </div>
       </div>
@@ -235,8 +315,8 @@ const Roadmaps = () => {
               Create AI-powered roadmap
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Generate a detailed, day-by-day plan in Notion-style Markdown. The
-              roadmap will appear below as a card with “Continue Learning”.
+              Generates a bootcamp-style roadmap for AI/ML with daily tasks, XP
+              rewards, quizzes, and free resources.
             </p>
           </div>
         </CardHeader>
@@ -247,7 +327,7 @@ const Roadmaps = () => {
                 Topic / Skill <span className="text-destructive">*</span>
               </label>
               <Input
-                placeholder="e.g. Web Development for MCA, NIMCET DSA, System Design..."
+                placeholder="e.g. Machine Learning with Python, Deep Learning for NLP..."
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
               />
@@ -272,7 +352,7 @@ const Roadmaps = () => {
               <Input
                 type="number"
                 min={1}
-                max={52}
+                max={24}
                 value={durationWeeks}
                 onChange={(e) => setDurationWeeks(Number(e.target.value) || 1)}
               />
@@ -296,7 +376,7 @@ const Roadmaps = () => {
                 Your background (optional)
               </label>
               <Textarea
-                placeholder="e.g. MCA student, basic C, no JS, weak in math..."
+                placeholder="e.g. MCA student, basic Python and stats, no prior ML..."
                 value={background}
                 onChange={(e) => setBackground(e.target.value)}
                 rows={3}
@@ -306,13 +386,21 @@ const Roadmaps = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium">Target goal (optional)</label>
               <Textarea
-                placeholder="e.g. Internship-ready in 4 months, clear NIMCET, build 2 projects..."
+                placeholder="e.g. Crack ML interviews, build 3 ML projects, understand deep learning..."
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
                 rows={3}
               />
             </div>
           </div>
+
+          <p className="text-xs text-muted-foreground border rounded-md border-border/60 bg-muted/40 px-3 py-2">
+            ⚠️ <span className="font-semibold">Disclaimer:</span> These
+            roadmaps are generated by AI and may contain intensive schedules or
+            assumptions. Review carefully and adjust based on your energy,
+            health, and available time. You are responsible for pacing yourself
+            safely.
+          </p>
 
           {generationError && (
             <p className="text-sm text-destructive">{generationError}</p>
@@ -338,285 +426,437 @@ const Roadmaps = () => {
             </Button>
 
             <p className="text-xs text-muted-foreground">
-              The AI will create a full week-by-week, day-by-day schedule in
-              Notion-friendly markdown and save it as a roadmap card below.
+              The AI will create a week-by-week, day-by-day schedule with XP
+              tracking.
             </p>
           </div>
         </CardContent>
       </Card>
 
-      {/* Filters for template roadmaps */}
-      <Card className="glass border-border/50">
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Search */}
-            <div className="md:col-span-2 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search roadmaps..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+      {/* SAVED AI ROADMAPS GRID */}
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-xl font-semibold">Your roadmaps</h2>
+          <p className="text-xs text-muted-foreground">
+            Track your progress and earn XP as you complete tasks!
+          </p>
+        </div>
 
-            {/* Difficulty */}
-            <Select
-              value={difficultyFilter}
-              onValueChange={(val) => setDifficultyFilter(val)}
-            >
-              <SelectTrigger>
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4" />
-                  <SelectValue placeholder="Difficulty" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Levels</SelectItem>
-                <SelectItem value="easy">Easy</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="hard">Hard</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Category */}
-            <Select
-              value={categoryFilter}
-              onValueChange={(val) => setCategoryFilter(val)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Count */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Showing {filteredMockRoadmaps.length} of {mockRoadmaps.length} template
-          roadmaps
-        </p>
-      </div>
-
-      {/* Roadmap Grid: AI roadmaps first, then static templates */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* AI-generated roadmap cards */}
-        {savedRoadmaps.map((rm) => {
-          const difficulty = mapLevelToDifficulty(rm.level);
-          const estimatedTime = formatEstimatedTime(rm.durationWeeks);
-          const totalSteps = rm.durationWeeks * 5; // rough: 5 days/week
-          const completedSteps = 0;
-          const progress = 0;
-          const tags = inferTagsFromTopic(rm.topic);
-
-          return (
-            <Card
-              key={`ai-${rm.id}`}
-              className="glass border-border/50 hover:shadow-lg hover:border-primary/30 transition-all cursor-pointer group"
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <MapPin className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
-                  <div className="flex gap-2">
-                    <Badge
-                      variant="outline"
-                      className={getDifficultyColor(difficulty)}
-                    >
-                      {difficulty}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      AI
-                    </Badge>
-                  </div>
-                </div>
-
-                <CardTitle className="group-hover:text-primary transition-colors line-clamp-2">
-                  {rm.title}
-                </CardTitle>
-
-                <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
-                  AI-generated roadmap for {rm.topic}.
-                </p>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span>{estimatedTime}</span>
-                  <span>•</span>
-                  <span>{totalSteps} steps (approx.)</span>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Progress</span>
-                    <span className="font-medium text-primary">
-                      {progress}%
-                    </span>
-                  </div>
-                  <Progress value={progress} className="h-2" />
-                  <p className="text-xs text-muted-foreground">
-                    {completedSteps} of {totalSteps} completed
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {tags.slice(0, 3).map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                  {tags.length > 3 && (
-                    <Badge variant="secondary" className="text-xs">
-                      +{tags.length - 3}
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                    onClick={() => openRoadmapDialog(rm)}
-                  >
-                    Continue Learning
-                    <ChevronRight className="h-4 w-4 ml-2" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="flex-shrink-0"
-                    onClick={() => handleDownloadMarkdown(rm)}
-                  >
-                    <FileDown className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-
-        {/* Static/template roadmap cards */}
-        {filteredMockRoadmaps.map((roadmap) => (
-          <Card
-            key={roadmap.id}
-            className="glass border-border/50 hover:shadow-lg hover:border-primary/30 transition-all cursor-pointer group"
-          >
-            <CardHeader>
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <MapPin className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
-                <Badge
-                  variant="outline"
-                  className={getDifficultyColor(roadmap.difficulty)}
-                >
-                  {roadmap.difficulty}
-                </Badge>
-              </div>
-
-              <CardTitle className="group-hover:text-primary transition-colors line-clamp-2">
-                {roadmap.title}
-              </CardTitle>
-
-              <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
-                {roadmap.description ?? ""}
-              </p>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                <span>{roadmap.estimatedTime ?? "N/A"}</span>
-                <span>•</span>
-                <span>{roadmap.totalSteps} steps</span>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Progress</span>
-                  <span className="font-medium text-primary">
-                    {roadmap.progress}%
-                  </span>
-                </div>
-                <Progress value={roadmap.progress} className="h-2" />
-                <p className="text-xs text-muted-foreground">
-                  {roadmap.completedSteps} of {roadmap.totalSteps} completed
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {(roadmap.tags ?? []).slice(0, 3).map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
-                {(roadmap.tags?.length ?? 0) > 3 && (
-                  <Badge variant="secondary" className="text-xs">
-                    +{roadmap.tags.length - 3}
-                  </Badge>
-                )}
-              </div>
-
-              <Button className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                {roadmap.progress > 0 ? "Continue Learning" : "Start Roadmap"}
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
+        {savedRoadmaps.length === 0 && (
+          <Card className="border-dashed border-border/60 bg-muted/30">
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              No roadmaps yet. Use the{" "}
+              <span className="font-medium">"Create AI-powered roadmap"</span>{" "}
+              section above to generate your first plan.
             </CardContent>
           </Card>
-        ))}
+        )}
+
+        {savedRoadmaps.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {savedRoadmaps.map((rm) => {
+              const difficulty = mapLevelToDifficulty(rm.level);
+              const estimatedTime = formatEstimatedTime(rm.durationWeeks);
+              const totalDays = (rm.roadmapJson.phases || []).reduce(
+                (acc, phase) =>
+                  acc +
+                  (phase.weeks || []).reduce(
+                    (wacc, week) => wacc + (week.days || []).length,
+                    0,
+                  ),
+                0,
+              );
+              const tags = inferTagsFromTopic(rm.topic);
+
+              return (
+                <Card
+                  key={`ai-${rm.id}`}
+                  className="glass border-border/50 hover:shadow-lg hover:border-primary/30 transition-all cursor-pointer group"
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <MapPin className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
+                      <div className="flex gap-2">
+                        <Badge
+                          variant="outline"
+                          className={getDifficultyColor(difficulty)}
+                        >
+                          {difficulty}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          AI
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <CardTitle className="group-hover:text-primary transition-colors line-clamp-2">
+                      {rm.title}
+                    </CardTitle>
+
+                    <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
+                      AI-generated roadmap for {rm.topic}.
+                    </p>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span>{estimatedTime}</span>
+                      <span>•</span>
+                      <span>{totalDays} days</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-lg border border-primary/10">
+                      <Trophy className="h-5 w-5 text-yellow-500" />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium">XP</span>
+                          <span className="font-bold text-primary">
+                            {rm.earnedXp} / {rm.roadmapJson.total_xp}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Progress</span>
+                        <span className="font-medium text-primary">
+                          {rm.progress}%
+                        </span>
+                      </div>
+                      <Progress value={rm.progress} className="h-2" />
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {tags.slice(0, 3).map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                      {tags.length > 3 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{tags.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                        onClick={() => openRoadmapDialog(rm)}
+                      >
+                        Continue Learning
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="flex-shrink-0"
+                        onClick={() => handleDownloadMarkdown(rm)}
+                      >
+                        <FileDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Empty State for when there are no template roadmaps */}
-      {filteredMockRoadmaps.length === 0 && (
-        <Card className="glass border-border/50">
-          <CardContent className="p-12 text-center">
-            <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">No roadmaps found</h3>
-            <p className="text-sm text-muted-foreground">
-              Try adjusting your search or filters
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Dialog to show the Notion-style markdown for an AI roadmap */}
+      {/* Dialog for roadmap progress tracking + markdown */}
       <Dialog open={isDialogOpen} onOpenChange={closeRoadmapDialog}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
           {activeAiRoadmap && (
             <>
               <DialogHeader>
-                <DialogTitle>{activeAiRoadmap.title}</DialogTitle>
-                <DialogDescription className="text-xs">
-                  {activeAiRoadmap.topic} • {activeAiRoadmap.durationWeeks} weeks •{" "}
-                  {activeAiRoadmap.hoursPerWeek}h/week •{" "}
-                  {activeAiRoadmap.level}
+                <DialogTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  {activeAiRoadmap.title}
+                </DialogTitle>
+                <DialogDescription className="flex items-center gap-3 flex-wrap">
+                  <span>{activeAiRoadmap.topic}</span>
+                  <span>•</span>
+                  <span>{activeAiRoadmap.durationWeeks} weeks</span>
+                  <span>•</span>
+                  <span>{activeAiRoadmap.hoursPerWeek}h/week</span>
+                  <span>•</span>
+                  <span className="font-medium text-primary">
+                    {activeAiRoadmap.earnedXp} /{" "}
+                    {activeAiRoadmap.roadmapJson.total_xp} XP
+                  </span>
                 </DialogDescription>
               </DialogHeader>
-              <div className="mt-4 border rounded-md bg-muted/40 p-3 max-h-[60vh] overflow-auto">
-                <pre className="text-xs whitespace-pre-wrap font-mono">
-                  {activeAiRoadmap.markdown}
-                </pre>
-              </div>
-              <div className="mt-3 flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="inline-flex items-center gap-1"
-                  onClick={() => handleDownloadMarkdown(activeAiRoadmap)}
+
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="flex-1 flex flex-col overflow-hidden"
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="progress">
+                    <Trophy className="h-4 w-4 mr-2" />
+                    Track Progress
+                  </TabsTrigger>
+                  <TabsTrigger value="markdown">
+                    <FileDown className="h-4 w-4 mr-2" />
+                    Markdown
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Progress Tab */}
+                <TabsContent
+                  value="progress"
+                  className="flex-1 overflow-auto mt-4 space-y-4"
                 >
-                  <FileDown className="h-4 w-4" />
-                  Download .md
-                </Button>
-              </div>
+                  <Card className="bg-gradient-to-r from-primary/10 to-purple-500/10 border-primary/20">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Trophy className="h-6 w-6 text-yellow-500" />
+                          <span className="font-bold text-lg">
+                            Total Progress
+                          </span>
+                        </div>
+                        <span className="text-2xl font-bold text-primary">
+                          {activeAiRoadmap.progress}%
+                        </span>
+                      </div>
+                      <Progress
+                        value={activeAiRoadmap.progress}
+                        className="h-3 mb-2"
+                      />
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <span>
+                          XP Earned: {activeAiRoadmap.earnedXp} /{" "}
+                          {activeAiRoadmap.roadmapJson.total_xp}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {(activeAiRoadmap.roadmapJson.phases || [])
+                    .sort((a, b) => a.order - b.order)
+                    .map((phase) => (
+                      <Card key={phase.id} className="border-border/50">
+                        <CardHeader>
+                          <CardTitle className="text-lg">
+                            {phase.name}
+                          </CardTitle>
+                          <p className="text-sm text-muted-foreground">
+                            {phase.goal}
+                          </p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="outline">
+                              <Trophy className="h-3 w-3 mr-1" />
+                              {phase.phase_xp} XP
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {(phase.weeks || [])
+                            .sort((a, b) => a.week_number - b.week_number)
+                            .map((week) => (
+                              <div
+                                key={week.week_number}
+                                className="space-y-3 border rounded-lg p-4 bg-muted/30"
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <h4 className="font-semibold">
+                                      Week {week.week_number}: {week.theme}
+                                    </h4>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {week.outcome}
+                                    </p>
+                                  </div>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {week.week_xp} XP
+                                  </Badge>
+                                </div>
+
+                                <div className="space-y-2">
+                                  {(week.days || [])
+                                    .sort(
+                                      (a, b) => a.day_number - b.day_number,
+                                    )
+                                    .map((day: RoadmapDay) => (
+                                      <div
+                                        key={day.day_number}
+                                        className={`border rounded-md p-3 space-y-2 transition-all ${
+                                          day.completed
+                                            ? "bg-success/10 border-success/30"
+                                            : "bg-background"
+                                        }`}
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-2">
+                                            <Checkbox
+                                              checked={day.completed}
+                                              onCheckedChange={() =>
+                                                toggleDayCompletion(
+                                                  phase.id,
+                                                  week.week_number,
+                                                  day.day_number,
+                                                )
+                                              }
+                                            />
+                                            <span className="font-medium">
+                                              Day {day.day_number}: {day.title}
+                                            </span>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <Badge
+                                              variant="outline"
+                                              className="text-xs"
+                                            >
+                                              <Trophy className="h-3 w-3 mr-1" />
+                                              {day.xp_reward} XP
+                                            </Badge>
+                                            {day.time_estimate_hours && (
+                                              <Badge
+                                                variant="secondary"
+                                                className="text-xs"
+                                              >
+                                                ~{day.time_estimate_hours}h
+                                              </Badge>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        {!day.completed && (
+                                          <div className="ml-6 space-y-2 text-sm">
+                                            {[
+                                              {
+                                                key: "learn_items",
+                                                label: "📖 Learn",
+                                              },
+                                              {
+                                                key: "practice_items",
+                                                label: "💪 Practice",
+                                              },
+                                              {
+                                                key: "project_items",
+                                                label: "🚀 Project",
+                                              },
+                                              {
+                                                key: "reflection_items",
+                                                label: "💭 Reflect",
+                                              },
+                                            ].map(({ key, label }) => {
+                                              const items =
+                                                (day[
+                                                  key as keyof RoadmapDay
+                                                ] as RoadmapDayItem[] | undefined) ||
+                                                [];
+                                              if (items.length === 0)
+                                                return null;
+
+                                              return (
+                                                <div
+                                                  key={key}
+                                                  className="space-y-1"
+                                                >
+                                                  <p className="text-xs font-medium text-muted-foreground">
+                                                    {label}
+                                                  </p>
+                                                  {items.map((item, idx) => (
+                                                    <div
+                                                      key={idx}
+                                                      className="flex items-start gap-2"
+                                                    >
+                                                      <Checkbox
+                                                        checked={
+                                                          item.completed
+                                                        }
+                                                        onCheckedChange={() =>
+                                                          toggleItemCompletion(
+                                                            phase.id,
+                                                            week.week_number,
+                                                            day.day_number,
+                                                            key as any,
+                                                            idx,
+                                                          )
+                                                        }
+                                                        className="mt-0.5"
+                                                      />
+                                                      <div className="flex-1">
+                                                        <span
+                                                          className={
+                                                            item.completed
+                                                              ? "line-through text-muted-foreground"
+                                                              : ""
+                                                          }
+                                                        >
+                                                          {item.description}
+                                                        </span>
+                                                        {item.xp > 0 && (
+                                                          <span className="text-xs text-primary ml-1">
+                                                            (+{item.xp} XP)
+                                                          </span>
+                                                        )}
+                                                        {item.resource?.url && (
+                                                          <a
+                                                            href={
+                                                              item.resource.url
+                                                            }
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-xs text-blue-500 hover:underline ml-2"
+                                                          >
+                                                            [
+                                                            {item.resource
+                                                              .title ||
+                                                              "Resource"}
+                                                            ]
+                                                          </a>
+                                                        )}
+                                                      </div>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                </div>
+                              </div>
+                            ))}
+                        </CardContent>
+                      </Card>
+                    ))}
+                </TabsContent>
+
+                {/* Markdown Tab */}
+                <TabsContent
+                  value="markdown"
+                  className="flex-1 overflow-hidden mt-4 flex flex-col"
+                >
+                  <div className="flex justify-end mb-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="inline-flex items-center gap-1"
+                      onClick={() => handleDownloadMarkdown(activeAiRoadmap)}
+                    >
+                      <FileDown className="h-4 w-4" />
+                      Download .md
+                    </Button>
+                  </div>
+                  <div className="border rounded-md bg-muted/40 p-3 flex-1 overflow-auto">
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {activeAiRoadmap.markdown}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </>
           )}
         </DialogContent>

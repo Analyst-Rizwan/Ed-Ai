@@ -9,11 +9,19 @@ logger = logging.getLogger(__name__)
 SYSTEM_PROMPT = settings.AI_SYSTEM_PROMPT
 
 
-async def ask_ai(prompt: str, temperature: float = 0.7, max_tokens: int = 300) -> str:
+async def ask_ai(
+    prompt: str,
+    temperature: float = 0.7,
+    max_tokens: int = 300,
+    json_mode: bool = False,   # NEW
+) -> Any:
     """
-    Unified AI interface - automatically uses the provider specified in settings.AI_PROVIDER
-    Supports: openai, gemini
-    Always returns a string (never None).
+    Unified interface for chat + structured output.
+
+    json_mode=True → forces STRICT JSON output (OpenAI only).
+    Returns:
+        - dict when json_mode=True
+        - str when json_mode=False
     """
     if not prompt or not prompt.strip():
         return "Please provide a valid question."
@@ -21,44 +29,66 @@ async def ask_ai(prompt: str, temperature: float = 0.7, max_tokens: int = 300) -
     provider = (settings.AI_PROVIDER or "").lower().strip()
 
     if provider == "openai":
-        return await _ask_openai(prompt, temperature, max_tokens)
+        return await _ask_openai(prompt, temperature, max_tokens, json_mode)
     elif provider == "gemini":
         return await _ask_gemini(prompt, temperature, max_tokens)
     else:
-        msg = f"Unknown AI provider: {provider!r}. Use 'openai' or 'gemini'."
+        msg = f"Unknown AI provider: {provider!r}. Expected 'openai' or 'gemini'."
         logger.error(msg)
         return msg
 
 
 # ============================================================
-#                    OPENAI IMPLEMENTATION
+#                     OPENAI IMPLEMENTATION  
 # ============================================================
 
-async def _ask_openai(prompt: str, temperature: float, max_tokens: int) -> str:
+async def _ask_openai(
+    prompt: str,
+    temperature: float,
+    max_tokens: int,
+    json_mode: bool
+) -> Any:
     from openai import AsyncOpenAI
 
     if not settings.OPENAI_API_KEY:
-        logger.error("OPENAI_API_KEY not set in environment")
-        return "AI is not configured correctly (missing OpenAI API key)."
+        logger.error("OPENAI_API_KEY missing.")
+        return "AI is not configured correctly (no API key)."
 
     try:
         client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
-        resp = await client.chat.completions.create(
-            model=settings.OPENAI_MODEL,
-            messages=[
+        # Common request arguments
+        kwargs = {
+            "model": settings.OPENAI_MODEL,
+            "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},
             ],
-            temperature=temperature,
-            max_tokens=max_tokens,
-        )
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
 
+        # 🔥 JSON MODE (strict enforced JSON)
+        if json_mode:
+            kwargs["response_format"] = {"type": "json_object"}
+
+        resp = await client.chat.completions.create(**kwargs)
+
+        # When json_mode=True, OpenAI gives parsed JSON INSTANTLY:
+        if json_mode:
+            return resp.choices[0].message.parsed  # ← already a Python dict
+
+        # Normal chat mode:
         content = resp.choices[0].message.content
         return content.strip() if isinstance(content, str) else str(content)
+
     except Exception as e:
         logger.exception("OpenAI error: %s", e)
-        return "AI is temporarily unavailable (OpenAI error). Please try again later."
+        return (
+            {"error": "openai_error", "message": str(e)}
+            if json_mode
+            else "AI error. Try again later."
+        )
 
 
 # ============================================================
@@ -69,8 +99,8 @@ async def _ask_gemini(prompt: str, temperature: float, max_tokens: int) -> str:
     import google.generativeai as genai
 
     if not settings.GEMINI_API_KEY:
-        logger.error("GEMINI_API_KEY not set in environment")
-        return "AI is not configured correctly (missing Gemini API key)."
+        logger.error("GEMINI_API_KEY missing.")
+        return "AI is not configured correctly (Gemini key missing)."
 
     try:
         genai.configure(api_key=settings.GEMINI_API_KEY)
@@ -86,47 +116,27 @@ async def _ask_gemini(prompt: str, temperature: float, max_tokens: int) -> str:
             ),
         )
 
-        # 1) Try quick accessor
-        try:
-            text = getattr(response, "text", None)
-            if text:
-                return text.strip()
-        except Exception:
-            text = None
+        # Quick extract
+        if hasattr(response, "text") and response.text:
+            return response.text.strip()
 
-        # 2) Try to manually extract from candidates/parts
+        # Manual fallback
         candidates = getattr(response, "candidates", None)
         if candidates:
-            pieces: list[str] = []
-            for cand in candidates:
-                content = getattr(cand, "content", None)
-                parts = getattr(content, "parts", None) if content else None
-                if parts:
-                    for p in parts:
-                        t = getattr(p, "text", None)
-                        if t:
-                            pieces.append(t)
-            if pieces:
-                return "".join(pieces).strip()
+            parts = getattr(candidates[0].content, "parts", [])
+            text_pieces = [p.text for p in parts if hasattr(p, "text")]
+            if text_pieces:
+                return "".join(text_pieces).strip()
 
-            first = candidates[0]
-            finish_reason = getattr(first, "finish_reason", "UNKNOWN")
-            logger.warning("Gemini returned no text. finish_reason=%s", finish_reason)
-            return (
-                "I couldn't generate a response right now "
-                f"(Gemini finish_reason={finish_reason}). Please try rephrasing your question."
-            )
+        return "Gemini returned no usable response."
 
-        # 3) No candidates at all
-        logger.warning("Gemini returned no candidates for the request.")
-        return "I couldn't generate any response. Please try again with a different question."
     except Exception as e:
         logger.exception("Gemini error: %s", e)
-        return "AI is temporarily unavailable (Gemini error). Please try again later."
+        return "AI unavailable (Gemini error)."
 
 
 # ============================================================
-#                    STREAMING (Optional - for later)
+#                    STREAMING (unchanged)
 # ============================================================
 
 async def stream_ai(
@@ -135,12 +145,7 @@ async def stream_ai(
     temperature: float = 0.7,
     max_tokens: int = 300,
 ) -> AsyncGenerator[Dict[str, Any], None]:
-    """
-    Streaming support - can be implemented per provider later.
-    For now, just yields the full response as one chunk.
-    """
     last_message = messages[-1]["content"] if messages else ""
     response = await ask_ai(last_message, temperature, max_tokens)
-
     yield {"type": "delta", "text": response}
     yield {"type": "done"}
