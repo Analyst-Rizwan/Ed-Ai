@@ -84,8 +84,14 @@ export interface SavedRoadmap {
 
 const STORAGE_KEY = "edai_saved_roadmaps_v3";
 
-// 🔥 point directly to backend in dev
-const API_BASE = "http://127.0.0.1:8000";
+// IMPORTANT: always hit same-origin /api
+// - In dev, Vite proxies /api -> http://127.0.0.1:8000
+// - In prod, browser hits https://eduaiajk.in/api/...
+const API_BASE = "";
+
+// --------------------------------------------------
+// Local storage helpers
+// --------------------------------------------------
 
 export function loadSavedRoadmaps(): SavedRoadmap[] {
   if (typeof window === "undefined") return [];
@@ -126,6 +132,10 @@ export function updateRoadmapProgress(roadmapId: string, updatedRoadmap: Roadmap
 
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
 }
+
+// --------------------------------------------------
+// XP / progress calculations
+// --------------------------------------------------
 
 function calculateEarnedXp(roadmap: Roadmap): number {
   let earned = 0;
@@ -170,6 +180,34 @@ function calculateProgress(roadmap: Roadmap): number {
 
   return totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
 }
+
+function calculatePhaseProgress(phase: RoadmapPhase): number {
+  let totalDays = 0;
+  let completedDays = 0;
+
+  for (const week of phase.weeks || []) {
+    for (const day of week.days || []) {
+      totalDays++;
+      if (day.completed) {
+        completedDays++;
+      }
+    }
+  }
+
+  return totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
+}
+
+function calculateWeekProgress(week: RoadmapWeek): number {
+  const days = week.days || [];
+  if (days.length === 0) return 0;
+
+  const completed = days.filter((d) => d.completed).length;
+  return Math.round((completed / days.length) * 100);
+}
+
+// --------------------------------------------------
+// Markdown building
+// --------------------------------------------------
 
 function sectionHeading(level: number, text: string): string {
   return `${"#".repeat(level)} ${text}`.trim();
@@ -269,37 +307,13 @@ function inferPhaseWeekRange(phase: RoadmapPhase): { start: number; end: number 
   };
 }
 
-function calculatePhaseProgress(phase: RoadmapPhase): number {
-  let totalDays = 0;
-  let completedDays = 0;
-
-  for (const week of phase.weeks || []) {
-    for (const day of week.days || []) {
-      totalDays++;
-      if (day.completed) {
-        completedDays++;
-      }
-    }
-  }
-
-  return totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
-}
-
-function calculateWeekProgress(week: RoadmapWeek): number {
-  const days = week.days || [];
-  if (days.length === 0) return 0;
-
-  const completed = days.filter((d) => d.completed).length;
-  return Math.round((completed / days.length) * 100);
-}
-
 export function buildMarkdownFromRoadmap(roadmap: Roadmap, topic: string): string {
   const lines: string[] = [];
 
-  // Title with progress indicator
   const earnedXp = calculateEarnedXp(roadmap);
   const progress = calculateProgress(roadmap);
 
+  // Title
   lines.push(sectionHeading(1, roadmap.title || `${topic} Roadmap`));
   lines.push("");
   lines.push(
@@ -376,7 +390,6 @@ export function buildMarkdownFromRoadmap(roadmap: Roadmap, topic: string): strin
         lines.push(week.summary);
       }
 
-      // Days
       const days = [...(week.days ?? [])].sort(
         (a, b) => a.day_number - b.day_number,
       );
@@ -385,7 +398,6 @@ export function buildMarkdownFromRoadmap(roadmap: Roadmap, topic: string): strin
         lines.push(formatDay(week.week_number, day, 4));
       }
 
-      // Quiz
       if (week.quiz_questions && week.quiz_questions.length) {
         lines.push("");
         lines.push(sectionHeading(4, "📝 Week Quiz"));
@@ -394,7 +406,6 @@ export function buildMarkdownFromRoadmap(roadmap: Roadmap, topic: string): strin
         });
       }
 
-      // Weekly resources
       if (week.weekly_resources && week.weekly_resources.length) {
         lines.push("");
         lines.push(formatResources(week.weekly_resources));
@@ -406,6 +417,10 @@ export function buildMarkdownFromRoadmap(roadmap: Roadmap, topic: string): strin
 
   return lines.join("\n");
 }
+
+// --------------------------------------------------
+// Backend call
+// --------------------------------------------------
 
 /**
  * Call backend /api/roadmaps/generate and convert the JSON roadmap
@@ -419,31 +434,55 @@ export async function generateRoadmapWithAi(opts: {
   background?: string;
   goal?: string;
 }): Promise<GeneratedRoadmapResult> {
-  const res = await fetch(`${API_BASE}/api/roadmaps/generate`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      topic: opts.topic,
-      level: opts.level,
-      duration_weeks: opts.durationWeeks,
-      hours_per_week: opts.hoursPerWeek,
-      learner_background: opts.background,
-      target_goal: opts.goal,
-    }),
-  });
+  const url = `${API_BASE}/api/roadmaps/generate`;
+  console.log("Calling roadmap API:", url, "dev:", import.meta.env.DEV);
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        topic: opts.topic,
+        level: opts.level,
+        duration_weeks: opts.durationWeeks,
+        hours_per_week: opts.hoursPerWeek,
+        learner_background: opts.background,
+        target_goal: opts.goal,
+      }),
+    });
+  } catch (err) {
+    console.error("Network error calling /api/roadmaps/generate:", err);
+    throw new Error("Network error while calling roadmap API");
+  }
+
+  const rawText = await res.text();
+  console.log(
+    "Roadmap API status:",
+    res.status,
+    res.statusText,
+    "| body (first 500):",
+    rawText.slice(0, 500),
+  );
 
   if (!res.ok) {
-    const text = await res.text();
     throw new Error(
       `Failed to generate roadmap (${res.status}): ${
-        text || res.statusText
+        rawText || res.statusText
       }`,
     );
   }
 
-  const json = (await res.json()) as { roadmap: Roadmap };
+  let json: { roadmap: Roadmap };
+  try {
+    json = JSON.parse(rawText) as { roadmap: Roadmap };
+  } catch (e) {
+    console.error("Failed to parse roadmap API JSON:", e);
+    throw new Error("Invalid JSON returned from roadmap API");
+  }
+
   const roadmap = json.roadmap;
   const markdown = buildMarkdownFromRoadmap(roadmap, opts.topic);
 
