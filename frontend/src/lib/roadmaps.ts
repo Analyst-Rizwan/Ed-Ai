@@ -87,7 +87,7 @@ const STORAGE_KEY = "edai_saved_roadmaps_v3";
 // IMPORTANT: always hit same-origin /api
 // - In dev, Vite proxies /api -> http://127.0.0.1:8000
 // - In prod, browser hits https://eduaiajk.in/api/...
-const API_BASE = "";
+const API_BASE = import.meta.env.VITE_API_URL ??"";
 
 // --------------------------------------------------
 // Local storage helpers
