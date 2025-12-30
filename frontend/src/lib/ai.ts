@@ -1,7 +1,6 @@
-// frontend/src/lib/ai.ts
 const API_BASE_URL =
-  (import.meta.env.VITE_API_URL && (import.meta.env.VITE_API_URL as string).trim()) ||
-  "http://127.0.0.1:8000/api";
+  (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.trim()) ||
+  "http://127.0.0.1:8000";
 
 /**
  * Send a chat message to the backend AI endpoint.
@@ -16,14 +15,13 @@ export async function sendMessageToAI(
     if (opts?.temperature !== undefined) body.temperature = opts.temperature;
     if (opts?.max_tokens !== undefined) body.max_tokens = opts.max_tokens;
 
-    const res = await fetch(`${API_BASE_URL}/ai/chat`, {
+    const res = await fetch(`${API_BASE_URL}/api/ai/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
 
     if (!res.ok) {
-      // try to log helpful info
       const txt = await res.text().catch(() => "");
       console.error("AI Server Error:", res.status, txt);
       return "⚠️ AI server returned an error.";
@@ -33,6 +31,7 @@ export async function sendMessageToAI(
     if (!data || typeof data.reply !== "string") {
       return "⚠️ AI returned an invalid response.";
     }
+
     return data.reply.trim() || "⚠️ AI gave an empty response.";
   } catch (err) {
     console.error("AI Network Error:", err);
@@ -40,7 +39,5 @@ export async function sendMessageToAI(
   }
 }
 
-// convenience named export used by components
 export const askAI = sendMessageToAI;
-
 export default sendMessageToAI;
