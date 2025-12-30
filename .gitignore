@@ -1,14 +1,22 @@
-﻿__pycache__/
+﻿# Python
+__pycache__/
 *.py[cod]
 *.sqlite3
+*.db
 .env
 .venv/
+
+# Node / Frontend
 node_modules/
 dist/
 build/
 npm-debug.log*
 frontend/dist/
+
+# Backend static build (Vite → FastAPI)
 backend/app/static/dist/
+
+# OS / Editor
 .DS_Store
 Thumbs.db
 .vscode/
