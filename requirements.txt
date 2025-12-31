@@ -1,4 +1,4 @@
-﻿annotated-doc==0.0.4
+annotated-doc==0.0.4
 annotated-types==0.7.0
 anyio==4.11.0
 bcrypt==5.0.0
@@ -26,8 +26,6 @@ tqdm==4.67.1
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 uvicorn==0.38.0
-psycopg2-binary
+psycopg2-binary==2.9.10
 SQLAlchemy==2.0.45
-psycopg[binary]
-
 

@@ -1,21 +1,22 @@
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.db.session import engine
-from app.db.base import Base
+from app.db.session import engine, Base
+
+# ⚠️ IMPORTANT: import all models so SQLAlchemy registers them
+import app.models  # noqa: F401
 
 
 def init_db() -> None:
     """
     Initializes the database schema.
 
-    - For development: creates all tables automatically.
-    - For production: tables should be created via Alembic migrations.
+    - Development: auto-create tables
+    - Production (Supabase): first-time bootstrap only
     """
 
     try:
-        # Create tables if they don't exist (safe for dev)
         Base.metadata.create_all(bind=engine)
         print("✔ Database initialized successfully.")
     except SQLAlchemyError as e:
         print("❌ Database initialization failed:", str(e))
+        raise
