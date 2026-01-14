@@ -1,5 +1,6 @@
 // frontend/src/lib/api.ts
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+// Use relative URL to leverage Vite's proxy (see vite.config.ts)
+const API_URL = "/api";
 
 // ============================================================
 // AUTH TOKEN

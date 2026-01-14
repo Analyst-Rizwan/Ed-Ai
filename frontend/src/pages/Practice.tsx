@@ -48,7 +48,7 @@ const Practice = () => {
   const [difficultyFilter, setDifficultyFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProblems, setTotalProblems] = useState(0);
@@ -65,7 +65,7 @@ const Practice = () => {
   // ============================================================
   useEffect(() => {
     loadInitialData();
-    
+
     // Load saved username from localStorage
     const savedUsername = localStorage.getItem("leetcode_username");
     if (savedUsername) {
@@ -105,7 +105,7 @@ const Practice = () => {
       ]);
       setStats(statsData);
       setCategories(categoriesData);
-      
+
       // Load first page of problems
       await loadProblems(1);
     } catch (error) {
@@ -123,36 +123,36 @@ const Practice = () => {
   const loadProblems = async (page: number) => {
     try {
       setLoadingProblems(true);
-      
+
       // Build query params - don't send 'all' values
       const params: any = {
         page,
         page_size: PROBLEMS_PER_PAGE,
       };
-      
+
       // Only add filters if they have actual values (not "all")
       if (searchQuery && searchQuery.trim()) {
         params.search = searchQuery.trim();
       }
-      
+
       if (difficultyFilter && difficultyFilter !== "all") {
         params.difficulty = difficultyFilter;
       }
-      
+
       if (categoryFilter && categoryFilter !== "all") {
         params.category = categoryFilter;
       }
-      
+
       if (statusFilter && statusFilter !== "all") {
         params.status = statusFilter;
       }
-      
+
       console.log("Loading problems with params:", params);
-      
+
       const data = await problemsApi.getProblems(params);
-      
+
       console.log("Received data:", data);
-      
+
       setProblems(data.problems);
       setTotalProblems(data.total);
       setTotalPages(Math.ceil(data.total / PROBLEMS_PER_PAGE));
@@ -219,7 +219,7 @@ const Practice = () => {
     try {
       await leetcodeApi.sync(leetcodeUsername);
       setLastSyncTime(new Date());
-      
+
       // Silently reload data without toast
       const statsData = await problemsApi.getStats();
       setStats(statsData);
@@ -266,7 +266,7 @@ const Practice = () => {
     setLeetcodeUsername("");
     setAutoSyncEnabled(false);
     setLastSyncTime(null);
-    
+
     toast({
       title: "Disconnected",
       description: "LeetCode account disconnected.",
@@ -278,21 +278,21 @@ const Practice = () => {
   // ============================================================
   const handleSolveOnLeetCode = (problem: Problem, e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    const leetcodeSlug = problem.leetcode_slug || 
-                         problem.title.toLowerCase()
-                           .replace(/[^a-z0-9]+/g, '-')
-                           .replace(/^-|-$/g, '');
-    
+
+    const leetcodeSlug = problem.leetcode_slug ||
+      problem.title.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
     const leetcodeUrl = `https://leetcode.com/problems/${leetcodeSlug}/`;
     window.open(leetcodeUrl, '_blank');
-    
+
     if (autoSyncEnabled) {
       toast({
         title: "Good luck!",
         description: "Your progress will sync automatically when you solve this problem.",
       });
-      
+
       setTimeout(() => {
         handleBackgroundSync();
       }, 10000);
@@ -327,7 +327,7 @@ const Practice = () => {
 
   const formatTimeSince = (date: Date) => {
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-    
+
     if (seconds < 60) return "just now";
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
@@ -364,8 +364,8 @@ const Practice = () => {
                 onChange={(e) => setLeetcodeUsername(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleLeetCodeSync()}
               />
-              <Button 
-                onClick={handleLeetCodeSync} 
+              <Button
+                onClick={handleLeetCodeSync}
                 disabled={syncingLeetCode}
                 className="whitespace-nowrap"
               >
@@ -412,11 +412,11 @@ const Practice = () => {
               </div>
             </div>
           )}
-          
+
           <p className="text-sm text-muted-foreground">
             {autoSyncEnabled ? (
               <>
-                ✨ Auto-sync enabled: Your full LeetCode history syncs every minute. 
+                ✨ Auto-sync enabled: Your full LeetCode history syncs every minute.
                 Click "Solve" to open problems on LeetCode.
               </>
             ) : (
@@ -523,7 +523,7 @@ const Practice = () => {
               </SelectContent>
             </Select>
           </div>
-          
+
           {(searchQuery || difficultyFilter !== "all" || categoryFilter !== "all" || statusFilter !== "all") && (
             <div className="mt-4 flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Active filters:</span>

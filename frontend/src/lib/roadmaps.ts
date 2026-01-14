@@ -86,8 +86,8 @@ const STORAGE_KEY = "edai_saved_roadmaps_v3";
 
 // IMPORTANT: always hit same-origin /api
 // - In dev, Vite proxies /api -> http://127.0.0.1:8000
-// - In prod, browser hits https://eduaiajk.in/api/...
-const API_BASE = import.meta.env.VITE_API_URL ??"";
+// - In prod, browser hits /api/... (relative URL)
+const API_BASE = "/api";
 
 // --------------------------------------------------
 // Local storage helpers
@@ -259,11 +259,11 @@ function formatDay(
     key: keyof RoadmapDay;
     emoji: string;
   }[] = [
-    { label: "Learn", key: "learn_items", emoji: "📖" },
-    { label: "Practice", key: "practice_items", emoji: "💪" },
-    { label: "Mini Project / Challenge", key: "project_items", emoji: "🚀" },
-    { label: "Reflection", key: "reflection_items", emoji: "💭" },
-  ];
+      { label: "Learn", key: "learn_items", emoji: "📖" },
+      { label: "Practice", key: "practice_items", emoji: "💪" },
+      { label: "Mini Project / Challenge", key: "project_items", emoji: "🚀" },
+      { label: "Reflection", key: "reflection_items", emoji: "💭" },
+    ];
 
   for (const { label, key, emoji } of sections) {
     const items = (day[key] as RoadmapDayItem[] | undefined) ?? [];
@@ -434,7 +434,7 @@ export async function generateRoadmapWithAi(opts: {
   background?: string;
   goal?: string;
 }): Promise<GeneratedRoadmapResult> {
-  const url = `${API_BASE}/api/roadmaps/generate`;
+  const url = `${API_BASE}/roadmaps/generate`;
   console.log("Calling roadmap API:", url, "dev:", import.meta.env.DEV);
 
   let res: Response;
@@ -469,8 +469,7 @@ export async function generateRoadmapWithAi(opts: {
 
   if (!res.ok) {
     throw new Error(
-      `Failed to generate roadmap (${res.status}): ${
-        rawText || res.statusText
+      `Failed to generate roadmap (${res.status}): ${rawText || res.statusText
       }`,
     );
   }

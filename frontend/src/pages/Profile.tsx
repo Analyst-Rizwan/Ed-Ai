@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  User, 
-  Trophy, 
-  Flame, 
-  Target, 
-  Settings, 
-  Share2, 
+import {
+  User,
+  Trophy,
+  Flame,
+  Target,
+  Settings,
+  Share2,
   Download,
   TrendingUp,
   Calendar,
@@ -155,9 +155,8 @@ const Profile = () => {
                   return (
                     <div
                       key={a.id}
-                      className={`p-4 rounded-lg border transition-all ${
-                        a.earned ? "bg-primary/5 border-primary/20 hover:bg-primary/10" : "bg-muted/30 border-border/50 opacity-60"
-                      }`}
+                      className={`p-4 rounded-lg border transition-all ${a.earned ? "bg-primary/5 border-primary/20 hover:bg-primary/10" : "bg-muted/30 border-border/50 opacity-60"
+                        }`}
                     >
                       <div className="flex items-start gap-3">
                         <div className={`rounded-full p-2 ${a.earned ? "bg-primary/10" : "bg-muted"}`}>

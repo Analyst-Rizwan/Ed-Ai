@@ -49,12 +49,11 @@ export function uid(prefix = "id"): string {
 }
 
 /**
- * Backend API URL (VERY IMPORTANT!)
- * If VITE_API_URL isn't provided, it falls back to local FastAPI.
+ * Backend API URL
+ * Uses relative path to leverage Vite's proxy (see vite.config.ts)
  *
  * Example:
  *   import { API_BASE_URL } from "@/lib/utils";
  *   fetch(`${API_BASE_URL}/ai/chat`)
  */
-export const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+export const API_BASE_URL = "/api";

@@ -1,11 +1,11 @@
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
-import { 
-  LayoutDashboard, 
-  Map, 
-  Code, 
-  User, 
-  MessageSquare, 
+import {
+  LayoutDashboard,
+  Map,
+  Code,
+  User,
+  MessageSquare,
   Settings,
   Trophy,
   Shield

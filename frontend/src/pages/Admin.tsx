@@ -11,7 +11,8 @@ import {
   Activity,
 } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+// Use relative URL to leverage Vite's proxy (see vite.config.ts)
+const API_BASE = "/api";
 
 // ###############################################
 // PRODUCTION: Fetch real stats from backend API
@@ -37,7 +38,7 @@ export default function Admin() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/api/progress/admin-stats`, {
+      const res = await fetch(`${API_BASE}/progress/admin-stats`, {
         credentials: "include",
       });
 
@@ -163,9 +164,8 @@ export default function Admin() {
                   <div
                     className="h-full bg-muted-foreground"
                     style={{
-                      width: `${
-                        (stats.subscriptions.free / stats.totalUsers) * 100
-                      }%`,
+                      width: `${(stats.subscriptions.free / stats.totalUsers) * 100
+                        }%`,
                     }}
                   />
                 </div>
@@ -185,9 +185,8 @@ export default function Admin() {
                   <div
                     className="h-full bg-primary"
                     style={{
-                      width: `${
-                        (stats.subscriptions.premium / stats.totalUsers) * 100
-                      }%`,
+                      width: `${(stats.subscriptions.premium / stats.totalUsers) * 100
+                        }%`,
                     }}
                   />
                 </div>
