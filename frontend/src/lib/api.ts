@@ -1,6 +1,6 @@
 // frontend/src/lib/api.ts
-// Use relative URL to leverage Vite's proxy (see vite.config.ts)
-const API_URL = "/api";
+// Use VITE_API_URL in production, fallback to /api for local dev with Vite proxy
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 // ============================================================
 // AUTH TOKEN

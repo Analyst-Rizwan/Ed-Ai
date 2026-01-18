@@ -1,6 +1,5 @@
-// Use relative URL to leverage Vite's proxy (see vite.config.ts)
-// This avoids double /api/api issues when VITE_API_URL includes /api
-const API_BASE_URL = "/api";
+// Use VITE_API_URL in production, fallback to /api for local dev with Vite proxy
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 /**
  * Send a chat message to the backend AI endpoint.
