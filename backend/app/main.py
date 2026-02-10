@@ -55,7 +55,7 @@ app.add_middleware(
 async def global_exception_handler(request: Request, exc: Exception):
     response = JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error", "error": str(exc)},
+        content={"detail": "Internal server error"},
     )
     # Add CORS headers manually to the error response
     origin = request.headers.get("origin")

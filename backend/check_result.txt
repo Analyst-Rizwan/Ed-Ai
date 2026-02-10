@@ -1,1 +1,0 @@
-[FAIL] InvalidRequestError: When initializing mapper Mapper[UserProgress(user_progress)], expression 'User' failed to locate a name ('User'). If this is a class name, consider adding this relationship() to the <class 'app.models.progress.UserProgress'> class after both dependent classes have been defined.
