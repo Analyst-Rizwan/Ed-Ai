@@ -5,3 +5,7 @@ cd backend
 cd frontend
 
 sqlite3 eduai.db
+
+DATABASE_URL=sqlite:///./eduai.db [LOCAL DB URL]
+
+.venv/Scripts/Activate.ps1
