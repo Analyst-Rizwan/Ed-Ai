@@ -161,7 +161,7 @@ async def chat_compat(req: ChatPayload, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         logger.exception("chat_compat error: %s", e)
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {type(e).__name__}: {str(e)}")
 
 
 # ---------------------------
