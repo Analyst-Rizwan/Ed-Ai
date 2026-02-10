@@ -14,14 +14,15 @@ from app.db.models_tutor import Conversation, TutorMessage, Roadmap as TutorRoad
 def init_db() -> None:
     """
     Initializes the database schema.
-
-    - Development: auto-create tables
-    - Production (Supabase): first-time bootstrap only
     """
-
     try:
+        print("🔍 Initializing database tables...")
+        # Get all table names registered with Base.metadata
+        registered_tables = list(Base.metadata.tables.keys())
+        print(f"📋 Registered models for table creation: {registered_tables}")
+        
         Base.metadata.create_all(bind=engine)
         print("✔ Database initialized successfully.")
     except SQLAlchemyError as e:
-        print("❌ Database initialization failed:", str(e))
+        print(f"❌ Database initialization failed: {e}")
         raise
