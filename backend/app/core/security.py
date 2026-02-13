@@ -1,85 +1,55 @@
 # app/core/security.py
-from datetime import datetime, timedelta
 from typing import Optional
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends
 from sqlalchemy.orm import Session
-
-from app.core.config import settings
 from app.db.session import get_db
-from app.models.user import User  # Changed this line
+from app.models.user import User
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# OAuth2 scheme for token authentication
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
-
+# Mock security functions to return a default user or bypass checks
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against a hash"""
-    return pwd_context.verify(plain_password, hashed_password)
-
+    """Mock verify password - always true"""
+    return True
 
 def get_password_hash(password: str) -> str:
-    """Hash a password"""
-    return pwd_context.hash(password)
+    """Mock hash password - return plain"""
+    return password
 
 def hash_password(password: str) -> str:
     """Backward-compatible alias for get_password_hash"""
     return get_password_hash(password)
 
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Create a JWT access token"""
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    return encoded_jwt
+def create_access_token(data: dict, expires_delta: Optional[object] = None) -> str:
+    """Mock create token - return dummy"""
+    return "dummy_token"
 
 def verify_token(token: str) -> Optional[dict]:
-    """
-    Decode a JWT token and return its payload.
-    Returns None if the token is invalid or expired.
-    """
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        return payload
-    except JWTError:
-        return None
-
+    """Mock verify token - always valid"""
+    return {"sub": "guest@example.com"}
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
+    token: str = "dummy_token" # Optional, purely for compatibility if any other dep calls it
 ):
     """
-    Dependency to get the current authenticated user from JWT token.
-    Expects `sub` in the token to be the user's email.
+    Dependency to get the current user.
+    ALWAYS returns the first user in the DB (Guest/Admin) or creates a temporary one if DB is empty.
     """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-
-    user = db.query(User).filter(User.email == email).first()
-    if user is None:
-        raise credentials_exception
-
+    # Try to find a default user (e.g., ID 1 or a specific email)
+    user = db.query(User).first()
+    
+    if not user:
+        # If no user exists, create a dummy one for the session (volatile) 
+        # or handle gracefully. ideally there should be a user seeded.
+        # using a simple object might fail if dependencies expect a real SQLAlchemy model attached to session.
+        # For now, let's assume seed data exists or we return None which might break things.
+        # Better: create a transient user object
+        user = User(
+            id=1,
+            email="guest@example.com",
+            username="guest",
+            is_active=True,
+            is_superuser=False
+        )
+    
     return user

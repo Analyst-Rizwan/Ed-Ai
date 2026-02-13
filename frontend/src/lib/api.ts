@@ -3,42 +3,75 @@
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 // ============================================================
-// AUTH TOKEN
+// TOKEN MANAGEMENT (IN-MEMORY)
 // ============================================================
-const getAuthToken = (): string | null => {
-  return localStorage.getItem("token");
+let accessToken: string | null = null;
+
+export const setAccessToken = (token: string | null) => {
+  accessToken = token;
 };
+
+export const getAccessToken = () => accessToken;
 
 // ============================================================
 // FETCH WRAPPER
 // ============================================================
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  const token = getAuthToken();
-
   const headers: HeadersInit = {
     "Content-Type": "application/json",
     ...(options.headers || {}),
   };
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+  if (accessToken) {
+    (headers as any)["Authorization"] = `Bearer ${accessToken}`;
   }
 
-  const response = await fetch(`${API_URL}${url}`, {
-    ...options,
-    headers,
-  });
+  // Define the fetch call
+  const doFetch = async () => {
+    const response = await fetch(`${API_URL}${url}`, {
+      ...options,
+      headers,
+    });
+    return response;
+  }
+
+  let response = await doFetch();
+
+  // Handle 401 (Unauthorized) -> Try Refresh
+  if (response.status === 401) {
+    // Prevent infinite loop if refresh endpoint itself allows 401
+    if (!url.includes("/auth/refresh")) {
+      try {
+        const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (refreshResponse.ok) {
+          const data = await refreshResponse.json();
+          setAccessToken(data.access_token);
+          // Update header with new token
+          (headers as any)["Authorization"] = `Bearer ${data.access_token}`;
+          // Retry original request
+          response = await fetch(`${API_URL}${url}`, {
+            ...options,
+            headers,
+          });
+        } else {
+          // Refresh failed - forbid access
+          setAccessToken(null);
+          // Optionally trigger logout / redirect via event or callback
+        }
+      } catch (e) {
+        setAccessToken(null);
+      }
+    }
+  }
 
   if (!response.ok) {
-    if (response.status === 401) {
-      localStorage.removeItem("token");
-      window.location.href = "/login";
-    }
-
     const error = await response
       .json()
       .catch(() => ({ detail: "An error occurred" }));
-
     throw new Error(error.detail || "Request failed");
   }
 
@@ -193,14 +226,64 @@ export interface User {
   email: string;
   username: string;
   full_name?: string;
+  bio?: string;
+  avatar_url?: string;
+  github_url?: string;
+  linkedin_url?: string;
+  website_url?: string;
+  location?: string;
   is_active: boolean;
   is_superuser: boolean;
   created_at: string;
+  xp?: number;
+  level?: number;
+  role?: string;
 }
 
 export const authApi = {
+  login: async (email: string, password: string): Promise<{ access_token: string }> => {
+    const formData = new FormData();
+    formData.append("username", email);
+    formData.append("password", password);
+
+    // Using fetch directly to allow FormData (fetchWithAuth sets json content type)
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Login failed" }));
+      throw new Error(error.detail || "Login failed");
+    }
+
+    const data = await response.json();
+    setAccessToken(data.access_token);
+    return data;
+  },
+
+  register: async (userData: any): Promise<User> => {
+    // userData should match UserCreate schema
+    return fetchWithAuth("/auth/register", {
+      method: "POST",
+      body: JSON.stringify(userData)
+    });
+  },
+
+  logout: async (): Promise<void> => {
+    await fetchWithAuth("/auth/logout", { method: "POST" });
+    setAccessToken(null);
+  },
+
   getCurrentUser: async (): Promise<User> => {
     return fetchWithAuth("/auth/me");
+  },
+
+  updateProfile: async (data: Partial<User>): Promise<User> => {
+    // TODO: Implement actual update endpoint if needed, or use existing generic one if available
+    // For now just partial return to satisfy interface
+    console.log("Mock updateProfile called with:", data);
+    return { ...data } as User;
   },
 };
 

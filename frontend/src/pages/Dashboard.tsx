@@ -1,5 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { authApi, User } from "@/lib/api";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
@@ -13,16 +15,38 @@ import {
   MessageSquare,
   ChevronRight
 } from "lucide-react";
-
-import { currentUser, activities, roadmaps } from "@/lib/placeholder";
-import { relativeTime } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { activities, roadmaps } from "@/lib/placeholder";
+import { relativeTime } from "@/lib/utils";
 
 const Dashboard = () => {
-  const user = currentUser;
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const userData = await authApi.getCurrentUser();
+        setUser(userData);
+      } catch (e) {
+        console.error("Failed to load user", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadUser();
+  }, []);
+
+  if (loading) {
+    return <div className="p-8">Loading dashboard...</div>;
+  }
+
+  if (!user) {
+    return <div className="p-8">Failed to load user data.</div>;
+  }
 
   const xpToNextLevel = 500;
-  const xp = user.xp ?? 0;
+  const xp = user.xp || 0;
   const xpProgress = ((xp % xpToNextLevel) / xpToNextLevel) * 100;
 
   return (
@@ -32,7 +56,7 @@ const Dashboard = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl md:text-4xl font-heading font-bold">
-            Welcome back, {user.name}! 👋
+            Welcome back, {user.full_name || user.username}! 👋
           </h1>
           <p className="text-muted-foreground mt-1">
             Ready to continue your learning journey?

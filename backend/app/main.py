@@ -7,7 +7,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 
 from app.api import (
-    routes_auth,
     routes_ai,
     routes_progress,
     routes_roadmaps,
@@ -16,6 +15,7 @@ from app.api import (
 )
 from app.db.init_db import init_db
 from app.core.config import settings
+from app.auth import routes as routes_auth
 
 
 # ============================================================
@@ -72,6 +72,7 @@ init_db()
 # ============================================================
 # API ROUTERS
 # ============================================================
+
 app.include_router(routes_auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(routes_ai.router, prefix="/api/ai", tags=["AI"])
 app.include_router(routes_progress.router, prefix="/api/progress", tags=["Progress"])

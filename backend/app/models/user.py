@@ -16,11 +16,29 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     username = Column(String, unique=True, index=True, nullable=False)
     full_name = Column(String, nullable=True)
+    password_hash = Column(String, nullable=False)
 
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
+    role = Column(String, default="user")  # Added for RBAC
 
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    # ============================================================
+    # GAMIFICATION
+    # ============================================================
+    xp = Column(Integer, default=0)
+    level = Column(Integer, default=1)
+
+    # ============================================================
+    # PROFILE FIELDS
+    # ============================================================
+    bio = Column(String, nullable=True)
+    avatar_url = Column(String, nullable=True)
+    github_url = Column(String, nullable=True)
+    linkedin_url = Column(String, nullable=True)
+    website_url = Column(String, nullable=True)
+    location = Column(String, nullable=True)
 
     # ============================================================
     # RELATIONSHIPS

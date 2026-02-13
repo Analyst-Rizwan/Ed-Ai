@@ -25,6 +25,7 @@ def init_db():
     from app.models.progress import UserProgress
     from app.models.roadmap import Roadmap
     from app.models.problem import Problem
+    from app.models.refresh_token import RefreshToken
 
     Base.metadata.create_all(bind=engine)
     print("✔ Database initialized successfully.")

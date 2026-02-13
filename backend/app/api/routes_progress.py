@@ -84,11 +84,19 @@ def complete_roadmap(user_id: int, roadmap_id: int, db: Session = Depends(get_db
 
     if roadmap_id not in progress.completed_roadmaps:
         progress.completed_roadmaps.append(roadmap_id)
+        
+        # Award XP for roadmap completion
+        roadmap_xp = roadmap.xp or 100
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            user.xp = (user.xp or 0) + roadmap_xp
+            # Simple level calc: 1 level per 500 XP
+            user.level = (user.xp // 500) + 1
 
     db.commit()
     db.refresh(progress)
 
-    return {"message": "Roadmap marked completed", "progress": progress.to_dict()}
+    return {"message": "Roadmap marked completed", "progress": progress.to_dict(), "xp_gained": roadmap.xp or 100}
 
 
 @router.post("/user/{user_id}/problem/{problem_id}/complete")
@@ -107,13 +115,22 @@ def complete_problem(user_id: int, problem_id: int, db: Session = Depends(get_db
         progress = UserProgress(user_id=user_id, completed_problems=[])
         db.add(progress)
 
+    xp_awarded = 0
     if problem_id not in progress.completed_problems:
         progress.completed_problems.append(problem_id)
+        
+        # Award XP for problem completion (fixed amount for now, e.g. 20)
+        xp_awarded = 20
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            user.xp = (user.xp or 0) + xp_awarded
+            # Simple level calc: 1 level per 500 XP
+            user.level = (user.xp // 500) + 1
 
     db.commit()
     db.refresh(progress)
 
-    return {"message": "Problem marked completed", "progress": progress.to_dict()}
+    return {"message": "Problem marked completed", "progress": progress.to_dict(), "xp_gained": xp_awarded}
 
 
 # ============================================================

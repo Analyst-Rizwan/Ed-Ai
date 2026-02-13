@@ -1,28 +1,58 @@
 // src/pages/Profile.tsx
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  User,
+  User as UserIcon,
   Trophy,
   Flame,
   Target,
-  Settings,
   Share2,
-  Download,
   TrendingUp,
   Calendar,
-  Award
+  Award,
+  MapPin,
+  Link as LinkIcon,
+  Github,
+  Linkedin,
+  Loader2
 } from "lucide-react";
-
-import { currentUser, activities } from "@/lib/placeholder";
+import { authApi, User } from "@/lib/api";
+import { EditProfileDialog } from "@/components/profile/EditProfileDialog";
+import { activities } from "@/lib/placeholder"; // Start with placeholder activities for now
 
 const Profile = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Placeholder XP data until backend supports it
   const xpToNextLevel = 500;
-  const xp = Number(currentUser.xp ?? 0);
+  const xp = user?.xp || 0;
   const xpProgress = ((xp % xpToNextLevel) / xpToNextLevel) * 100;
+  const level = user?.level || 1;
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const userData = await authApi.getCurrentUser();
+      setUser(userData);
+    } catch (error) {
+      console.error("Failed to fetch profile", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUserUpdate = (updatedUser: User) => {
+    setUser(updatedUser);
+  };
+
 
   const achievements = [
     { id: 1, title: "First Steps", description: "Solved your first problem", icon: Trophy, earned: true },
@@ -33,6 +63,14 @@ const Profile = () => {
     { id: 6, title: "Consistency King", description: "30-day streak", icon: Calendar, earned: false },
   ];
 
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
+
+  if (!user) {
+    return <div className="flex h-screen items-center justify-center">Failed to load profile.</div>;
+  }
+
   return (
     <div className="space-y-6 animate-in">
       {/* HEADER */}
@@ -41,22 +79,50 @@ const Profile = () => {
           <CardContent className="p-6">
             <div className="flex items-start gap-6">
               <img
-                src={currentUser.avatar ?? "/avatar.png"}
-                alt={currentUser.name ?? "User"}
-                className="h-24 w-24 rounded-full ring-4 ring-primary/20"
+                src={user.avatar_url || "/avatar.png"}
+                alt={user.full_name || user.username}
+                className="h-24 w-24 rounded-full ring-4 ring-primary/20 object-cover"
               />
 
               <div className="flex-1 space-y-4">
                 <div>
-                  <h1 className="text-3xl font-heading font-bold">{currentUser.name ?? "User"}</h1>
-                  <p className="text-muted-foreground">{currentUser.email ?? "user@example.com"}</p>
+                  <h1 className="text-3xl font-heading font-bold">{user.full_name || user.username}</h1>
+                  <p className="text-muted-foreground">{user.email}</p>
+                  {user.bio && <p className="text-sm mt-2 max-w-lg">{user.bio}</p>}
 
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-muted-foreground">
+                    {user.location && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        {user.location}
+                      </div>
+                    )}
+                    {user.website_url && (
+                      <a href={user.website_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors">
+                        <LinkIcon className="h-4 w-4" />
+                        Website
+                      </a>
+                    )}
+                    {user.github_url && (
+                      <a href={user.github_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors">
+                        <Github className="h-4 w-4" />
+                        GitHub
+                      </a>
+                    )}
+                    {user.linkedin_url && (
+                      <a href={user.linkedin_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors">
+                        <Linkedin className="h-4 w-4" />
+                        LinkedIn
+                      </a>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-4">
                     <Badge variant="secondary" className="text-sm">
-                      Level {currentUser.level ?? 1}
+                      Level {level}
                     </Badge>
                     <Badge variant="outline" className="text-sm">
-                      {currentUser.role === "admin" ? "Admin" : "Member"}
+                      {user.is_superuser ? "Admin" : "Member"}
                     </Badge>
                   </div>
                 </div>
@@ -64,7 +130,7 @@ const Profile = () => {
                 {/* XP PROGRESS */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Progress to Level {Number(currentUser.level ?? 1) + 1}</span>
+                    <span className="text-muted-foreground">Progress to Level {level + 1}</span>
                     <span className="font-medium text-primary">{Math.round(xpProgress)}%</span>
                   </div>
 
@@ -73,10 +139,7 @@ const Profile = () => {
 
                 {/* ACTIONS */}
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Edit Profile
-                  </Button>
+                  <EditProfileDialog user={user} onUpdate={handleUserUpdate} />
                   <Button variant="outline" size="sm">
                     <Share2 className="h-4 w-4 mr-2" />
                     Share
@@ -92,7 +155,7 @@ const Profile = () => {
           <Card className="glass border-border/50">
             <CardContent className="p-4 text-center">
               <Flame className="h-8 w-8 text-destructive mx-auto mb-2" />
-              <div className="text-3xl font-bold">{currentUser.streak ?? 0}</div>
+              <div className="text-3xl font-bold">0</div>
               <p className="text-sm text-muted-foreground">Day Streak</p>
             </CardContent>
           </Card>

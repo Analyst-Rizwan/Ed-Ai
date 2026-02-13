@@ -28,14 +28,14 @@ const Sidebar = ({ onOpenAITutor }: SidebarProps) => {
   const [user, setUser] = useState<UserType | null>(null);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("user");
-      if (stored) {
-        setUser(JSON.parse(stored));
-      }
-    } catch (e) {
-      console.error("Failed to load user", e);
-    }
+    // Set default guest user
+    setUser({
+      id: 1,
+      name: "Guest User",
+      role: "user",
+      level: 1,
+      avatar: "https://github.com/shadcn.png"
+    });
   }, []);
 
   const navItems = [
