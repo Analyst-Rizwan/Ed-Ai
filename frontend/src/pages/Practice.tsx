@@ -147,11 +147,7 @@ const Practice = () => {
         params.status = statusFilter;
       }
 
-      console.log("Loading problems with params:", params);
-
       const data = await problemsApi.getProblems(params);
-
-      console.log("Received data:", data);
 
       setProblems(data.problems);
       setTotalProblems(data.total);

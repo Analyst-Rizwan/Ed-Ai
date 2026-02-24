@@ -12,6 +12,9 @@ from openai import AsyncOpenAI, OpenAIError
 from app.db.session import get_db
 from app.core.config import settings
 
+from app.auth.dependencies import get_current_user
+from app.models.user import User
+
 logger = logging.getLogger("app.api.routes_roadmaps")
 
 router = APIRouter()
@@ -269,7 +272,11 @@ async def _call_week_expander(prompt: str) -> Dict[str, Any]:
 # Main endpoint: hybrid planner -> expander approach
 # ------------------------------------------------------
 @router.post("/generate", summary="Generate a detailed AI/ML roadmap using hybrid models (planner + expander)")
-async def generate_roadmap(payload: RoadmapGenerateRequest, db: Session = Depends(get_db)) -> Dict[str, Any]:
+async def generate_roadmap(
+    payload: RoadmapGenerateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Dict[str, Any]:
     topic = (payload.topic or "").strip()
     if not topic:
         raise HTTPException(status_code=400, detail="Topic is required.")
@@ -373,6 +380,7 @@ Expand this week into daily tasks (5 days OK). Context:
 Return ONLY JSON with shape:
 {{
  "week_xp": 0,
+ "weekly_resources": [{{ "title":"", "url":"", "provider":"", "type":"" }}],
  "days": [
    {{
      "day_number": 1,
@@ -393,16 +401,19 @@ Rules:
 - day.xp_reward must equal sum of its items;
 - week_xp must equal sum of day.xp_reward.
 - All completed flags false.
+- CRITICAL: Provide ONLY REAL, USABLE, and FREE learning resources. Use actual links to active websites such as official documentation (e.g., MDN, Python.org), well-known tutorials (e.g., freeCodeCamp, W3Schools), or specific real YouTube videos/channels. NEVER use placeholder links like "example.com" or fabricated URLs.
 - Return valid JSON only.
 """
             expanded = await _call_week_expander(week_prompt)
 
             days = expanded.get("days") or []
             week_xp = expanded.get("week_xp") or 0
+            weekly_resources = expanded.get("weekly_resources") or []
 
             # attach the expanded week data
             week["days"] = days
             week["week_xp"] = week_xp
+            week["weekly_resources"] = weekly_resources
 
             if isinstance(week_xp, (int, float)):
                 phase_xp += week_xp

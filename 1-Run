@@ -9,3 +9,10 @@ sqlite3 eduai.db
 DATABASE_URL=sqlite:///./eduai.db [LOCAL DB URL]
 
 .venv/Scripts/Activate.ps1
+
+JVMO0t7XrvY0V89k
+
+1079129856698-tnf2ev45vf03nlrlnjnb745i59g51iap.apps.googleusercontent.com = OAuth Client ID
+
+[OAUTH_CLIENT_SECRET] = OAuth Client Secret 
+

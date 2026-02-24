@@ -8,6 +8,8 @@ import random
 from app.db.session import get_db
 from app.models.problem import Problem
 from app.models.progress import Progress
+from app.models.user import User
+from app.auth.dependencies import get_current_user, get_current_active_superuser
 from app.schemas.problem import (
     Problem as ProblemSchema,
     ProblemDetail,
@@ -20,7 +22,7 @@ router = APIRouter(tags=["Problems"])  # ❗ NO PREFIX
 
 
 # ============================================================
-# GET PROBLEMS (PUBLIC with pagination & filtering)
+# GET PROBLEMS (with pagination & filtering)
 # ============================================================
 @router.get("", response_model=ProblemListResponse)
 def get_problems(
@@ -31,9 +33,9 @@ def get_problems(
     category: Optional[str] = Query(None),
     status: Optional[str] = Query(None),  # "all", "solved", "unsolved"
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    # TEMPORARY DEV USER
-    user_id = 1
+    user_id = current_user.id
     
     # Base query
     query = db.query(Problem)
@@ -130,9 +132,11 @@ def get_categories(db: Session = Depends(get_db)):
 # GET STATS (USER-BASED)
 # ============================================================
 @router.get("/stats")
-def get_problem_stats(db: Session = Depends(get_db)):
-    # TEMPORARY DEV USER
-    user_id = 1
+def get_problem_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    user_id = current_user.id
     
     total = db.query(Problem).count()
     
@@ -196,9 +200,9 @@ def get_random_problem(
     category: Optional[str] = Query(None),
     unsolved_only: bool = Query(False),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    # TEMPORARY DEV USER
-    user_id = 1
+    user_id = current_user.id
     
     query = db.query(Problem)
 
@@ -247,9 +251,9 @@ def get_random_problem(
 def get_problem(
     problem_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    # TEMPORARY DEV USER
-    user_id = 1
+    user_id = current_user.id
     
     problem = db.query(Problem).filter(Problem.id == problem_id).first()
     if not problem:
@@ -281,12 +285,13 @@ def get_problem(
 
 
 # ============================================================
-# CREATE PROBLEM (PUBLIC FOR NOW)
+# CREATE PROBLEM (ADMIN ONLY)
 # ============================================================
 @router.post("", response_model=ProblemSchema)
 def create_problem(
     problem: ProblemCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_superuser),
 ):
     db_problem = Problem(**problem.dict())
     db.add(db_problem)
@@ -311,13 +316,14 @@ def create_problem(
 
 
 # ============================================================
-# UPDATE PROBLEM (PUBLIC FOR NOW)
+# UPDATE PROBLEM (ADMIN ONLY)
 # ============================================================
 @router.put("/{problem_id}", response_model=ProblemSchema)
 def update_problem(
     problem_id: int,
     problem_update: ProblemUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_superuser),
 ):
     db_problem = db.query(Problem).filter(Problem.id == problem_id).first()
     if not db_problem:
@@ -347,12 +353,13 @@ def update_problem(
 
 
 # ============================================================
-# DELETE PROBLEM (PUBLIC FOR NOW)
+# DELETE PROBLEM (ADMIN ONLY)
 # ============================================================
 @router.delete("/{problem_id}")
 def delete_problem(
     problem_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_superuser),
 ):
     db_problem = db.query(Problem).filter(Problem.id == problem_id).first()
     if not db_problem:

@@ -11,19 +11,32 @@ const Layout = () => {
   const isMobile = useIsMobile();
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "var(--bg)", transition: "background 0.25s ease" }}>
       {!isMobile && <Sidebar onOpenAITutor={() => setAiTutorOpen(true)} />}
-      
-      <main className="flex-1 pb-20 md:pb-0">
-        <div className="container mx-auto p-4 md:p-6 lg:p-8">
-          <Outlet />
-        </div>
+
+      <main style={{
+        flex: 1,
+        overflowY: "auto",
+        padding: isMobile ? "16px" : "32px 36px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 28,
+        background: "var(--bg)",
+        transition: "background 0.25s ease",
+      }}>
+        <Outlet />
       </main>
 
       {isMobile && <BottomNav onOpenAITutor={() => setAiTutorOpen(true)} />}
-      
+
       <AITutorDrawer open={aiTutorOpen} onOpenChange={setAiTutorOpen} />
       <NotificationCenter />
+
+      <style>{`
+        main::-webkit-scrollbar { width: 5px; }
+        main::-webkit-scrollbar-track { background: transparent; }
+        main::-webkit-scrollbar-thumb { background: #252525; border-radius: 99px; }
+      `}</style>
     </div>
   );
 };

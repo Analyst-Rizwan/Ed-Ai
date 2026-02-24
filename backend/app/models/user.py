@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.db.base_class import Base
 
@@ -22,7 +22,7 @@ class User(Base):
     is_superuser = Column(Boolean, default=False)
     role = Column(String, default="user")  # Added for RBAC
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # ============================================================
     # GAMIFICATION

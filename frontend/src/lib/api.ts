@@ -31,6 +31,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
     const response = await fetch(`${API_URL}${url}`, {
       ...options,
       headers,
+      credentials: "include",
     });
     return response;
   }
@@ -45,6 +46,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
         const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
         });
 
         if (refreshResponse.ok) {
@@ -56,6 +58,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
           response = await fetch(`${API_URL}${url}`, {
             ...options,
             headers,
+            credentials: "include",
           });
         } else {
           // Refresh failed - forbid access
@@ -237,19 +240,21 @@ export interface User {
   created_at: string;
   xp?: number;
   level?: number;
+  streak?: number;
   role?: string;
 }
 
 export const authApi = {
   login: async (email: string, password: string): Promise<{ access_token: string }> => {
-    const formData = new FormData();
-    formData.append("username", email);
-    formData.append("password", password);
+    const params = new URLSearchParams();
+    params.append("username", email);
+    params.append("password", password);
 
-    // Using fetch directly to allow FormData (fetchWithAuth sets json content type)
+    // Using fetch directly to allow x-www-form-urlencoded (fetchWithAuth sets json content type)
     const response = await fetch(`${API_URL}/auth/login`, {
       method: "POST",
-      body: formData,
+      body: params,
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -280,10 +285,10 @@ export const authApi = {
   },
 
   updateProfile: async (data: Partial<User>): Promise<User> => {
-    // TODO: Implement actual update endpoint if needed, or use existing generic one if available
-    // For now just partial return to satisfy interface
-    console.log("Mock updateProfile called with:", data);
-    return { ...data } as User;
+    return fetchWithAuth("/auth/me", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
   },
 };
 
@@ -323,6 +328,31 @@ export const leetcodeApi = {
 };
 
 // ============================================================
+// DASHBOARD TYPES & API
+// ============================================================
+export interface DashboardActivity {
+  id: number;
+  type: "problem_solved" | "streak_milestone" | "roadmap_completed" | "level_up";
+  title: string;
+  timestamp: string | null;
+}
+
+export interface DashboardSummary {
+  xp: number;
+  level: number;
+  streak: number;
+  problems_solved: number;
+  completed_roadmaps: number;
+  recent_activity: DashboardActivity[];
+}
+
+export const dashboardApi = {
+  getSummary: async (): Promise<DashboardSummary> => {
+    return fetchWithAuth("/dashboard/summary");
+  },
+};
+
+// ============================================================
 // EXPORT DEFAULT
 // ============================================================
 export default {
@@ -331,4 +361,5 @@ export default {
   auth: authApi,
   roadmaps: roadmapsApi,
   leetcode: leetcodeApi,
+  dashboard: dashboardApi,
 };

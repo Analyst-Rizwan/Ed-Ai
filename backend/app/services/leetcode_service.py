@@ -1,7 +1,7 @@
 # backend/app/services/leetcode_service.py
 import httpx
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.models.leetcode_sync import LeetCodeSync
 from app.models.problem import Problem
@@ -40,7 +40,7 @@ async def sync_leetcode(db: Session, user_id: int, username: str):
     sync = LeetCodeSync(
         user_id=user_id,
         sync_status="pending",
-        sync_started_at=datetime.utcnow(),
+        sync_started_at=datetime.now(timezone.utc),
     )
     db.add(sync)
     db.commit()
@@ -102,7 +102,7 @@ async def sync_leetcode(db: Session, user_id: int, username: str):
 
         sync.sync_status = "success"
         sync.problems_synced = solved_count
-        sync.sync_completed_at = datetime.utcnow()
+        sync.sync_completed_at = datetime.now(timezone.utc)
 
         db.commit()
 

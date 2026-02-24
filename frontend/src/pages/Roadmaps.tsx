@@ -61,6 +61,9 @@ const Roadmaps = () => {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [genProgress, setGenProgress] = useState(0);          // 0-100
+  const [genStepLabel, setGenStepLabel] = useState("");       // current status text
+  const [genStepIndex, setGenStepIndex] = useState(0);        // which step we're on
 
   // Saved AI roadmaps (from localStorage for now)
   const [savedRoadmaps, setSavedRoadmaps] = useState<SavedRoadmap[]>([]);
@@ -137,8 +140,51 @@ const Roadmaps = () => {
       return;
     }
 
+    // ── Build the step labels that mirror backend work ──────────────────
+    // Backend does: 1 planner call + N week-expander calls (one per week)
+    const totalWeeks = Math.max(1, durationWeeks);
+    const steps: string[] = [
+      "Contacting AI planner…",
+      "Designing curriculum skeleton…",
+      "Structuring phases and milestones…",
+      ...Array.from({ length: totalWeeks }, (_, i) =>
+        `Expanding Week ${i + 1} of ${totalWeeks}…`
+      ),
+      "Compiling resources and XP rewards…",
+      "Generating markdown summary…",
+      "Finalizing your roadmap…",
+    ];
+    const totalSteps = steps.length;
+
+    // Reset progress
+    setGenProgress(0);
+    setGenStepIndex(0);
+    setGenStepLabel(steps[0]);
+    setIsGenerating(true);
+
+    // ── Advance progress ticker ──────────────────────────────────────────
+    // We spread the ticks over ~90% of expected time, leaving the last 10%
+    // for actual completion. Estimated time: ~4-6 s planner + ~6s per week.
+    const estimatedMs = (5 + totalWeeks * 6) * 1000;
+    const tickMs = estimatedMs / totalSteps;
+    let currentStep = 0;
+
+    const timer = setInterval(() => {
+      currentStep += 1;
+      if (currentStep < totalSteps) {
+        setGenStepIndex(currentStep);
+        setGenStepLabel(steps[currentStep]);
+        // Advance to ~90% linearly; the last 10% waits for real completion
+        setGenProgress(Math.round((currentStep / totalSteps) * 90));
+      } else {
+        // Hold at 90% until the request finishes
+        setGenStepLabel("AI is crafting the final details…");
+        setGenProgress(90);
+        clearInterval(timer);
+      }
+    }, tickMs);
+
     try {
-      setIsGenerating(true);
       const { roadmap, markdown } = await generateRoadmapWithAi({
         topic: topic.trim(),
         level,
@@ -147,6 +193,13 @@ const Roadmaps = () => {
         background: background.trim() || undefined,
         goal: goal.trim() || undefined,
       });
+
+      // Jump to 100% on success
+      clearInterval(timer);
+      setGenProgress(100);
+      setGenStepLabel("Roadmap ready! ✓");
+
+      await new Promise((r) => setTimeout(r, 600)); // brief pause to show 100%
 
       const roadmapTitle =
         roadmap.title || `${topic.trim()} – ${durationWeeks} week roadmap`;
@@ -167,12 +220,16 @@ const Roadmaps = () => {
       saveRoadmapToStorage(saved);
       setSavedRoadmaps((prev) => [saved, ...prev]);
     } catch (err: any) {
+      clearInterval(timer);
       console.error("Roadmap generation failed:", err);
       setGenerationError(
         err?.message || "Failed to generate roadmap. Please try again.",
       );
     } finally {
       setIsGenerating(false);
+      setGenProgress(0);
+      setGenStepLabel("");
+      setGenStepIndex(0);
     }
   };
 
@@ -406,6 +463,104 @@ const Roadmaps = () => {
             <p className="text-sm text-destructive">{generationError}</p>
           )}
 
+          {/* ── Generation Progress Bar ── */}
+          {isGenerating && (
+            <div style={{
+              background: "var(--surface2)",
+              border: "1px solid var(--border2)",
+              borderRadius: 16,
+              padding: "20px 24px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 14,
+            }}>
+              {/* Header row */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {/* Pulsing dot */}
+                  <span style={{
+                    display: "inline-block",
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    background: "var(--accent)",
+                    animation: "pulse 1.2s ease-in-out infinite",
+                  }} />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>
+                    Generating your roadmap
+                  </span>
+                </div>
+                <span style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "var(--accent)",
+                  fontFamily: "'Space Mono', monospace",
+                }}>
+                  {genProgress}%
+                </span>
+              </div>
+
+              {/* Progress bar track */}
+              <div style={{
+                height: 8,
+                background: "var(--bg)",
+                borderRadius: 99,
+                overflow: "hidden",
+                border: "1px solid var(--border)",
+              }}>
+                <div style={{
+                  height: "100%",
+                  width: `${genProgress}%`,
+                  background: "linear-gradient(90deg, var(--accent), var(--blue))",
+                  borderRadius: 99,
+                  transition: "width 0.8s cubic-bezier(0.22, 1, 0.36, 1)",
+                }} />
+              </div>
+
+              {/* Current step label */}
+              <div style={{
+                fontSize: 12,
+                color: "var(--muted)",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}>
+                <Loader2
+                  style={{
+                    width: 12,
+                    height: 12,
+                    color: "var(--accent)",
+                    animation: "spin 1s linear infinite",
+                  }}
+                />
+                <span>{genStepLabel}</span>
+              </div>
+
+              {/* Step dots */}
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                {Array.from({ length: Math.min(durationWeeks + 4, 20) }, (_, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: i <= genStepIndex
+                        ? "var(--accent)"
+                        : "var(--border2)",
+                      transition: "background 0.3s ease",
+                      flexShrink: 0,
+                    }}
+                  />
+                ))}
+              </div>
+
+              <p style={{ fontSize: 11, color: "var(--muted)", margin: 0 }}>
+                This may take {Math.round((durationWeeks * 6 + 10) / 60)} – {Math.round((durationWeeks * 8 + 20) / 60)} min for a {durationWeeks}-week roadmap. Please keep this tab open.
+              </p>
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
             <Button
               onClick={handleGenerateRoadmap}
@@ -415,7 +570,7 @@ const Roadmaps = () => {
               {isGenerating ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Generating roadmap...
+                  Generating…
                 </>
               ) : (
                 <>
@@ -430,6 +585,17 @@ const Roadmaps = () => {
               tracking.
             </p>
           </div>
+
+          <style>{`
+            @keyframes pulse {
+              0%, 100% { opacity: 1; transform: scale(1); }
+              50% { opacity: 0.4; transform: scale(0.85); }
+            }
+            @keyframes spin {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
         </CardContent>
       </Card>
 
@@ -686,11 +852,10 @@ const Roadmaps = () => {
                                     .map((day: RoadmapDay) => (
                                       <div
                                         key={day.day_number}
-                                        className={`border rounded-md p-3 space-y-2 transition-all ${
-                                          day.completed
+                                        className={`border rounded-md p-3 space-y-2 transition-all ${day.completed
                                             ? "bg-success/10 border-success/30"
                                             : "bg-background"
-                                        }`}
+                                          }`}
                                       >
                                         <div className="flex items-center justify-between">
                                           <div className="flex items-center gap-2">

@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  User as UserIcon,
   Trophy,
   Flame,
   Target,
@@ -18,15 +17,18 @@ import {
   Link as LinkIcon,
   Github,
   Linkedin,
-  Loader2
+  Loader2,
+  Settings
 } from "lucide-react";
 import { authApi, User } from "@/lib/api";
 import { EditProfileDialog } from "@/components/profile/EditProfileDialog";
-import { activities } from "@/lib/placeholder"; // Start with placeholder activities for now
+import { activities } from "@/lib/placeholder";
+import { useTheme } from "@/context/ThemeContext";
 
 const Profile = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const { theme, toggleTheme } = useTheme();
 
   // Placeholder XP data until backend supports it
   const xpToNextLevel = 500;
@@ -138,12 +140,65 @@ const Profile = () => {
                 </div>
 
                 {/* ACTIONS */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap items-center">
                   <EditProfileDialog user={user} onUpdate={handleUserUpdate} />
                   <Button variant="outline" size="sm">
                     <Share2 className="h-4 w-4 mr-2" />
                     Share
                   </Button>
+                  <Button variant="outline" size="sm">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </Button>
+
+                  {/* ── Dark / Light Mode Toggle ── */}
+                  <button
+                    onClick={toggleTheme}
+                    title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '6px 14px',
+                      borderRadius: 100,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      fontFamily: "'DM Sans', sans-serif",
+                      background: 'var(--surface2)',
+                      color: 'var(--text)',
+                      border: '1px solid var(--border2)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      boxShadow: 'var(--shadow-sm)',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; }}
+                  >
+                    {/* Toggle track */}
+                    <div style={{
+                      width: 36,
+                      height: 20,
+                      borderRadius: 99,
+                      background: theme === 'dark' ? 'var(--accent)' : 'var(--surface2)',
+                      border: '1px solid var(--border2)',
+                      position: 'relative',
+                      transition: 'background 0.25s ease',
+                    }}>
+                      <div style={{
+                        position: 'absolute',
+                        top: 2,
+                        left: theme === 'dark' ? 18 : 2,
+                        width: 14,
+                        height: 14,
+                        borderRadius: '50%',
+                        background: theme === 'dark' ? '#fff' : 'var(--accent)',
+                        transition: 'left 0.25s ease',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                      }} />
+                    </div>
+                    <span style={{ fontSize: 15 }}>{theme === 'dark' ? '🌙' : '☀️'}</span>
+                    <span>{theme === 'dark' ? 'Dark' : 'Light'}</span>
+                  </button>
                 </div>
               </div>
             </div>

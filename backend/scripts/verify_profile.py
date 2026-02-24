@@ -23,8 +23,8 @@ def verify_profile_flow():
         return False
     
     if resp.status_code != 201:
-        # Try login if already exists (unlikely with random uuid but good practice)
-        pass
+        print(f"Registration failed with status {resp.status_code}: {resp.text}")
+        return False
     else:
         print("Registration successful.")
 

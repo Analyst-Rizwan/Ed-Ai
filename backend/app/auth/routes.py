@@ -1,6 +1,6 @@
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException, Response, status, Cookie
+from fastapi import APIRouter, Depends, HTTPException, Response, Request, status, Cookie
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -10,12 +10,15 @@ from app.models.user import User
 from app.models.refresh_token import RefreshToken
 from app.core.config import settings
 from app.auth.utils import get_password_hash
-from app.schemas.user import UserCreate, UserOut
+from app.schemas.user import UserCreate, UserOut, UserUpdate
+from app.core.rate_limit import limiter
 
 router = APIRouter()
 
 @router.post("/login", response_model=schemas.Token)
+@limiter.limit("5/minute")
 def login_access_token(
+    request: Request,
     response: Response,
     db: Session = Depends(get_db),
     form_data: OAuth2PasswordRequestForm = Depends()
@@ -38,7 +41,7 @@ def login_access_token(
     # 2. Create Refresh Token
     refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     refresh_token = service.create_refresh_token(
-        data={"sub": str(user.id), "jti": str(datetime.utcnow().timestamp())}, 
+        data={"sub": str(user.id), "jti": str(datetime.now(timezone.utc).timestamp())}, 
         expires_delta=refresh_token_expires
     )
     
@@ -47,7 +50,7 @@ def login_access_token(
     db_refresh_token = RefreshToken(
         user_id=user.id,
         token_hash=get_password_hash(refresh_token),
-        expires_at=datetime.utcnow() + refresh_token_expires
+        expires_at=datetime.now(timezone.utc) + refresh_token_expires
     )
     db.add(db_refresh_token)
     db.commit()
@@ -57,7 +60,7 @@ def login_access_token(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True, # Set to True for production (HTTPS)
+        secure=False, # Set to False for local Docker/HTTP
         samesite="lax",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     )
@@ -106,7 +109,7 @@ def refresh_token(
     user_tokens = db.query(RefreshToken).filter(
         RefreshToken.user_id == int(user_id),
         RefreshToken.revoked == False,
-        RefreshToken.expires_at > datetime.utcnow()
+        RefreshToken.expires_at > datetime.now(timezone.utc)
     ).all()
     
     valid_db_token = None
@@ -136,14 +139,14 @@ def refresh_token(
     
     new_refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     new_refresh_token = service.create_refresh_token(
-        data={"sub": str(user.id), "jti": str(datetime.utcnow().timestamp())}, 
+        data={"sub": str(user.id), "jti": str(datetime.now(timezone.utc).timestamp())}, 
         expires_delta=new_refresh_token_expires
     )
     
     new_db_refresh_token = RefreshToken(
         user_id=user.id,
         token_hash=get_password_hash(new_refresh_token),
-        expires_at=datetime.utcnow() + new_refresh_token_expires
+        expires_at=datetime.now(timezone.utc) + new_refresh_token_expires
     )
     db.add(new_db_refresh_token)
     db.commit()
@@ -152,7 +155,7 @@ def refresh_token(
         key="refresh_token",
         value=new_refresh_token,
         httponly=True,
-        secure=True,
+        secure=False,
         samesite="lax",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     )
@@ -194,9 +197,25 @@ def read_users_me(
 ):
     return current_user
 
+@router.put("/me", response_model=UserOut)
+def update_user_me(
+    user_in: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(dependencies.get_current_user)
+):
+    for field, value in user_in.dict(exclude_unset=True).items():
+        setattr(current_user, field, value)
+    
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
 # Register endpoint (Added for completeness as user lacks it)
-@router.post("/register", response_model=UserOut)
+@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit("3/minute")
 def register_user(
+    request: Request,
     user_in: UserCreate,
     db: Session = Depends(get_db)
 ):

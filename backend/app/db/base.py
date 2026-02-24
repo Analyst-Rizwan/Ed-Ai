@@ -19,6 +19,11 @@ def get_db():
         db.close()
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 def init_db():
     """Create all tables."""
     from app.models.user import User
@@ -28,4 +33,4 @@ def init_db():
     from app.models.refresh_token import RefreshToken
 
     Base.metadata.create_all(bind=engine)
-    print("✔ Database initialized successfully.")
+    logger.info("Database initialized successfully")

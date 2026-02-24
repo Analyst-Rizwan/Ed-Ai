@@ -21,3 +21,14 @@ backend/app/static/dist/
 Thumbs.db
 .vscode/
 .idea/
+
+# Dev / one-off scripts & logs (not part of the app)
+backend_logs.txt
+update_db.py
+seed_problems.py
+cookies.txt
+test_output.txt
+gen_hash.py
+test_login.py
+test_jwt_hash.py
+*.log

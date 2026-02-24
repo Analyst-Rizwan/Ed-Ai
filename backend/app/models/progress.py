@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, Boolean, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import JSON
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.db.base_class import Base
 
@@ -59,7 +59,7 @@ class Progress(Base):
 
     solved = Column(Boolean, default=False)
     attempted = Column(Boolean, default=False)
-    last_attempt = Column(DateTime, default=datetime.utcnow)
+    last_attempt = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     solution_code = Column(Text, nullable=True)
     notes = Column(Text, nullable=True)

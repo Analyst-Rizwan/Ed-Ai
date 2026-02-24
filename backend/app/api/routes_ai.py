@@ -9,10 +9,11 @@ import logging
 
 from sqlalchemy.orm import Session
 
-from app.core.security import get_current_user
+from app.auth.dependencies import get_current_user
 from app.core.ai_client import ask_ai, stream_ai
 from app.db.session import get_db
 from app.services import tutor_service
+from app.core.rate_limit import limiter
 
 logger = logging.getLogger("app.api.routes_ai")
 router = APIRouter()
@@ -106,7 +107,9 @@ async def test_ai(req: AskRequest):
 
 
 @router.post("/ask", summary="Ask the AI (non-streaming)")
+@limiter.limit("10/minute")
 async def ask_question(
+    request: Request,
     req: AskRequest,
     user=Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -136,17 +139,17 @@ async def ask_question(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.post("/chat", summary="Compatibility /chat endpoint (accepts { message }) - NO AUTH")
-async def chat_compat(req: ChatPayload, db: Session = Depends(get_db)):
+@router.post("/chat", summary="Compatibility /chat endpoint (accepts { message })")
+@limiter.limit("10/minute")
+async def chat_compat(request: Request, req: ChatPayload, user=Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Backwards-compatible endpoint for older frontends that POST { "message": "..." } to /api/ai/chat.
-    Authentication temporarily disabled for testing.
     The frontend expects: { reply: string, conversation_id: number }
     """
     try:
         conv_id = req.conversation_id
         if conv_id is None:
-            conv = tutor_service.create_conversation(db, user_id=None)
+            conv = tutor_service.create_conversation(db, user_id=getattr(user, "id", None))
             conv_id = conv.id
 
         tutor_service.add_message(db, conv_id, "user", req.message)
@@ -241,7 +244,8 @@ def get_conversation(conv_id: int, user=Depends(get_current_user), db: Session =
 
 
 @router.post("/mcq", summary="Generate MCQs for a topic")
-async def create_mcq(req: MCQRequest, user=Depends(get_current_user)):
+@limiter.limit("5/minute")
+async def create_mcq(request: Request, req: MCQRequest, user=Depends(get_current_user)):
     try:
         mcq = await tutor_service.generate_mcq(
             topic=req.topic,
@@ -287,7 +291,8 @@ def roadmap(topic: str, user=Depends(get_current_user), db: Session = Depends(ge
 
 
 @router.post("/code", summary="Execute code (safe sandbox for python)")
-def run_code(req: CodeExecRequest, user=Depends(get_current_user)):
+@limiter.limit("5/minute")
+def run_code(request: Request, req: CodeExecRequest, user=Depends(get_current_user)):
     """
     Executes code with tutor_service.run_python_safely
     Returns whatever tutor_service.run_python_safely returns (stdout/stderr/result).

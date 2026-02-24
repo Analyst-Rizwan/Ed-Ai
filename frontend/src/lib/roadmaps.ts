@@ -1,4 +1,5 @@
 // frontend/src/lib/roadmaps.ts
+import { getAccessToken } from "./api";
 
 export interface RoadmapResource {
   title: string;
@@ -435,7 +436,6 @@ export async function generateRoadmapWithAi(opts: {
   goal?: string;
 }): Promise<GeneratedRoadmapResult> {
   const url = `${API_BASE}/roadmaps/generate`;
-  console.log("Calling roadmap API:", url, "dev:", import.meta.env.DEV);
 
   let res: Response;
   try {
@@ -443,7 +443,9 @@ export async function generateRoadmapWithAi(opts: {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${getAccessToken()}`
       },
+      credentials: "include",
       body: JSON.stringify({
         topic: opts.topic,
         level: opts.level,
@@ -459,13 +461,6 @@ export async function generateRoadmapWithAi(opts: {
   }
 
   const rawText = await res.text();
-  console.log(
-    "Roadmap API status:",
-    res.status,
-    res.statusText,
-    "| body (first 500):",
-    rawText.slice(0, 500),
-  );
 
   if (!res.ok) {
     throw new Error(

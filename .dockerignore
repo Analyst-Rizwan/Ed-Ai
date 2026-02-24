@@ -1,0 +1,45 @@
+# Virtual environments
+backend/.venv/
+backend/venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Local databases
+*.db
+*.sqlite3
+
+# Environment files (secrets!)
+.env
+backend/.env
+
+# Node modules (we install fresh in Docker)
+frontend/node_modules/
+frontend/dist/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Backend test / debug scripts
+backend/test_*.py
+backend/debug_*.py
+backend/scripts/
+
+# Supabase migration SQL (not needed in container)
+backend/supabase/
+
+# Built static (we build fresh in Docker)
+backend/app/static/dist/
+
+# Docs
+*.md
+!backend/README.md

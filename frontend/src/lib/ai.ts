@@ -1,3 +1,5 @@
+import { getAccessToken } from "./api";
+
 // Use VITE_API_URL in production, fallback to /api for local dev with Vite proxy
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
@@ -14,9 +16,16 @@ export async function sendMessageToAI(
     if (opts?.temperature !== undefined) body.temperature = opts.temperature;
     if (opts?.max_tokens !== undefined) body.max_tokens = opts.max_tokens;
 
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const token = getAccessToken();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const res = await fetch(`${API_BASE_URL}/ai/chat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
+      credentials: "include",
       body: JSON.stringify(body),
     });
 

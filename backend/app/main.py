@@ -1,10 +1,13 @@
 # app/main.py
 
 from pathlib import Path
+import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.api import (
     routes_ai,
@@ -12,10 +15,18 @@ from app.api import (
     routes_roadmaps,
     routes_leetcode,
     routes_problems,
+    routes_dashboard,
 )
-from app.db.init_db import init_db
 from app.core.config import settings
+from app.core.rate_limit import limiter
+from app.core.logging_config import setup_logging, RequestLoggingMiddleware
 from app.auth import routes as routes_auth
+
+# ============================================================
+# STRUCTURED LOGGING
+# ============================================================
+setup_logging()
+logger = logging.getLogger(__name__)
 
 
 # ============================================================
@@ -26,6 +37,12 @@ app = FastAPI(
     docs_url="/api/docs",
     redoc_url="/api/redoc",
 )
+
+# ============================================================
+# RATE LIMITING
+# ============================================================
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # ============================================================
 # CORS CONFIGURATION
@@ -44,7 +61,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex="https://(.*\.)?eduaiajk\.in", # Robust subdomain matching
+    allow_origin_regex=r"https://(.*\.)?eduaiajk\.in", # Robust subdomain matching
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,9 +82,28 @@ async def global_exception_handler(request: Request, exc: Exception):
     return response
 
 # ============================================================
-# DATABASE INIT
+# REQUEST LOGGING MIDDLEWARE
 # ============================================================
-init_db()
+app.add_middleware(RequestLoggingMiddleware)
+
+
+# ============================================================
+# SECURITY HEADERS MIDDLEWARE
+# ============================================================
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        if request.url.scheme == "https":
+            response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 # ============================================================
 # API ROUTERS
@@ -79,6 +115,7 @@ app.include_router(routes_progress.router, prefix="/api/progress", tags=["Progre
 app.include_router(routes_roadmaps.router, prefix="/api/roadmaps", tags=["Roadmaps"])
 app.include_router(routes_problems.router, prefix="/api/problems", tags=["Problems"])
 app.include_router(routes_leetcode.router, prefix="/api/leetcode", tags=["LeetCode"])
+app.include_router(routes_dashboard.router, prefix="/api", tags=["Dashboard"])
 
 # ============================================================
 # HEALTH CHECKS

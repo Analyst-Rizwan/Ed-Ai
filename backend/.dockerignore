@@ -1,0 +1,33 @@
+# Virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Local databases
+*.db
+*.sqlite3
+
+# Environment files (secrets!)
+.env
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Test / debug scripts
+test_*.py
+debug_*.py
+scripts/
+
+# Supabase migration SQL (not needed in container)
+supabase/
