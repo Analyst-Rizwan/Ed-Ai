@@ -10,6 +10,7 @@ import Roadmaps from "./pages/Roadmaps";
 import Practice from "./pages/Practice";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
+import Opportunities from "./pages/Opportunities";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -47,6 +48,7 @@ const App = () => {
                     <Route index element={<Dashboard />} />
                     <Route path="roadmaps" element={<Roadmaps />} />
                     <Route path="practice" element={<Practice />} />
+                    <Route path="opportunities" element={<Opportunities />} />
                     <Route path="profile" element={<Profile />} />
                     <Route path="admin" element={<Admin />} />
                   </Route>

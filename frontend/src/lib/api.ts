@@ -353,6 +353,63 @@ export const dashboardApi = {
 };
 
 // ============================================================
+// OPPORTUNITIES TYPES & API
+// ============================================================
+export interface JobListing {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  salary: string | null;
+  type: "job" | "internship" | "apprenticeship";
+  field: string;
+  remote: boolean;
+  region: string;
+  posted: string;
+  platform: string;
+  platform_url: string;
+  tags: string[];
+  description: string;
+  emoji: string;
+  color: string;
+}
+
+export interface OpportunitiesResponse {
+  jobs: JobListing[];
+  total: number;
+  platforms: number;
+  page: number;
+  limit: number;
+  cached_at: string | null;
+}
+
+export const opportunitiesApi = {
+  getJobs: async (params: {
+    q?: string;
+    type?: string;
+    field?: string;
+    remote?: boolean;
+    region?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<OpportunitiesResponse> => {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "" && value !== "all") {
+        queryParams.append(key, String(value));
+      }
+    });
+    return fetchWithAuth(`/opportunities/jobs?${queryParams.toString()}`);
+  },
+
+  refresh: async (q?: string): Promise<OpportunitiesResponse> => {
+    const queryParams = new URLSearchParams();
+    if (q) queryParams.set("q", q);
+    return fetchWithAuth(`/opportunities/refresh?${queryParams.toString()}`);
+  },
+};
+
+// ============================================================
 // EXPORT DEFAULT
 // ============================================================
 export default {
@@ -362,4 +419,5 @@ export default {
   roadmaps: roadmapsApi,
   leetcode: leetcodeApi,
   dashboard: dashboardApi,
+  opportunities: opportunitiesApi,
 };

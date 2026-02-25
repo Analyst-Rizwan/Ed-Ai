@@ -38,3 +38,5 @@ pandas>=2.2.3
 numpy>=1.26.0
 slowapi>=0.1.9
 python-json-logger>=2.0.0
+beautifulsoup4>=4.12.0
+lxml>=5.0.0

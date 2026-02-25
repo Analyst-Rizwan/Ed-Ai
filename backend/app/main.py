@@ -16,6 +16,7 @@ from app.api import (
     routes_leetcode,
     routes_problems,
     routes_dashboard,
+    routes_opportunities,
 )
 from app.core.config import settings
 from app.core.rate_limit import limiter
@@ -116,6 +117,7 @@ app.include_router(routes_roadmaps.router, prefix="/api/roadmaps", tags=["Roadma
 app.include_router(routes_problems.router, prefix="/api/problems", tags=["Problems"])
 app.include_router(routes_leetcode.router, prefix="/api/leetcode", tags=["LeetCode"])
 app.include_router(routes_dashboard.router, prefix="/api", tags=["Dashboard"])
+app.include_router(routes_opportunities.router, prefix="/api", tags=["Opportunities"])
 
 # ============================================================
 # HEALTH CHECKS

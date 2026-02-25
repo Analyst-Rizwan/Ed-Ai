@@ -9,6 +9,7 @@ const navItems = [
   { icon: "⊞", label: "Dashboard", path: "/" },
   { icon: "🗺", label: "Roadmaps", path: "/roadmaps" },
   { icon: "</>", label: "Practice", path: "/practice" },
+  { icon: "◈", label: "Opportunities", path: "/opportunities" },
   { icon: "◉", label: "Profile", path: "/profile" },
 ];
 
