@@ -1,6 +1,15 @@
 -- Migration: Add 'topic' column to 'tutor_conversations'
 -- This script is for PostgreSQL (Render/Supabase)
 
+-- Create tutor_conversations first if it's completely missing
+CREATE TABLE IF NOT EXISTS tutor_conversations (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Then add topic column (for existing local dbs migrating, or just new ones)
 ALTER TABLE tutor_conversations ADD COLUMN IF NOT EXISTS topic VARCHAR;
 
 -- Also ensuring other tutor tables exist with correct columns if create_all missed them

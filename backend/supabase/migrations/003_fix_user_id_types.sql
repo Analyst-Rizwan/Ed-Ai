@@ -10,9 +10,6 @@ DROP POLICY IF EXISTS "Users can view own syncs" ON leetcode_syncs;
 DROP POLICY IF EXISTS "Only admins can insert problems" ON problems;
 DROP POLICY IF EXISTS "Only admins can update problems" ON problems;
 DROP POLICY IF EXISTS "Problems are viewable by everyone" ON problems;
-DROP POLICY IF EXISTS "Profiles are viewable by everyone" ON profiles;
-DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
-DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 DROP POLICY IF EXISTS "Users can delete own progress" ON progress;
 DROP POLICY IF EXISTS "Users can insert own progress" ON progress;
 DROP POLICY IF EXISTS "Users can update own progress" ON progress;
@@ -33,7 +30,6 @@ DROP POLICY IF EXISTS "Users can view own user_progress" ON user_progress;
 -- STEP 2: Disable RLS on ALL tables
 ALTER TABLE leetcode_syncs DISABLE ROW LEVEL SECURITY;
 ALTER TABLE problems DISABLE ROW LEVEL SECURITY;
-ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
 ALTER TABLE progress DISABLE ROW LEVEL SECURITY;
 ALTER TABLE roadmaps DISABLE ROW LEVEL SECURITY;
 ALTER TABLE tutor_conversations DISABLE ROW LEVEL SECURITY;

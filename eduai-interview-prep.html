@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduAI – Interview Prep</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #141414;
+  --surface: #1e1e1e;
+  --surface2: #252525;
+  --surface3: #2c2c2c;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #e8e8e8;
+  --muted: #666;
+  --muted2: #888;
+  --accent: #7c5cfc;
+  --accent-glow: rgba(124,92,252,0.25);
+  --accent-soft: rgba(124,92,252,0.12);
+  --red: #e85d4a;     --red-soft: rgba(232,93,74,0.13);
+  --orange: #f4924a;  --orange-soft: rgba(244,146,74,0.13);
+  --yellow: #f5c842;  --yellow-soft: rgba(245,200,66,0.13);
+  --green: #4acf82;   --green-soft: rgba(74,207,130,0.13);
+  --teal: #3ec6c6;    --teal-soft: rgba(62,198,198,0.13);
+  --blue: #5b8df0;    --blue-soft: rgba(91,141,240,0.13);
+  --purple: #b46ef5;  --purple-soft: rgba(180,110,245,0.13);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  display: flex; height: 100vh; overflow: hidden;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 220px; min-width: 220px;
+  background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; padding: 24px 16px; gap: 4px;
+}
+.logo {
+  display: flex; align-items: center; gap: 8px; padding: 0 8px 24px;
+  font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; color: var(--yellow);
+}
+.nav-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+  border-radius: 12px; font-size: 14px; font-weight: 500; color: var(--muted);
+  cursor: pointer; transition: all 0.18s; text-decoration: none;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--accent-soft); color: var(--accent); }
+.nav-icon { width: 18px; text-align: center; font-size: 15px; }
+.tags-row { display:flex; align-items:center; gap:7px; padding:0 8px; margin-top:16px; }
+.tags-label { font-size:11px; color:var(--muted); }
+.tag-dot { width:11px; height:11px; border-radius:50%; cursor:pointer; transition:transform 0.15s; }
+.tag-dot:hover { transform:scale(1.35); }
+.sidebar-footer {
+  margin-top:auto; padding-top:16px; border-top:1px solid var(--border);
+  display:flex; flex-direction:column; gap:6px;
+}
+.user-card {
+  display:flex; align-items:center; gap:10px; padding:10px 12px;
+  border-radius:12px; background:var(--surface2);
+}
+.avatar {
+  width:32px; height:32px; border-radius:50%;
+  background:linear-gradient(135deg,var(--purple),var(--blue));
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; color:#fff; flex-shrink:0;
+}
+
+/* ── MAIN LAYOUT ── */
+.main { flex:1; overflow:hidden; display:flex; flex-direction:column; }
+
+.topbar {
+  padding: 20px 32px 0; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
+}
+.page-title { font-size:22px; font-weight:600; }
+.page-title span { color:var(--accent); }
+
+/* ── PREP NAV ── */
+.prep-nav {
+  padding: 16px 32px 0; display:flex; gap:0; flex-shrink:0;
+  border-bottom: 1px solid var(--border);
+}
+.prep-tab {
+  padding: 10px 20px; font-size:13px; font-weight:500; color:var(--muted);
+  cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
+  transition:all 0.18s; display:flex; align-items:center; gap:7px; white-space:nowrap;
+}
+.prep-tab:hover { color:var(--text); }
+.prep-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+/* ── BODY ── */
+.prep-body { flex:1; overflow:hidden; display:flex; }
+
+/* ── SHARED ── */
+.btn {
+  display:flex; align-items:center; gap:7px; padding:9px 18px;
+  border-radius:100px; font-size:13px; font-weight:600; cursor:pointer;
+  border:none; font-family:'DM Sans',sans-serif; transition:all 0.18s;
+}
+.btn-ghost { background:var(--surface); color:var(--muted2); border:1px solid var(--border2); }
+.btn-ghost:hover { color:var(--text); border-color:rgba(255,255,255,0.2); }
+.btn-primary { background:var(--accent); color:#fff; box-shadow:0 4px 14px var(--accent-glow); }
+.btn-primary:hover { background:#8f72ff; }
+.btn-green { background:var(--green-soft); color:var(--green); border:1px solid rgba(74,207,130,0.25); }
+.btn-green:hover { background:rgba(74,207,130,0.2); }
+.btn-sm { padding:6px 13px; font-size:12px; }
+.btn-xs { padding:5px 10px; font-size:11px; border-radius:100px; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; transition:all 0.15s; }
+
+.card { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:20px; }
+.section-title { font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px; }
+.badge { padding:3px 9px; border-radius:100px; font-size:10px; font-weight:600; background:var(--surface2); color:var(--muted); font-family:'Space Mono',monospace; border:1px solid var(--border); }
+
+.scroll { overflow-y:auto; }
+.scroll::-webkit-scrollbar { width:4px; }
+.scroll::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:99px; }
+
+.hidden { display:none !important; }
+
+/* ════════════════════════════════════════════
+   1. MOCK INTERVIEW
+════════════════════════════════════════════ */
+#view-mock {
+  flex:1; display:flex; overflow:hidden;
+}
+.mock-config {
+  width:300px; min-width:300px; border-right:1px solid var(--border);
+  padding:24px; display:flex; flex-direction:column; gap:16px; overflow-y:auto;
+}
+.mock-config::-webkit-scrollbar { width:4px; }
+.mock-config::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:99px; }
+
+.config-label { font-size:12px; color:var(--muted); font-weight:500; margin-bottom:6px; }
+.config-select, .config-input {
+  width:100%; background:var(--surface2); border:1px solid var(--border2);
+  border-radius:12px; padding:10px 14px; color:var(--text);
+  font-family:'DM Sans',sans-serif; font-size:13px; outline:none;
+  transition:border-color 0.15s; appearance:none;
+}
+.config-select:focus, .config-input:focus { border-color:var(--accent); }
+
+.difficulty-row { display:flex; gap:8px; }
+.diff-btn {
+  flex:1; padding:8px; border-radius:12px; text-align:center;
+  font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--border2);
+  color:var(--muted); background:var(--surface2); transition:all 0.15s;
+}
+.diff-btn.active-easy { background:var(--green-soft); border-color:rgba(74,207,130,0.3); color:var(--green); }
+.diff-btn.active-medium { background:var(--yellow-soft); border-color:rgba(245,200,66,0.3); color:var(--yellow); }
+.diff-btn.active-hard { background:var(--red-soft); border-color:rgba(232,93,74,0.3); color:var(--red); }
+
+.session-history { margin-top:8px; }
+.history-item {
+  padding:10px 12px; border-radius:12px; background:var(--surface2);
+  border:1px solid var(--border); margin-bottom:8px; cursor:pointer; transition:border-color 0.15s;
+}
+.history-item:hover { border-color:var(--border2); }
+.history-role { font-size:12px; font-weight:600; margin-bottom:3px; }
+.history-meta { font-size:11px; color:var(--muted); display:flex; gap:10px; }
+
+/* INTERVIEW AREA */
+.mock-area { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.mock-header {
+  padding:20px 24px; border-bottom:1px solid var(--border); flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.mock-progress { display:flex; align-items:center; gap:12px; }
+.progress-dots { display:flex; gap:6px; }
+.progress-dot { width:8px; height:8px; border-radius:50%; background:var(--surface3); transition:all 0.3s; }
+.progress-dot.done { background:var(--green); }
+.progress-dot.current { background:var(--accent); transform:scale(1.3); }
+
+.mock-content { flex:1; overflow-y:auto; padding:24px; display:flex; flex-direction:column; gap:16px; }
+.mock-content::-webkit-scrollbar { width:4px; }
+.mock-content::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:99px; }
+
+.interview-start {
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:20px; text-align:center; padding:40px;
+}
+.interview-start .big-emoji { font-size:56px; }
+.interview-start h2 { font-size:20px; font-weight:600; }
+.interview-start p { font-size:14px; color:var(--muted2); max-width:380px; line-height:1.6; }
+
+.question-bubble {
+  background:var(--accent-soft); border:1px solid rgba(124,92,252,0.2);
+  border-radius:18px 18px 18px 4px; padding:18px 20px;
+  max-width:85%; animation:fadeUp 0.35s ease;
+}
+.question-label { font-size:10px; color:var(--accent); font-weight:600; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.question-text { font-size:14px; line-height:1.65; }
+.question-category { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:100px; font-size:11px; background:var(--surface2); color:var(--muted2); margin-top:10px; }
+
+.answer-bubble {
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:18px 18px 4px 18px; padding:16px 18px;
+  max-width:85%; align-self:flex-end; animation:fadeUp 0.3s ease;
+}
+.answer-label { font-size:10px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px; }
+.answer-text { font-size:13px; color:var(--muted2); line-height:1.6; }
+
+.feedback-bubble {
+  background:var(--green-soft); border:1px solid rgba(74,207,130,0.2);
+  border-radius:18px; padding:18px 20px; animation:fadeUp 0.35s ease;
+}
+.feedback-label { font-size:10px; color:var(--green); font-weight:600; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.feedback-scores { display:flex; gap:10px; margin-bottom:12px; }
+.score-pill {
+  flex:1; padding:8px 10px; border-radius:12px; background:rgba(0,0,0,0.2);
+  text-align:center;
+}
+.score-pill-label { font-size:10px; color:rgba(255,255,255,0.5); margin-bottom:4px; }
+.score-pill-val { font-size:18px; font-weight:700; font-family:'Space Mono',monospace; }
+.feedback-text { font-size:13px; color:rgba(255,255,255,0.7); line-height:1.65; }
+
+.confidence-meter {
+  background:var(--surface2); border:1px solid var(--border); border-radius:16px; padding:16px;
+}
+.meter-label { font-size:12px; color:var(--muted); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
+.meter-track { height:8px; background:var(--surface3); border-radius:99px; overflow:hidden; }
+.meter-fill { height:100%; border-radius:99px; transition:width 1s cubic-bezier(0.22,1,0.36,1); }
+
+.answer-input-area {
+  padding:16px 24px; border-top:1px solid var(--border); flex-shrink:0;
+}
+.answer-textarea {
+  width:100%; background:var(--surface2); border:1px solid var(--border2);
+  border-radius:16px; padding:14px 16px; color:var(--text);
+  font-family:'DM Sans',sans-serif; font-size:13px; outline:none; resize:none;
+  line-height:1.6; transition:border-color 0.15s; min-height:80px;
+}
+.answer-textarea:focus { border-color:var(--accent); }
+.answer-actions { display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+.char-count { font-size:11px; color:var(--muted); font-family:'Space Mono',monospace; }
+
+/* ════════════════════════════════════════════
+   2. QUESTION BANK
+════════════════════════════════════════════ */
+#view-bank {
+  flex:1; display:flex; overflow:hidden;
+}
+.bank-sidebar {
+  width:240px; min-width:240px; border-right:1px solid var(--border);
+  padding:20px; display:flex; flex-direction:column; gap:10px; overflow-y:auto;
+}
+.bank-sidebar::-webkit-scrollbar { width:4px; }
+.bank-sidebar::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:99px; }
+.bank-cat {
+  padding:10px 12px; border-radius:12px; font-size:13px; font-weight:500;
+  cursor:pointer; color:var(--muted); transition:all 0.15s; display:flex; align-items:center; justify-content:space-between;
+}
+.bank-cat:hover { background:var(--surface2); color:var(--text); }
+.bank-cat.active { background:var(--accent-soft); color:var(--accent); }
+.bank-count { font-size:10px; font-family:'Space Mono',monospace; background:var(--surface2); padding:2px 6px; border-radius:100px; }
+.bank-cat.active .bank-count { background:rgba(124,92,252,0.2); color:var(--accent); }
+
+.bank-main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.bank-toolbar {
+  padding:16px 24px; border-bottom:1px solid var(--border); flex-shrink:0;
+  display:flex; gap:10px; align-items:center;
+}
+.bank-search {
+  flex:1; display:flex; align-items:center; gap:8px;
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:100px; padding:8px 14px;
+}
+.bank-search input {
+  flex:1; background:none; border:none; outline:none; color:var(--text);
+  font-family:'DM Sans',sans-serif; font-size:13px;
+}
+.bank-search input::placeholder { color:var(--muted); }
+
+.bank-list { flex:1; overflow-y:auto; padding:16px 24px; display:flex; flex-direction:column; gap:10px; }
+.bank-list::-webkit-scrollbar { width:4px; }
+.bank-list::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:99px; }
+
+.q-card {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:16px; padding:16px; transition:all 0.18s; cursor:pointer;
+}
+.q-card:hover { border-color:var(--border2); }
+.q-card.practiced { border-left:3px solid var(--green); }
+.q-card-top { display:flex; align-items:flex-start; gap:12px; margin-bottom:10px; }
+.q-card-icon { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+.q-text { font-size:13px; font-weight:500; line-height:1.55; flex:1; }
+.q-card-bottom { display:flex; align-items:center; justify-content:space-between; }
+.q-tags { display:flex; gap:6px; flex-wrap:wrap; }
+.q-tag { padding:3px 8px; border-radius:100px; font-size:10px; font-weight:500; }
+.q-actions { display:flex; gap:6px; }
+
+/* Practice modal / expand */
+.q-tips {
+  margin-top:12px; padding:12px; background:var(--surface3);
+  border-radius:12px; font-size:12px; color:var(--muted2); line-height:1.7;
+  display:none;
+}
+.q-card.open .q-tips { display:block; }
+.q-expand-btn { font-size:12px; color:var(--muted); cursor:pointer; transition:color 0.15s; }
+.q-expand-btn:hover { color:var(--accent); }
+
+/* ════════════════════════════════════════════
+   3. STAR BUILDER
+════════════════════════════════════════════ */
+#view-star {
+  flex:1; display:flex; overflow:hidden;
+}
+.star-left {
+  width:300px; min-width:300px; border-right:1px solid var(--border);
+  padding:20px; display:flex; flex-direction:column; gap:10px; overflow-y:auto;
+}
+.star-left::-webkit-scrollbar { width:4px; }
+.star-left::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:99px; }
+.star-story {
+  padding:12px 14px; border-radius:14px; background:var(--surface2);
+  border:1px solid var(--border); cursor:pointer; transition:all 0.15s;
+}
+.star-story:hover { border-color:var(--border2); }
+.star-story.active { border-color:rgba(124,92,252,0.4); background:var(--accent-soft); }
+.star-story-title { font-size:13px; font-weight:600; margin-bottom:3px; }
+.star-story-meta { font-size:11px; color:var(--muted); }
+
+.star-main { flex:1; padding:24px; overflow-y:auto; display:flex; flex-direction:column; gap:16px; }
+.star-main::-webkit-scrollbar { width:4px; }
+.star-main::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:99px; }
+
+.star-block {
+  background:var(--surface2); border:1px solid var(--border); border-radius:16px; overflow:hidden;
+}
+.star-block-header {
+  padding:14px 16px; display:flex; align-items:center; gap:12px;
+  border-bottom:1px solid var(--border);
+}
+.star-letter {
+  width:32px; height:32px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Space Mono',monospace; font-size:16px; font-weight:700; flex-shrink:0;
+}
+.star-block-title { font-size:13px; font-weight:600; }
+.star-block-desc { font-size:11px; color:var(--muted); margin-top:2px; }
+.star-textarea {
+  width:100%; background:none; border:none; padding:14px 16px;
+  color:var(--text); font-family:'DM Sans',sans-serif; font-size:13px;
+  outline:none; resize:none; min-height:80px; line-height:1.65;
+}
+.star-textarea::placeholder { color:var(--muted); }
+
+.star-output {
+  background:var(--surface); border:1px solid var(--border2); border-radius:16px; padding:20px;
+}
+.star-output-text {
+  font-size:13px; color:var(--muted2); line-height:1.75; white-space:pre-wrap;
+}
+
+/* ════════════════════════════════════════════
+   4. COMPANY INTEL
+════════════════════════════════════════════ */
+#view-company {
+  flex:1; display:flex; overflow:hidden;
+}
+.company-left {
+  width:260px; min-width:260px; border-right:1px solid var(--border);
+  padding:20px; display:flex; flex-direction:column; gap:8px; overflow-y:auto;
+}
+.company-left::-webkit-scrollbar { width:4px; }
+.company-left::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:99px; }
+.company-item {
+  padding:12px 14px; border-radius:14px; background:var(--surface2);
+  border:1px solid var(--border); cursor:pointer; transition:all 0.15s;
+  display:flex; align-items:center; gap:12px;
+}
+.company-item:hover { border-color:var(--border2); }
+.company-item.active { border-color:rgba(124,92,252,0.35); background:var(--accent-soft); }
+.company-emoji { font-size:22px; }
+.company-item-name { font-size:13px; font-weight:600; }
+.company-item-type { font-size:11px; color:var(--muted); }
+
+.company-main { flex:1; overflow-y:auto; padding:24px; }
+.company-main::-webkit-scrollbar { width:4px; }
+.company-main::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:99px; }
+
+.company-hero {
+  display:flex; align-items:center; gap:16px; margin-bottom:24px;
+  padding:20px; background:var(--surface2); border:1px solid var(--border); border-radius:18px;
+}
+.company-hero-logo { font-size:40px; }
+.company-hero-title { font-size:20px; font-weight:600; margin-bottom:4px; }
+.company-hero-sub { font-size:13px; color:var(--muted2); }
+.company-hero-tags { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+
+.intel-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.intel-card { background:var(--surface2); border:1px solid var(--border); border-radius:16px; padding:16px; }
+.intel-card-title { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:10px; }
+.intel-item { font-size:13px; color:var(--muted2); padding:6px 0; border-bottom:1px solid var(--border); line-height:1.5; }
+.intel-item:last-child { border:none; padding-bottom:0; }
+.intel-item strong { color:var(--text); }
+
+.known-q-list { display:flex; flex-direction:column; gap:8px; }
+.known-q {
+  background:var(--surface2); border:1px solid var(--border); border-radius:14px; padding:14px;
+  font-size:13px; color:var(--muted2); line-height:1.55; display:flex; align-items:flex-start; gap:10px;
+}
+.known-q-num {
+  font-family:'Space Mono',monospace; font-size:11px; color:var(--accent);
+  background:var(--accent-soft); padding:3px 7px; border-radius:6px; flex-shrink:0; margin-top:1px;
+}
+
+/* ════════════════════════════════════════════
+   5. SALARY NEGOTIATION
+════════════════════════════════════════════ */
+#view-salary {
+  flex:1; display:flex; overflow:hidden;
+}
+.salary-config {
+  width:280px; min-width:280px; border-right:1px solid var(--border);
+  padding:20px; display:flex; flex-direction:column; gap:14px; overflow-y:auto;
+}
+.salary-config::-webkit-scrollbar { width:4px; }
+.salary-config::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:99px; }
+.salary-main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.salary-chat { flex:1; overflow-y:auto; padding:24px; display:flex; flex-direction:column; gap:14px; }
+.salary-chat::-webkit-scrollbar { width:4px; }
+.salary-chat::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:99px; }
+
+.salary-bubble-interviewer {
+  background:var(--orange-soft); border:1px solid rgba(244,146,74,0.2);
+  border-radius:18px 18px 18px 4px; padding:16px 18px; max-width:80%;
+  animation:fadeUp 0.3s ease;
+}
+.salary-bubble-user {
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:18px 18px 4px 18px; padding:16px 18px;
+  max-width:80%; align-self:flex-end; animation:fadeUp 0.3s ease;
+}
+.bubble-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px; }
+.bubble-text { font-size:13px; line-height:1.65; color:var(--muted2); }
+
+.salary-tip {
+  background:var(--accent-soft); border:1px solid rgba(124,92,252,0.2);
+  border-radius:12px; padding:12px 14px; font-size:12px; color:var(--muted2); line-height:1.6;
+}
+.salary-tip strong { color:var(--accent); }
+
+/* ════════════════════════════════════════════
+   RIGHT PANEL (sessions + countdown)
+════════════════════════════════════════════ */
+.right-panel {
+  width:260px; min-width:260px; border-left:1px solid var(--border);
+  padding:20px; display:flex; flex-direction:column; gap:16px; overflow-y:auto;
+}
+.right-panel::-webkit-scrollbar { width:4px; }
+.right-panel::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:99px; }
+
+.countdown-card {
+  background:var(--surface2); border:1px solid var(--border); border-radius:16px; padding:16px;
+}
+.countdown-item { margin-bottom:12px; }
+.countdown-item:last-child { margin-bottom:0; }
+.countdown-company { font-size:13px; font-weight:600; margin-bottom:3px; display:flex; align-items:center; gap:8px; }
+.countdown-role { font-size:11px; color:var(--muted); margin-bottom:8px; }
+.countdown-days {
+  font-family:'Space Mono',monospace; font-size:22px; font-weight:700;
+  color:var(--accent); line-height:1;
+}
+.countdown-unit { font-size:10px; color:var(--muted); }
+.countdown-bar { height:4px; background:var(--surface3); border-radius:99px; overflow:hidden; margin-top:8px; }
+.countdown-fill { height:100%; border-radius:99px; }
+
+.session-stat { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+.session-stat:last-child { border:none; }
+.session-stat-label { font-size:12px; color:var(--muted); }
+.session-stat-val { font-size:14px; font-weight:600; font-family:'Space Mono',monospace; }
+
+.streak-row { display:flex; gap:4px; margin-top:6px; }
+.streak-day { width:24px; height:24px; border-radius:6px; background:var(--surface3); display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--muted); }
+.streak-day.done { background:var(--green-soft); color:var(--green); }
+.streak-day.today { background:var(--accent-soft); color:var(--accent); outline:1px solid var(--accent); }
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(10px); }
+  to { opacity:1; transform:translateY(0); }
+}
+@keyframes pulse {
+  0%,100% { opacity:1; } 50% { opacity:0.5; }
+}
+.typing { animation:pulse 1s ease infinite; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">⚡ EduAI</div>
+  <a class="nav-item"><span class="nav-icon">⊞</span> Dashboard</a>
+  <a class="nav-item"><span class="nav-icon">🗺</span> Roadmaps</a>
+  <a class="nav-item"><span class="nav-icon">&lt;/&gt;</span> Practice</a>
+  <a class="nav-item"><span class="nav-icon">◈</span> Opportunities</a>
+  <a class="nav-item active"><span class="nav-icon">🎯</span> Interview Prep</a>
+  <a class="nav-item"><span class="nav-icon">◉</span> Profile</a>
+  <a class="nav-item"><span class="nav-icon">✦</span> AI Tutor</a>
+  <div class="tags-row">
+    <span class="tags-label">Tags</span>
+    <div class="tag-dot" style="background:var(--red)"></div>
+    <div class="tag-dot" style="background:var(--orange)"></div>
+    <div class="tag-dot" style="background:var(--yellow)"></div>
+    <div class="tag-dot" style="background:var(--green)"></div>
+    <div class="tag-dot" style="background:var(--teal)"></div>
+    <div class="tag-dot" style="background:var(--blue)"></div>
+    <div class="tag-dot" style="background:var(--purple)"></div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="avatar">MR</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:600;">Mohamed R.</div>
+        <div style="font-size:11px;color:var(--muted);">Level 1</div>
+      </div>
+      <span style="color:var(--muted);font-size:14px;cursor:pointer;">⚙</span>
+    </div>
+    <a class="nav-item" style="font-size:13px;"><span class="nav-icon">→</span> Logout</a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Interview Prep <span>🎯</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px;">Mock interviews, question bank, STAR stories & company intel</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div style="font-size:12px;color:var(--muted2);background:var(--surface2);padding:6px 14px;border-radius:100px;border:1px solid var(--border);">
+        🔥 <span style="color:var(--text);font-weight:600;">7</span> day streak
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="switchView('mock')">▶ Start Mock Interview</button>
+    </div>
+  </div>
+
+  <!-- PREP NAV TABS -->
+  <div class="prep-nav">
+    <div class="prep-tab active" onclick="switchView('mock',this)">🤖 Mock Interview</div>
+    <div class="prep-tab" onclick="switchView('bank',this)">📚 Question Bank</div>
+    <div class="prep-tab" onclick="switchView('star',this)">⭐ STAR Builder</div>
+    <div class="prep-tab" onclick="switchView('company',this)">🏢 Company Intel</div>
+    <div class="prep-tab" onclick="switchView('salary',this)">💰 Salary Negotiation</div>
+  </div>
+
+  <div class="prep-body">
+
+    <!-- ══ 1. MOCK INTERVIEW ══ -->
+    <div id="view-mock">
+
+      <!-- Config sidebar -->
+      <div class="mock-config">
+        <div>
+          <div class="config-label">Role Type</div>
+          <select class="config-select" id="mockRole">
+            <option>Frontend Developer</option>
+            <option>Backend Developer</option>
+            <option>Full Stack Developer</option>
+            <option>Data Scientist</option>
+            <option>Machine Learning Engineer</option>
+            <option>Product Manager</option>
+            <option>UX Designer</option>
+            <option>DevOps Engineer</option>
+            <option>Finance Analyst</option>
+            <option>Software Engineering Intern</option>
+          </select>
+        </div>
+        <div>
+          <div class="config-label">Company (optional)</div>
+          <input class="config-input" id="mockCompany" placeholder="e.g. Google, Amazon...">
+        </div>
+        <div>
+          <div class="config-label">Interview Type</div>
+          <select class="config-select" id="mockType">
+            <option>Mixed (Behavioural + Technical)</option>
+            <option>Behavioural Only</option>
+            <option>Technical Only</option>
+            <option>HR / Culture Fit</option>
+            <option>Case Study</option>
+          </select>
+        </div>
+        <div>
+          <div class="config-label">Difficulty</div>
+          <div class="difficulty-row">
+            <div class="diff-btn" onclick="setDiff('easy',this)">Easy</div>
+            <div class="diff-btn active-medium" onclick="setDiff('medium',this)">Mid</div>
+            <div class="diff-btn" onclick="setDiff('hard',this)">Hard</div>
+          </div>
+        </div>
+        <div>
+          <div class="config-label">Questions</div>
+          <select class="config-select" id="mockQCount">
+            <option value="3">3 (Quick)</option>
+            <option value="5" selected>5 (Standard)</option>
+            <option value="8">8 (Full Round)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="startMock()">▶ Start Session</button>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center;" onclick="resetMock()">↺ Reset</button>
+
+        <div style="margin-top:8px;">
+          <div class="section-title">Past Sessions</div>
+          <div class="session-history">
+            <div class="history-item">
+              <div class="history-role">Frontend Developer</div>
+              <div class="history-meta"><span>Google</span><span>Score: 78%</span><span>Feb 20</span></div>
+            </div>
+            <div class="history-item">
+              <div class="history-role">Software Engineering Intern</div>
+              <div class="history-meta"><span>Amazon</span><span>Score: 65%</span><span>Feb 18</span></div>
+            </div>
+            <div class="history-item">
+              <div class="history-role">Product Manager</div>
+              <div class="history-meta"><span>Spotify</span><span>Score: 82%</span><span>Feb 15</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interview area -->
+      <div class="mock-area">
+        <div class="mock-header">
+          <div class="mock-progress">
+            <div id="mockStatusLabel" style="font-size:13px;font-weight:600;color:var(--muted2)">Configure your session →</div>
+            <div class="progress-dots" id="progressDots"></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;" id="mockControls" style="display:none">
+            <div id="timerDisplay" style="font-family:'Space Mono',monospace;font-size:13px;color:var(--muted);background:var(--surface2);padding:6px 12px;border-radius:100px;border:1px solid var(--border);"></div>
+          </div>
+        </div>
+
+        <div class="mock-content" id="mockContent">
+          <div class="interview-start" id="interviewStart">
+            <div class="big-emoji">🎯</div>
+            <h2>Ready to ace your interview?</h2>
+            <p>Configure your session on the left, then hit Start. The AI will ask you real interview questions and give structured feedback on each answer.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+              <div style="padding:8px 14px;border-radius:100px;background:var(--surface2);border:1px solid var(--border);font-size:12px;color:var(--muted2)">📊 Clarity score</div>
+              <div style="padding:8px 14px;border-radius:100px;background:var(--surface2);border:1px solid var(--border);font-size:12px;color:var(--muted2)">🎯 Relevance score</div>
+              <div style="padding:8px 14px;border-radius:100px;background:var(--surface2);border:1px solid var(--border);font-size:12px;color:var(--muted2)">💡 Improvement tips</div>
+              <div style="padding:8px 14px;border-radius:100px;background:var(--surface2);border:1px solid var(--border);font-size:12px;color:var(--muted2)">⏱ Answer timer</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="answer-input-area" id="answerInputArea" style="display:none;">
+          <textarea class="answer-textarea" id="answerText" placeholder="Type your answer here... Use the STAR method: Situation → Task → Action → Result" rows="3" oninput="updateCharCount()"></textarea>
+          <div class="answer-actions">
+            <span class="char-count" id="charCount">0 / 500</span>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-ghost btn-sm" onclick="skipQuestion()">Skip →</button>
+              <button class="btn btn-primary btn-sm" onclick="submitAnswer()">Submit Answer ✓</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right panel -->
+      <div class="right-panel">
+        <div>
+          <div class="section-title">Upcoming Interviews</div>
+          <div class="countdown-card">
+            <div class="countdown-item" style="padding-bottom:12px;border-bottom:1px solid var(--border);">
+              <div class="countdown-company"><span>🔵</span> Google</div>
+              <div class="countdown-role">Software Engineering Intern</div>
+              <div class="countdown-days">4 <span class="countdown-unit">days left</span></div>
+              <div class="countdown-bar"><div class="countdown-fill" style="width:60%;background:var(--accent)"></div></div>
+            </div>
+            <div class="countdown-item" style="padding-top:12px;">
+              <div class="countdown-company"><span>🎵</span> Spotify</div>
+              <div class="countdown-role">Frontend Engineer</div>
+              <div class="countdown-days">12 <span class="countdown-unit">days left</span></div>
+              <div class="countdown-bar"><div class="countdown-fill" style="width:85%;background:var(--green)"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title">This Week</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:14px;">
+            <div class="session-stat"><span class="session-stat-label">Sessions Done</span><span class="session-stat-val" style="color:var(--accent)">3</span></div>
+            <div class="session-stat"><span class="session-stat-label">Avg Score</span><span class="session-stat-val" style="color:var(--green)">75%</span></div>
+            <div class="session-stat"><span class="session-stat-label">Questions Practiced</span><span class="session-stat-val">47</span></div>
+            <div class="session-stat"><span class="session-stat-label">Best Score</span><span class="session-stat-val" style="color:var(--yellow)">82%</span></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title">Prep Streak</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:14px;">
+            <div style="font-size:22px;font-weight:700;font-family:'Space Mono',monospace;color:var(--yellow);margin-bottom:4px;">7 🔥</div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">days in a row</div>
+            <div class="streak-row">
+              <div class="streak-day done">M</div>
+              <div class="streak-day done">T</div>
+              <div class="streak-day done">W</div>
+              <div class="streak-day done">T</div>
+              <div class="streak-day done">F</div>
+              <div class="streak-day done">S</div>
+              <div class="streak-day today">S</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title">Quick Tips</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:12px;color:var(--muted2);line-height:1.6;">
+              💡 Always quantify impact in STAR answers. "increased by 40%" beats "improved significantly."
+            </div>
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:12px;color:var(--muted2);line-height:1.6;">
+              🎯 For Google: they use a structured hiring rubric — every answer should show problem-solving, not just what you did.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 2. QUESTION BANK ══ -->
+    <div id="view-bank" class="hidden">
+      <div class="bank-sidebar">
+        <div style="font-size:13px;font-weight:600;color:var(--text);padding:0 4px;margin-bottom:8px;">Categories</div>
+        <div class="bank-cat active" onclick="filterBank('all',this)">All Questions <span class="bank-count">84</span></div>
+        <div class="bank-cat" onclick="filterBank('behavioural',this)">🧠 Behavioural <span class="bank-count">28</span></div>
+        <div class="bank-cat" onclick="filterBank('technical',this)">&lt;/&gt; Technical <span class="bank-count">24</span></div>
+        <div class="bank-cat" onclick="filterBank('situational',this)">💭 Situational <span class="bank-count">16</span></div>
+        <div class="bank-cat" onclick="filterBank('hr',this)">👤 HR / Culture <span class="bank-count">10</span></div>
+        <div class="bank-cat" onclick="filterBank('system',this)">⚙️ System Design <span class="bank-count">6</span></div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">By Role</div>
+          <div class="bank-cat" onclick="filterBank('frontend',this)">Frontend Dev</div>
+          <div class="bank-cat" onclick="filterBank('backend',this)">Backend Dev</div>
+          <div class="bank-cat" onclick="filterBank('product',this)">Product Manager</div>
+          <div class="bank-cat" onclick="filterBank('data',this)">Data / ML</div>
+          <div class="bank-cat" onclick="filterBank('design',this)">UX Design</div>
+          <div class="bank-cat" onclick="filterBank('finance',this)">Finance</div>
+        </div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Progress</div>
+          <div style="font-size:22px;font-weight:700;font-family:'Space Mono',monospace;color:var(--green);">23<span style="font-size:13px;color:var(--muted);">/84</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">practiced</div>
+          <div style="height:4px;background:var(--surface3);border-radius:99px;overflow:hidden;">
+            <div style="height:100%;width:27%;background:var(--green);border-radius:99px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bank-main">
+        <div class="bank-toolbar">
+          <div class="bank-search">
+            <span style="color:var(--muted);font-size:13px;">⌕</span>
+            <input placeholder="Search questions..." id="bankSearch" oninput="renderBank()">
+          </div>
+          <select class="config-select" style="width:140px;" id="bankDiff" onchange="renderBank()">
+            <option value="all">All Difficulties</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="practiceRandom()">🎲 Random</button>
+        </div>
+        <div class="bank-list" id="bankList"></div>
+      </div>
+
+      <div class="right-panel">
+        <div class="section-title">Tip of the Day</div>
+        <div style="background:var(--accent-soft);border:1px solid rgba(124,92,252,0.2);border-radius:14px;padding:14px;font-size:12px;color:var(--muted2);line-height:1.7;">
+          ✦ When asked "tell me about a time you failed" — always end on what you <em>learned</em>. Growth mindset signals are gold in interviews.
+        </div>
+        <div class="section-title" style="margin-top:4px;">Most Missed</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="background:var(--red-soft);border:1px solid rgba(232,93,74,0.2);border-radius:12px;padding:12px;font-size:12px;color:var(--muted2);line-height:1.6;">
+            "Design a URL shortener" — 68% of users struggle with this
+          </div>
+          <div style="background:var(--yellow-soft);border:1px solid rgba(245,200,66,0.2);border-radius:12px;padding:12px;font-size:12px;color:var(--muted2);line-height:1.6;">
+            "Why do you want to work here?" — Often answered too generically
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 3. STAR BUILDER ══ -->
+    <div id="view-star" class="hidden">
+      <div class="star-left">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;">My Stories</div>
+        <div class="star-story active" onclick="loadStory(0,this)">
+          <div class="star-story-title">Led a team project under deadline</div>
+          <div class="star-story-meta">Leadership · Completed</div>
+        </div>
+        <div class="star-story" onclick="loadStory(1,this)">
+          <div class="star-story-title">Resolved a production bug at 2am</div>
+          <div class="star-story-meta">Problem Solving · Completed</div>
+        </div>
+        <div class="star-story" onclick="loadStory(2,this)">
+          <div class="star-story-title">Disagreement with a team member</div>
+          <div class="star-story-meta">Conflict Resolution · Draft</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:8px;" onclick="newStory()">+ New Story</button>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+          <div class="section-title">Common Themes</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span style="padding:4px 10px;border-radius:100px;font-size:11px;background:var(--surface2);border:1px solid var(--border);color:var(--muted2);cursor:pointer;" onclick="setTheme('Leadership')">Leadership</span>
+            <span style="padding:4px 10px;border-radius:100px;font-size:11px;background:var(--surface2);border:1px solid var(--border);color:var(--muted2);cursor:pointer;" onclick="setTheme('Teamwork')">Teamwork</span>
+            <span style="padding:4px 10px;border-radius:100px;font-size:11px;background:var(--surface2);border:1px solid var(--border);color:var(--muted2);cursor:pointer;" onclick="setTheme('Problem Solving')">Problem Solving</span>
+            <span style="padding:4px 10px;border-radius:100px;font-size:11px;background:var(--surface2);border:1px solid var(--border);color:var(--muted2);cursor:pointer;" onclick="setTheme('Failure')">Failure</span>
+            <span style="padding:4px 10px;border-radius:100px;font-size:11px;background:var(--surface2);border:1px solid var(--border);color:var(--muted2);cursor:pointer;" onclick="setTheme('Initiative')">Initiative</span>
+            <span style="padding:4px 10px;border-radius:100px;font-size:11px;background:var(--surface2);border:1px solid var(--border);color:var(--muted2);cursor:pointer;" onclick="setTheme('Conflict')">Conflict</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="star-main" id="starMain">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <input id="storyTitle" style="background:none;border:none;outline:none;font-size:18px;font-weight:600;color:var(--text);font-family:'DM Sans',sans-serif;flex:1;" value="Led a team project under deadline">
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-green btn-sm" onclick="polishStory()">✦ AI Polish</button>
+            <button class="btn btn-ghost btn-sm" onclick="copyStory()">⎘ Copy</button>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Tip: Be specific and quantify your impact wherever possible.</div>
+
+        <div class="star-block">
+          <div class="star-block-header">
+            <div class="star-letter" style="background:var(--blue-soft);color:var(--blue);">S</div>
+            <div><div class="star-block-title">Situation</div><div class="star-block-desc">Set the scene — when, where, context</div></div>
+          </div>
+          <textarea class="star-textarea" id="starS" placeholder="e.g. During my final year at university, my 4-person team was tasked with building a full-stack web app in 6 weeks for a real client...">During my final year at university, my 4-person team was tasked with building a full-stack web app in 6 weeks for a real client. Two weeks before the deadline, our team lead dropped out unexpectedly.</textarea>
+        </div>
+
+        <div class="star-block">
+          <div class="star-block-header">
+            <div class="star-letter" style="background:var(--purple-soft);color:var(--purple);">T</div>
+            <div><div class="star-block-title">Task</div><div class="star-block-desc">Your responsibility in the situation</div></div>
+          </div>
+          <textarea class="star-textarea" id="starT" placeholder="e.g. I needed to step up and lead the remaining team...">I needed to step up and take over as lead, redistribute the workload, and ensure we still delivered a working product on time without sacrificing quality.</textarea>
+        </div>
+
+        <div class="star-block">
+          <div class="star-block-header">
+            <div class="star-letter" style="background:var(--green-soft);color:var(--green);">A</div>
+            <div><div class="star-block-title">Action</div><div class="star-block-desc">Specific steps YOU took (use "I" not "we")</div></div>
+          </div>
+          <textarea class="star-textarea" id="starA" placeholder="e.g. I immediately called a team meeting...">I immediately held an emergency team meeting to reassess scope. I broke the remaining work into clear sprints using Notion, personally took on the backend API work, and set up daily 15-minute standups to catch blockers early.</textarea>
+        </div>
+
+        <div class="star-block">
+          <div class="star-block-header">
+            <div class="star-letter" style="background:var(--yellow-soft);color:var(--yellow);">R</div>
+            <div><div class="star-block-title">Result</div><div class="star-block-desc">Quantify the outcome — numbers win</div></div>
+          </div>
+          <textarea class="star-textarea" id="starR" placeholder="e.g. We delivered on time and received...">We delivered the full product on time. The client gave us a 9/10 satisfaction score and our project received the highest mark in the cohort. I was later asked to mentor the next year's students on project management.</textarea>
+        </div>
+
+        <div class="star-output">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div class="section-title" style="margin:0;">Polished Answer</div>
+            <div style="font-size:11px;color:var(--muted)">~90 seconds to deliver</div>
+          </div>
+          <div class="star-output-text" id="starOutput">Click "✦ AI Polish" to generate a clean, interview-ready version of your story.</div>
+        </div>
+      </div>
+
+      <div class="right-panel">
+        <div class="section-title">STAR Checklist</div>
+        <div style="display:flex;flex-direction:column;gap:8px;" id="starChecklist">
+          <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--muted2);">
+            <span style="color:var(--green);margin-top:1px;">✓</span> Situation is specific (not vague)
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--muted2);">
+            <span style="color:var(--green);margin-top:1px;">✓</span> Task explains YOUR role clearly
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--muted2);">
+            <span style="color:var(--yellow);margin-top:1px;">◎</span> Actions use "I" not "we"
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--muted2);">
+            <span style="color:var(--red);margin-top:1px;">✕</span> Result has a specific metric
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--muted2);">
+            <span style="color:var(--green);margin-top:1px;">✓</span> Under 2 minutes to deliver
+          </div>
+        </div>
+        <div class="section-title" style="margin-top:4px;">Suggested Questions</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--muted2);">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;">"Tell me about a time you showed leadership"</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;">"Describe a challenging project you completed"</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;">"How do you handle pressure and tight deadlines?"</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 4. COMPANY INTEL ══ -->
+    <div id="view-company" class="hidden">
+      <div class="company-left">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Companies</div>
+        <div class="company-item active" onclick="loadCompany('google',this)">
+          <span class="company-emoji">🔵</span>
+          <div><div class="company-item-name">Google</div><div class="company-item-type">Tech · FAANG</div></div>
+        </div>
+        <div class="company-item" onclick="loadCompany('amazon',this)">
+          <span class="company-emoji">📦</span>
+          <div><div class="company-item-name">Amazon</div><div class="company-item-type">Tech · FAANG</div></div>
+        </div>
+        <div class="company-item" onclick="loadCompany('meta',this)">
+          <span class="company-emoji">🔷</span>
+          <div><div class="company-item-name">Meta</div><div class="company-item-type">Tech · FAANG</div></div>
+        </div>
+        <div class="company-item" onclick="loadCompany('apple',this)">
+          <span class="company-emoji">🍎</span>
+          <div><div class="company-item-name">Apple</div><div class="company-item-type">Tech · FAANG</div></div>
+        </div>
+        <div class="company-item" onclick="loadCompany('spotify',this)">
+          <span class="company-emoji">🎵</span>
+          <div><div class="company-item-name">Spotify</div><div class="company-item-type">Tech · Scale-up</div></div>
+        </div>
+        <div class="company-item" onclick="loadCompany('monzo',this)">
+          <span class="company-emoji">🏧</span>
+          <div><div class="company-item-name">Monzo</div><div class="company-item-type">Fintech</div></div>
+        </div>
+        <div class="company-item" onclick="loadCompany('goldman',this)">
+          <span class="company-emoji">💰</span>
+          <div><div class="company-item-name">Goldman Sachs</div><div class="company-item-type">Finance · IB</div></div>
+        </div>
+        <div class="company-item" onclick="loadCompany('deepmind',this)">
+          <span class="company-emoji">🧠</span>
+          <div><div class="company-item-name">DeepMind</div><div class="company-item-type">AI Research</div></div>
+        </div>
+        <div class="company-item" onclick="loadCompany('bbc',this)">
+          <span class="company-emoji">📺</span>
+          <div><div class="company-item-name">BBC</div><div class="company-item-type">Media · Public</div></div>
+        </div>
+      </div>
+
+      <div class="company-main" id="companyMain"></div>
+
+      <div class="right-panel">
+        <div class="section-title">Prep Score</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;">
+          <div style="font-size:40px;font-weight:700;font-family:'Space Mono',monospace;color:var(--green);">B+</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px;">Google Readiness</div>
+          <div style="height:4px;background:var(--surface3);border-radius:99px;overflow:hidden;margin-top:12px;">
+            <div style="height:100%;width:72%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:99px;"></div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;">72% prepared</div>
+        </div>
+        <div class="section-title" style="margin-top:4px;">To Do</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;">
+          <div style="display:flex;gap:8px;align-items:center;color:var(--muted2);">
+            <span style="color:var(--red)">✕</span> Practice system design question
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;color:var(--muted2);">
+            <span style="color:var(--red)">✕</span> Research Google's AI products
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;color:var(--muted2);">
+            <span style="color:var(--green)">✓</span> STAR story for leadership
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;color:var(--muted2);">
+            <span style="color:var(--green)">✓</span> Researched interview format
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 5. SALARY NEGOTIATION ══ -->
+    <div id="view-salary" class="hidden">
+      <div class="salary-config">
+        <div>
+          <div class="config-label">Your Role</div>
+          <select class="config-select">
+            <option>Frontend Developer</option>
+            <option>Software Engineer</option>
+            <option>Product Manager</option>
+            <option>Data Scientist</option>
+            <option>UX Designer</option>
+          </select>
+        </div>
+        <div>
+          <div class="config-label">Experience Level</div>
+          <select class="config-select">
+            <option>Graduate / Entry Level</option>
+            <option>1–3 years</option>
+            <option>3–5 years</option>
+            <option>5+ years</option>
+          </select>
+        </div>
+        <div>
+          <div class="config-label">Their Offer (£)</div>
+          <input class="config-input" placeholder="e.g. 55000" id="salaryOffer">
+        </div>
+        <div>
+          <div class="config-label">Your Target (£)</div>
+          <input class="config-input" placeholder="e.g. 65000" id="salaryTarget">
+        </div>
+        <div>
+          <div class="config-label">Company</div>
+          <input class="config-input" placeholder="e.g. Spotify">
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="startNegotiation()">▶ Start Simulation</button>
+        <div class="salary-tip">
+          <strong>💡 Key principle:</strong> Never give a number first. Always anchor high and justify with market data and your specific value.
+        </div>
+        <div class="salary-tip" style="margin-top:8px;">
+          <strong>📊 Market rate:</strong> Frontend Dev in London = £45k–£85k depending on experience. Use this as your anchor.
+        </div>
+      </div>
+
+      <div class="salary-main">
+        <div class="salary-chat" id="salaryChat">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:16px;text-align:center;padding:40px;">
+            <div style="font-size:48px;">💰</div>
+            <div style="font-size:18px;font-weight:600;">Salary Negotiation Simulator</div>
+            <div style="font-size:14px;color:var(--muted2);max-width:380px;line-height:1.6;">Fill in the details on the left and start the simulation. You'll practice real negotiation scenarios with an AI playing the hiring manager.</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+              <div style="padding:8px 14px;border-radius:100px;background:var(--surface2);border:1px solid var(--border);font-size:12px;color:var(--muted2);">Counter-offer tactics</div>
+              <div style="padding:8px 14px;border-radius:100px;background:var(--surface2);border:1px solid var(--border);font-size:12px;color:var(--muted2);">Handling lowballs</div>
+              <div style="padding:8px 14px;border-radius:100px;background:var(--surface2);border:1px solid var(--border);font-size:12px;color:var(--muted2);">Benefits negotiation</div>
+            </div>
+          </div>
+        </div>
+        <div class="answer-input-area" id="salaryInputArea" style="display:none;">
+          <textarea class="answer-textarea" id="salaryAnswer" placeholder="Type your response to the hiring manager..." rows="2"></textarea>
+          <div class="answer-actions">
+            <span class="char-count"></span>
+            <button class="btn btn-primary btn-sm" onclick="submitSalaryResponse()">Send →</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-panel">
+        <div class="section-title">Negotiation Tactics</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:4px;color:var(--accent);">The Anchor</div>
+            <div style="font-size:11px;color:var(--muted2);line-height:1.6;">State your target first, higher than your real minimum. This sets the negotiating range in your favour.</div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:4px;color:var(--green);">The Silence</div>
+            <div style="font-size:11px;color:var(--muted2);line-height:1.6;">After naming your number, stop talking. Whoever speaks next loses the upper hand.</div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:4px;color:var(--yellow);">The Flinch</div>
+            <div style="font-size:11px;color:var(--muted2);line-height:1.6;">When given an offer, show mild disappointment (not anger). This signals room to move.</div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:4px;color:var(--teal);">Total Package</div>
+            <div style="font-size:11px;color:var(--muted2);line-height:1.6;">Negotiate equity, remote days, title, and bonus — not just salary. Often easier to get.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end prep-body -->
+</div><!-- end main -->
+
+<script>
+// ══════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════
+const VIEWS = ['mock','bank','star','company','salary'];
+function switchView(id, el) {
+  VIEWS.forEach(v => {
+    document.getElementById('view-' + v).classList.toggle('hidden', v !== id);
+  });
+  if (el) {
+    document.querySelectorAll('.prep-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+}
+
+// ══════════════════════════════════════════════════
+// MOCK INTERVIEW
+// ══════════════════════════════════════════════════
+const QUESTIONS = {
+  behavioural: [
+    { text: "Tell me about a time you had to lead a team under significant pressure. What did you do and what was the outcome?", cat: "Leadership" },
+    { text: "Describe a situation where you had a conflict with a teammate. How did you resolve it?", cat: "Conflict Resolution" },
+    { text: "Tell me about a time you failed. What did you learn from it?", cat: "Resilience" },
+    { text: "Give an example of when you showed initiative on a project without being asked.", cat: "Initiative" },
+    { text: "Describe a time you had to adapt quickly to a major change. How did you handle it?", cat: "Adaptability" },
+    { text: "Tell me about the most challenging project you've worked on. What made it difficult and how did you overcome that?", cat: "Problem Solving" },
+    { text: "Describe a time you had to persuade someone who strongly disagreed with your approach.", cat: "Communication" },
+    { text: "Give an example of a goal you set for yourself and how you achieved it.", cat: "Drive" },
+  ],
+  technical: [
+    { text: "Explain the difference between synchronous and asynchronous programming. When would you use each?", cat: "Technical" },
+    { text: "How would you design a URL shortening service like bit.ly? Walk me through your architecture.", cat: "System Design" },
+    { text: "What is the difference between a process and a thread? How does the OS manage them?", cat: "CS Fundamentals" },
+    { text: "Explain how you would optimise a slow SQL query. What steps would you take?", cat: "Databases" },
+    { text: "What is the time and space complexity of your favourite sorting algorithm and why would you choose it?", cat: "Algorithms" },
+    { text: "How does React's virtual DOM work and why is it more efficient than direct DOM manipulation?", cat: "Frontend" },
+  ],
+  situational: [
+    { text: "If you discovered a critical bug in production 30 minutes before a major release, what would you do?", cat: "Situational" },
+    { text: "Your manager gives you an unrealistic deadline for a project. How do you handle it?", cat: "Situational" },
+    { text: "You're halfway through a project when requirements change significantly. Walk me through your response.", cat: "Situational" },
+    { text: "A client is unhappy with your work. What steps do you take to resolve the situation?", cat: "Situational" },
+  ],
+  hr: [
+    { text: "Why do you want to work here specifically? What draws you to this company over others in the space?", cat: "Motivation" },
+    { text: "Where do you see yourself in five years?", cat: "Career Goals" },
+    { text: "What is your greatest professional strength and how has it helped you succeed?", cat: "Self-Awareness" },
+    { text: "Tell me about yourself — walk me through your background and what led you here.", cat: "Introduction" },
+  ]
+};
+
+const FEEDBACK_TEMPLATES = [
+  { clarity: 85, relevance: 78, structure: 90, text: "Strong answer with a clear narrative arc. Your use of specific details strengthens credibility. To improve: quantify the impact more precisely — instead of 'improved performance', try 'reduced load time by 40%'. The STAR structure was evident which is excellent." },
+  { clarity: 72, relevance: 65, structure: 68, text: "Decent foundation but the answer drifted slightly from the question. Focus more on YOUR specific actions rather than what the team did collectively. The situation was well set up, but the result could be stronger — what was the measurable outcome?" },
+  { clarity: 91, relevance: 88, structure: 85, text: "Excellent answer. Concise, specific, and directly relevant. You demonstrated clear ownership and quantified impact. One suggestion: add a brief reflection on what you learned — interviewers love to see growth mindset in action." },
+  { clarity: 60, relevance: 75, structure: 55, text: "The core story is good but the structure needs work. Try using STAR more deliberately: 30 seconds on Situation, 10 seconds on Task, 60 seconds on Action, 20 seconds on Result. Your answer was too heavily weighted on background and light on your specific contribution." },
+];
+
+let mockState = { running: false, questions: [], currentQ: 0, answers: [], totalQ: 5, timer: null, elapsed: 0 };
+let mockDifficulty = 'medium';
+
+function setDiff(d, el) {
+  mockDifficulty = d;
+  document.querySelectorAll('.diff-btn').forEach(b => b.className = 'diff-btn');
+  el.className = `diff-btn active-${d}`;
+}
+
+function getQuestions(type, count) {
+  let pool = [];
+  if (type.includes('Mixed')) pool = [...QUESTIONS.behavioural, ...QUESTIONS.technical, ...QUESTIONS.situational];
+  else if (type.includes('Behavioural')) pool = QUESTIONS.behavioural;
+  else if (type.includes('Technical')) pool = QUESTIONS.technical;
+  else if (type.includes('HR')) pool = QUESTIONS.hr;
+  else pool = [...QUESTIONS.behavioural, ...QUESTIONS.technical];
+  // shuffle
+  return pool.sort(() => Math.random() - 0.5).slice(0, count);
+}
+
+function startMock() {
+  const count = parseInt(document.getElementById('mockQCount').value);
+  const type = document.getElementById('mockType').value;
+  const role = document.getElementById('mockRole').value;
+  const company = document.getElementById('mockCompany').value;
+
+  mockState.questions = getQuestions(type, count);
+  mockState.totalQ = count; mockState.currentQ = 0; mockState.answers = []; mockState.running = true;
+
+  // Build progress dots
+  const dots = document.getElementById('progressDots');
+  dots.innerHTML = mockState.questions.map((_,i) => `<div class="progress-dot ${i===0?'current':''}" id="dot-${i}"></div>`).join('');
+
+  const label = document.getElementById('mockStatusLabel');
+  label.textContent = `${role}${company?' @ '+company:''} · Question 1 of ${count}`;
+  label.style.color = 'var(--text)';
+
+  document.getElementById('interviewStart').classList.add('hidden');
+  document.getElementById('answerInputArea').style.display = 'block';
+  document.getElementById('mockContent').innerHTML = '';
+
+  startTimer();
+  showQuestion(0);
+}
+
+function showQuestion(idx) {
+  const q = mockState.questions[idx];
+  const content = document.getElementById('mockContent');
+  const bubble = document.createElement('div');
+  bubble.className = 'question-bubble';
+  bubble.innerHTML = `
+    <div class="question-label">🤖 AI Interviewer · Question ${idx+1} of ${mockState.totalQ}</div>
+    <div class="question-text">${q.text}</div>
+    <div class="question-category">🏷 ${q.cat}</div>
+  `;
+  content.appendChild(bubble);
+
+  // Confidence meter
+  const meter = document.createElement('div');
+  meter.className = 'confidence-meter';
+  meter.innerHTML = `
+    <div class="meter-label"><span>Answer Strength</span><span id="meterPct">—</span></div>
+    <div class="meter-track"><div class="meter-fill" id="meterFill" style="width:0%;background:var(--accent)"></div></div>
+  `;
+  content.appendChild(meter);
+  content.scrollTop = content.scrollHeight;
+
+  // Live strength meter
+  const ta = document.getElementById('answerText');
+  ta.value = '';
+  ta.addEventListener('input', () => {
+    const len = ta.value.length;
+    const pct = Math.min(100, Math.round(len / 4));
+    const fill = document.getElementById('meterFill');
+    const pctEl = document.getElementById('meterPct');
+    if (fill) {
+      fill.style.width = pct + '%';
+      fill.style.background = pct < 30 ? 'var(--red)' : pct < 65 ? 'var(--yellow)' : 'var(--green)';
+      if (pctEl) pctEl.textContent = pct + '%';
+    }
+  });
+}
+
+function submitAnswer() {
+  const answer = document.getElementById('answerText').value.trim();
+  if (!answer) return;
+
+  const content = document.getElementById('mockContent');
+  // Show answer bubble
+  const ab = document.createElement('div');
+  ab.className = 'answer-bubble';
+  ab.innerHTML = `<div class="answer-label">You</div><div class="answer-text">${answer.replace(/</g,'&lt;')}</div>`;
+  content.appendChild(ab);
+
+  // Typing indicator
+  const typing = document.createElement('div');
+  typing.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0;" class="typing">AI is reviewing your answer...</div>`;
+  content.appendChild(typing);
+  content.scrollTop = content.scrollHeight;
+
+  mockState.answers.push(answer);
+  document.getElementById('answerText').value = '';
+
+  setTimeout(() => {
+    content.removeChild(typing);
+    showFeedback(content);
+  }, 1800);
+}
+
+function showFeedback(content) {
+  const fb = FEEDBACK_TEMPLATES[Math.floor(Math.random() * FEEDBACK_TEMPLATES.length)];
+  const fbEl = document.createElement('div');
+  fbEl.className = 'feedback-bubble';
+  fbEl.innerHTML = `
+    <div class="feedback-label">✦ AI Feedback</div>
+    <div class="feedback-scores">
+      <div class="score-pill"><div class="score-pill-label">Clarity</div><div class="score-pill-val" style="color:${scoreColor(fb.clarity)}">${fb.clarity}</div></div>
+      <div class="score-pill"><div class="score-pill-label">Relevance</div><div class="score-pill-val" style="color:${scoreColor(fb.relevance)}">${fb.relevance}</div></div>
+      <div class="score-pill"><div class="score-pill-label">Structure</div><div class="score-pill-val" style="color:${scoreColor(fb.structure)}">${fb.structure}</div></div>
+    </div>
+    <div class="feedback-text">${fb.text}</div>
+  `;
+  content.appendChild(fbEl);
+
+  // Update dot
+  const dot = document.getElementById(`dot-${mockState.currentQ}`);
+  if (dot) dot.classList.replace('current', 'done');
+  mockState.currentQ++;
+
+  if (mockState.currentQ < mockState.totalQ) {
+    // Next question button
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'btn btn-primary btn-sm';
+    nextBtn.style.cssText = 'margin-top:4px;width:fit-content;';
+    nextBtn.textContent = `Next Question →`;
+    nextBtn.onclick = () => {
+      content.removeChild(nextBtn);
+      const nextDot = document.getElementById(`dot-${mockState.currentQ}`);
+      if (nextDot) nextDot.classList.add('current');
+      document.getElementById('mockStatusLabel').textContent = `Question ${mockState.currentQ+1} of ${mockState.totalQ}`;
+      showQuestion(mockState.currentQ);
+    };
+    content.appendChild(nextBtn);
+  } else {
+    // Session complete
+    stopTimer();
+    const complete = document.createElement('div');
+    const avg = Math.round((FEEDBACK_TEMPLATES.reduce((s,f) => s + f.clarity + f.relevance + f.structure, 0) / (FEEDBACK_TEMPLATES.length * 3)));
+    complete.innerHTML = `
+      <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:18px;padding:24px;text-align:center;margin-top:8px;animation:fadeUp 0.4s ease;">
+        <div style="font-size:36px;margin-bottom:12px;">🎉</div>
+        <div style="font-size:18px;font-weight:600;margin-bottom:6px;">Session Complete!</div>
+        <div style="font-size:13px;color:var(--muted2);margin-bottom:16px;">You answered all ${mockState.totalQ} questions</div>
+        <div style="font-family:'Space Mono',monospace;font-size:32px;font-weight:700;color:var(--green);margin-bottom:4px;">${avg}%</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Overall Score</div>
+        <button class="btn btn-primary" style="margin:0 auto;" onclick="resetMock()">↺ New Session</button>
+      </div>`;
+    content.appendChild(complete);
+    document.getElementById('answerInputArea').style.display = 'none';
+  }
+
+  content.scrollTop = content.scrollHeight;
+}
+
+function scoreColor(s) {
+  return s >= 80 ? '#4acf82' : s >= 65 ? '#f5c842' : '#e85d4a';
+}
+
+function skipQuestion() {
+  if (!mockState.running) return;
+  const dot = document.getElementById(`dot-${mockState.currentQ}`);
+  if (dot) { dot.style.background = 'var(--muted)'; }
+  mockState.currentQ++;
+  if (mockState.currentQ < mockState.totalQ) {
+    const nextDot = document.getElementById(`dot-${mockState.currentQ}`);
+    if (nextDot) nextDot.classList.add('current');
+    showQuestion(mockState.currentQ);
+  }
+}
+
+function resetMock() {
+  stopTimer();
+  mockState = { running:false, questions:[], currentQ:0, answers:[], totalQ:5, timer:null, elapsed:0 };
+  document.getElementById('progressDots').innerHTML = '';
+  document.getElementById('mockStatusLabel').textContent = 'Configure your session →';
+  document.getElementById('mockStatusLabel').style.color = 'var(--muted2)';
+  document.getElementById('answerInputArea').style.display = 'none';
+  document.getElementById('mockContent').innerHTML = `
+    <div class="interview-start" id="interviewStart">
+      <div class="big-emoji">🎯</div>
+      <h2>Ready to ace your interview?</h2>
+      <p>Configure your session on the left, then hit Start. The AI will ask you real interview questions and give structured feedback on each answer.</p>
+    </div>`;
+  document.getElementById('timerDisplay').textContent = '';
+}
+
+let timerInterval = null;
+function startTimer() {
+  mockState.elapsed = 0;
+  const display = document.getElementById('timerDisplay');
+  display.textContent = '0:00';
+  timerInterval = setInterval(() => {
+    mockState.elapsed++;
+    const m = Math.floor(mockState.elapsed / 60);
+    const s = mockState.elapsed % 60;
+    display.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  }, 1000);
+}
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+function updateCharCount() {
+  const v = document.getElementById('answerText').value.length;
+  document.getElementById('charCount').textContent = `${v} / 500`;
+}
+
+// ══════════════════════════════════════════════════
+// QUESTION BANK
+// ══════════════════════════════════════════════════
+const ALL_QUESTIONS = [
+  { text:"Tell me about yourself.", cat:"hr", diff:"easy", tips:"Keep it to 90 seconds. Career story → relevant skills → why here. Don't recite your CV." },
+  { text:"Why do you want to work here?", cat:"hr", diff:"easy", tips:"Research the company's mission, recent news and culture. Connect their values to yours specifically." },
+  { text:"What is your greatest weakness?", cat:"hr", diff:"medium", tips:"Choose a real weakness, show self-awareness, and explain what you're doing to improve it." },
+  { text:"Where do you see yourself in 5 years?", cat:"hr", diff:"easy", tips:"Show ambition but keep it realistic and tied to the role. Avoid 'in your seat' jokes." },
+  { text:"Tell me about a time you failed. What did you learn?", cat:"behavioural", diff:"medium", tips:"Pick a real failure, own it fully, and focus 60% of your answer on the learning and what changed." },
+  { text:"Describe a situation where you had to lead a team.", cat:"behavioural", diff:"medium", tips:"Use STAR. Emphasise how you motivated others, not just what you technically did." },
+  { text:"Give an example of handling a difficult stakeholder or client.", cat:"behavioural", diff:"medium", tips:"Show empathy, active listening, and how you found a solution that worked for both sides." },
+  { text:"Tell me about a time you had to learn something new very quickly.", cat:"behavioural", diff:"easy", tips:"Emphasise your learning strategy and resourcefulness. Quantify the timeline if possible." },
+  { text:"Describe a time you had to make a decision with incomplete information.", cat:"behavioural", diff:"hard", tips:"Show structured thinking: what data you had, what assumptions you made, and how you mitigated risk." },
+  { text:"Tell me about a time you disagreed with your manager.", cat:"behavioural", diff:"hard", tips:"Show respectful assertiveness. The key is showing you can advocate for your view without burning bridges." },
+  { text:"Explain the difference between TCP and UDP.", cat:"technical", diff:"easy", tips:"TCP = reliable, ordered, connection-based. UDP = fast, connectionless, no guarantee. Give a real use case for each." },
+  { text:"What happens when you type a URL in a browser and press Enter?", cat:"technical", diff:"medium", tips:"Cover DNS lookup, TCP handshake, HTTP request/response, rendering. Shows breadth of web knowledge." },
+  { text:"Design a notification system for a social media app.", cat:"technical", diff:"hard", tips:"Think: pub/sub architecture, WebSockets for real-time, queues for async, fanout for large audiences." },
+  { text:"How does garbage collection work in your primary language?", cat:"technical", diff:"medium", tips:"Explain the algorithm (mark-and-sweep, reference counting etc.) and when GC pauses can be a problem." },
+  { text:"What is the difference between an index and a primary key in a database?", cat:"technical", diff:"easy", tips:"Primary key = unique identifier, always indexed. Index = performance optimisation, can be on any column." },
+  { text:"Design Twitter's trending topics feature.", cat:"technical", diff:"hard", tips:"Think: time-windowed counters, distributed aggregation, eventual consistency, cache layer for serving." },
+  { text:"If your team is consistently missing sprint targets, what would you do as PM?", cat:"situational", diff:"medium", tips:"Diagnose first: scope creep? estimation issues? blockers? Then show systematic improvement approach." },
+  { text:"A key engineer just resigned mid-project. How do you handle it?", cat:"situational", diff:"hard", tips:"Short term: stabilise, document, redistribute. Long term: knowledge transfer process, bus factor reduction." },
+  { text:"You have three urgent tasks and can only complete two today. How do you decide?", cat:"situational", diff:"medium", tips:"Show an impact vs effort framework. Communicate proactively to stakeholders about the third task." },
+  { text:"Walk me through how you would onboard yourself into a new codebase.", cat:"situational", diff:"easy", tips:"Read the README, run it locally, trace a user journey end-to-end, read the tests, ask questions strategically." },
+  { text:"Describe your approach to designing a component library from scratch.", cat:"technical", diff:"hard", tips:"Tokens → primitives → compounds → patterns. Discuss theming, accessibility, documentation and versioning." },
+  { text:"How would you improve the checkout flow of an e-commerce app?", cat:"situational", diff:"medium", tips:"Start with data: what's the drop-off rate at each step? Then hypothesis → A/B test → measure." },
+];
+
+let bankFilter = 'all';
+let practicedSet = new Set([0, 3, 5, 9, 10, 14]);
+
+function filterBank(cat, el) {
+  bankFilter = cat;
+  document.querySelectorAll('.bank-cat').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderBank();
+}
+
+function renderBank() {
+  const search = (document.getElementById('bankSearch')?.value || '').toLowerCase();
+  const diff = document.getElementById('bankDiff')?.value || 'all';
+  const catMap = { behavioural:'behavioural', technical:'technical', situational:'situational', hr:'hr', system:'technical', frontend:'technical', backend:'technical', product:'situational', data:'technical', design:'situational', finance:'hr' };
+  const targetCat = catMap[bankFilter];
+
+  const filtered = ALL_QUESTIONS.filter((q,i) => {
+    const matchCat = bankFilter === 'all' || q.cat === targetCat;
+    const matchDiff = diff === 'all' || q.diff === diff;
+    const matchSearch = !search || q.text.toLowerCase().includes(search);
+    return matchCat && matchDiff && matchSearch;
+  });
+
+  const list = document.getElementById('bankList');
+  const diffStyles = { easy:{bg:'var(--green-soft)',color:'var(--green)'}, medium:{bg:'var(--yellow-soft)',color:'var(--yellow)'}, hard:{bg:'var(--red-soft)',color:'var(--red)'} };
+  const catColors = { behavioural:{bg:'var(--purple-soft)',color:'var(--purple)'}, technical:{bg:'var(--blue-soft)',color:'var(--blue)'}, situational:{bg:'var(--teal-soft)',color:'var(--teal)'}, hr:{bg:'var(--orange-soft)',color:'var(--orange)'} };
+
+  list.innerHTML = filtered.map((q, i) => {
+    const realIdx = ALL_QUESTIONS.indexOf(q);
+    const practiced = practicedSet.has(realIdx);
+    const ds = diffStyles[q.diff]; const cs = catColors[q.cat] || catColors.hr;
+    return `
+    <div class="q-card ${practiced?'practiced':''}" id="qcard-${realIdx}">
+      <div class="q-card-top">
+        <div class="q-card-icon" style="background:${cs.bg};color:${cs.color}">
+          ${q.cat==='behavioural'?'🧠':q.cat==='technical'?'⚙️':q.cat==='situational'?'💭':'👤'}
+        </div>
+        <div class="q-text">${q.text}</div>
+      </div>
+      <div class="q-card-bottom">
+        <div class="q-tags">
+          <span class="q-tag" style="background:${ds.bg};color:${ds.color}">${q.diff}</span>
+          <span class="q-tag" style="background:${cs.bg};color:${cs.color}">${q.cat}</span>
+          ${practiced?`<span class="q-tag" style="background:var(--green-soft);color:var(--green)">✓ practiced</span>`:''}
+        </div>
+        <div class="q-actions">
+          <span class="q-expand-btn" onclick="toggleTip(${realIdx})">Tips ▾</span>
+          <span style="margin-left:8px;cursor:pointer;font-size:12px;color:var(--muted);" onclick="markPracticed(${realIdx})">${practiced?'↺ Undo':'✓ Done'}</span>
+        </div>
+      </div>
+      <div class="q-tips" id="qtip-${realIdx}">${q.tips}</div>
+    </div>`;
+  }).join('') || `<div style="text-align:center;padding:40px;color:var(--muted);">No questions found</div>`;
+}
+
+function toggleTip(i) {
+  document.getElementById(`qcard-${i}`).classList.toggle('open');
+  const tip = document.getElementById(`qtip-${i}`);
+  tip.style.display = tip.style.display === 'block' ? 'none' : 'block';
+}
+function markPracticed(i) {
+  if (practicedSet.has(i)) practicedSet.delete(i); else practicedSet.add(i);
+  renderBank();
+}
+function practiceRandom() {
+  const unpracticed = ALL_QUESTIONS.map((_,i)=>i).filter(i => !practicedSet.has(i));
+  if (!unpracticed.length) return;
+  const i = unpracticed[Math.floor(Math.random() * unpracticed.length)];
+  const card = document.getElementById(`qcard-${i}`);
+  if (card) { card.scrollIntoView({behavior:'smooth',block:'center'}); card.style.borderColor = 'var(--accent)'; setTimeout(()=>card.style.borderColor='',1500); }
+}
+
+// ══════════════════════════════════════════════════
+// STAR BUILDER
+// ══════════════════════════════════════════════════
+const STORIES = [
+  { title:"Led a team project under deadline", s:"During my final year at university, my 4-person team was tasked with building a full-stack web app in 6 weeks for a real client. Two weeks before the deadline, our team lead dropped out unexpectedly.", t:"I needed to step up and take over as lead, redistribute the workload, and ensure we still delivered a working product on time without sacrificing quality.", a:"I immediately held an emergency team meeting to reassess scope. I broke the remaining work into clear sprints using Notion, personally took on the backend API work, and set up daily 15-minute standups to catch blockers early.", r:"We delivered the full product on time. The client gave us a 9/10 satisfaction score and our project received the highest mark in the cohort. I was later asked to mentor the next year's students on project management." },
+  { title:"Resolved a production bug at 2am", s:"I was on-call when a critical payment service started failing at 2am, affecting thousands of users mid-checkout.", t:"As the only engineer awake, I had to diagnose and resolve the issue before it caused significant revenue loss.", a:"I checked the monitoring dashboard, traced the error to a third-party API timeout, implemented an exponential backoff retry mechanism, and deployed a hotfix within 45 minutes.", r:"Payment success rate recovered to 99.8% within an hour. I wrote a post-mortem and proposed adding circuit breakers, which we implemented the following sprint." },
+  { title:"Disagreement with a team member", s:"", t:"", a:"", r:"" }
+];
+
+function loadStory(i, el) {
+  document.querySelectorAll('.star-story').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  const s = STORIES[i];
+  document.getElementById('storyTitle').value = s.title;
+  document.getElementById('starS').value = s.s;
+  document.getElementById('starT').value = s.t;
+  document.getElementById('starA').value = s.a;
+  document.getElementById('starR').value = s.r;
+  document.getElementById('starOutput').textContent = 'Click "✦ AI Polish" to generate a clean, interview-ready version of your story.';
+}
+
+function newStory() {
+  document.getElementById('storyTitle').value = 'New Story';
+  ['starS','starT','starA','starR'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('starOutput').textContent = 'Fill in the STAR fields above, then click "✦ AI Polish".';
+}
+
+function setTheme(theme) {
+  document.getElementById('storyTitle').value = `A time I demonstrated ${theme}`;
+}
+
+function polishStory() {
+  const s = document.getElementById('starS').value;
+  const t = document.getElementById('starT').value;
+  const a = document.getElementById('starA').value;
+  const r = document.getElementById('starR').value;
+  if (!s || !a) { document.getElementById('starOutput').textContent = 'Please fill in at least the Situation and Action fields first.'; return; }
+  
+  const polished = `${s.trim()} My responsibility in this situation was to ${t.trim().toLowerCase().replace(/^i needed to /,'')}.\n\nTo tackle this, ${a.trim().toLowerCase().startsWith('i') ? a.trim() : 'I ' + a.trim().toLowerCase()}.\n\nAs a result, ${r.trim().toLowerCase().startsWith('we') || r.trim().toLowerCase().startsWith('i') ? r.trim() : 'we ' + r.trim().toLowerCase()}`;
+  
+  document.getElementById('starOutput').textContent = polished;
+}
+
+function copyStory() {
+  const text = document.getElementById('starOutput').textContent;
+  navigator.clipboard.writeText(text).catch(()=>{});
+  const btn = event.target;
+  btn.textContent = '✓ Copied!'; btn.style.color = 'var(--green)';
+  setTimeout(() => { btn.textContent = '⎘ Copy'; btn.style.color = ''; }, 2000);
+}
+
+// ══════════════════════════════════════════════════
+// COMPANY INTEL
+// ══════════════════════════════════════════════════
+const COMPANIES = {
+  google: {
+    name:"Google", emoji:"🔵", type:"Big Tech · FAANG", color:"#4285F4",
+    founded:"1998", size:"180,000+", hq:"Mountain View, CA",
+    format:"4–6 rounds: Phone screen → 2x Technical → System Design → Behavioural (Googleyness) → Hiring Committee",
+    duration:"4–8 weeks total", style:"Structured, consistent scoring rubric across all interviewers",
+    values:["Googleyness (humility, collaboration)", "Data-driven decision making", "Impact at scale", "Learning & growth mindset"],
+    tips:["Prepare for system design at senior level — even for junior roles it may appear", "Every answer is scored on: Problem Solving, Technical, Communication, Googleyness", "Practise 'How would you improve Google Maps/Search/Gmail'", "They value reasoning over correct answers — think out loud"],
+    questions:["Tell me about a time you had a significant impact on a project.", "Design a distributed key-value store.", "How would you improve Google Maps for visually impaired users?", "Walk me through a technically complex project you're proud of.", "How do you handle disagreements with your tech lead?"]
+  },
+  amazon: {
+    name:"Amazon", emoji:"📦", type:"Big Tech · FAANG", color:"#FF9900",
+    founded:"1994", size:"1,500,000+", hq:"Seattle, WA",
+    format:"5–7 rounds including a 'Bar Raiser' — an interviewer from another team who has veto power",
+    duration:"3–5 weeks", style:"Entirely structured around the 16 Leadership Principles. Every answer must map to an LP.",
+    values:["Customer Obsession", "Ownership", "Invent and Simplify", "Bias for Action", "Deliver Results"],
+    tips:["Prepare 2 STAR stories per Leadership Principle before your interview", "The Bar Raiser will push back on your answers — stay calm and defend your reasoning", "Quantify everything: 'reduced latency by 40%' not 'made it faster'", "Read the 16 Leadership Principles the night before — know them cold"],
+    questions:["Tell me about a time you made a decision without all the information.", "Describe a time you disagreed with your manager and what happened.", "Tell me about a time you failed and what you did about it.", "Give an example of when you went above and beyond for a customer.", "How do you prioritise when you have too much on your plate?"]
+  },
+  spotify: {
+    name:"Spotify", emoji:"🎵", type:"Tech · Scale-up", color:"#1DB954",
+    founded:"2006", size:"9,500+", hq:"Stockholm, Sweden",
+    format:"Recruiter screen → Hiring manager → Technical (2 rounds) → Values/culture fit",
+    duration:"2–4 weeks", style:"Collaborative and values-driven. Strong emphasis on autonomy and culture fit.",
+    values:["Autonomy & trust", "Innovation", "Collaboration", "Social mission", "Authenticity"],
+    tips:["Show genuine passion for music or podcasting — they can tell if it's fake", "They use the 'Spotify model' of squads/tribes — understand this structure", "Culture fit is weighted heavily — show you thrive with high autonomy", "Be ready to discuss work you're proud of in depth — portfolio matters"],
+    questions:["Why Spotify specifically over other music/tech companies?", "Tell me about a project where you had full autonomy. How did you manage it?", "How do you stay motivated when working on long-running projects?", "Describe a time you took a risk that paid off.", "What would you change about Spotify's product today?"]
+  },
+  goldman: {
+    name:"Goldman Sachs", emoji:"💰", type:"Finance · Investment Banking", color:"#0066CC",
+    founded:"1869", size:"45,000+", hq:"New York, NY",
+    format:"HireVue video interview → Superday (6–8 back-to-back interviews in one day)",
+    duration:"6–10 weeks for graduate roles", style:"Extremely competitive. Mix of technical finance, fit questions and market knowledge.",
+    values:["Excellence", "Integrity", "Client focus", "Teamwork", "Innovation in finance"],
+    tips:["Know your 'Why Goldman' cold — vague answers kill your chances instantly", "Be ready to walk through your CV in detail — they will probe every line", "Know current market conditions: interest rates, major M&A deals, market trends", "Demonstrate genuine intellectual curiosity about markets and finance"],
+    questions:["Walk me through your CV.", "Why Goldman Sachs specifically?", "Pitch me a stock you'd buy right now and why.", "Tell me about a time you worked under significant pressure.", "Where do you see interest rates in 12 months and why?"]
+  },
+  monzo: {
+    name:"Monzo", emoji:"🏧", type:"Fintech", color:"#FF4970",
+    founded:"2015", size:"3,000+", hq:"London, UK",
+    format:"Recruiter screen → Take-home task → Technical interview → Values interview",
+    duration:"2–3 weeks", style:"Informal, mission-driven. Strong emphasis on values alignment around financial inclusion.",
+    values:["Make money work for everyone", "Transparency", "Diversity & inclusion", "Move fast, iterate", "Customer empathy"],
+    tips:["Use Monzo yourself and have specific product opinions ready", "They care deeply about diversity — show genuine commitment not just buzzwords", "The take-home task matters a lot — treat it seriously", "They value directness and honesty over polished corporate answers"],
+    questions:["What would you change about the Monzo app right now?", "How do you balance moving fast with maintaining reliability?", "Tell me about a time you advocated for a user even when it was difficult.", "Why fintech? Why now? Why Monzo?", "What's the hardest technical problem you've solved?"]
+  },
+  deepmind: {
+    name:"DeepMind", emoji:"🧠", type:"AI Research", color:"#4285F4",
+    founded:"2010", size:"1,500+", hq:"London, UK",
+    format:"Research talk or technical screen → Research interviews (3–4 rounds) → Values and mission alignment",
+    duration:"6–12 weeks", style:"Extremely rigorous. They hire for long-term research impact, not just implementation.",
+    values:["Scientific rigour", "Safety-conscious AI development", "Multidisciplinary thinking", "Long-term mission focus"],
+    tips:["Have deep knowledge of at least 2–3 sub-areas of ML", "Be ready to whiteboard mathematical proofs", "Read recent DeepMind papers before interviewing", "Show genuine alignment with responsible AI development"],
+    questions:["Walk me through a research paper you found particularly interesting.", "Design an RL environment for a novel task.", "How would you approach making an AI system more robust to distribution shift?", "What do you think are the most important open problems in ML today?", "Tell me about original research or projects you've done."]
+  },
+  meta: {
+    name:"Meta", emoji:"🔷", type:"Big Tech · FAANG", color:"#0668E1",
+    founded:"2004", size:"70,000+", hq:"Menlo Park, CA",
+    format:"Recruiter screen → Technical phone screen → Onsite (Coding × 2, System Design, Behavioural)",
+    duration:"3–5 weeks", style:"Heavy focus on coding skills at all levels. Move fast culture.",
+    values:["Move fast", "Build social value", "Be bold", "Focus on impact", "Live in the future"],
+    tips:["LeetCode hard is standard for senior roles", "System design is critical — practice distributed systems", "They ask 'How would you improve Facebook/Instagram/WhatsApp'", "Show comfort with scale: billions of users, petabytes of data"],
+    questions:["Design Instagram's news feed ranking algorithm.", "Tell me about a time you had to make a major product decision.", "How would you measure the success of a new feature?", "Solve: Given a sorted array, find the target using binary search — then make it work on a rotated array.", "What would you build at Meta if given 6 months and a team of 5?"]
+  },
+  apple: {
+    name:"Apple", emoji:"🍎", type:"Big Tech · FAANG", color:"#555555",
+    founded:"1976", size:"160,000+", hq:"Cupertino, CA",
+    format:"Recruiter → Technical screen → Onsite (6–8 rounds, different team members, highly secretive)",
+    duration:"4–8 weeks", style:"Secretive about process. Strong emphasis on quality, attention to detail and craft.",
+    values:["Simplicity", "Privacy", "Quality over speed", "Think different", "Craftsmanship"],
+    tips:["They value deep expertise — know your speciality inside out", "Attention to detail is paramount — polish everything", "Be prepared for deep dives on past projects", "Research Apple's product philosophy and be able to critique products thoughtfully"],
+    questions:["How would you improve the iPhone's accessibility features?", "Design an offline-first iOS app architecture.", "Tell me about the most technically challenging thing you've built.", "How do you balance performance with battery life in mobile development?", "What Apple product would you redesign and why?"]
+  },
+  bbc: {
+    name:"BBC", emoji:"📺", type:"Media · Public Sector", color:"#BB1919",
+    founded:"1927", size:"22,000+", hq:"London, UK",
+    format:"Application → Online tests → Video interview → Assessment centre (group exercise + individual presentation + interview)",
+    duration:"8–12 weeks for graduate schemes", style:"Public sector process, values-heavy. Strong emphasis on BBC's public service mission.",
+    values:["Impartiality", "Public service", "Creativity", "Accuracy & trust", "Diversity of thought"],
+    tips:["Know the BBC's editorial guidelines and why impartiality matters", "Show genuine passion for media and journalism's role in society", "For tech roles, show awareness of BBC's scale (iPlayer, Sounds, News)", "Assessment centres test collaboration as much as individual skill"],
+    questions:["Why the BBC over a commercial broadcaster?", "How do you feel about the BBC's approach to impartiality?", "Give an example of working effectively in a team under pressure.", "How would you improve BBC iPlayer?", "What public service role do you think technology should play?"]
+  }
+};
+
+function loadCompany(key, el) {
+  document.querySelectorAll('.company-item').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const c = COMPANIES[key];
+  const main = document.getElementById('companyMain');
+  main.innerHTML = `
+    <div class="company-hero">
+      <div class="company-hero-logo">${c.emoji}</div>
+      <div>
+        <div class="company-hero-title">${c.name}</div>
+        <div class="company-hero-sub">${c.type} · Founded ${c.founded} · ${c.size} employees</div>
+        <div class="company-hero-tags">
+          ${c.values.slice(0,3).map(v=>`<span style="padding:4px 10px;border-radius:100px;font-size:11px;background:var(--surface);border:1px solid var(--border2);color:var(--muted2);">${v}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="intel-grid">
+      <div class="intel-card">
+        <div class="intel-card-title">Interview Format</div>
+        <div class="intel-item">${c.format}</div>
+        <div class="intel-item"><strong>Timeline:</strong> ${c.duration}</div>
+        <div class="intel-item"><strong>Style:</strong> ${c.style}</div>
+      </div>
+      <div class="intel-card">
+        <div class="intel-card-title">Core Values to Reference</div>
+        ${c.values.map(v=>`<div class="intel-item">✦ ${v}</div>`).join('')}
+      </div>
+    </div>
+
+    <div class="intel-card" style="margin-bottom:14px;">
+      <div class="intel-card-title">Insider Tips</div>
+      ${c.tips.map(t=>`<div class="intel-item">💡 ${t}</div>`).join('')}
+    </div>
+
+    <div style="margin-bottom:8px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Known Interview Questions</div>
+    <div class="known-q-list">
+      ${c.questions.map((q,i)=>`
+        <div class="known-q">
+          <span class="known-q-num">Q${i+1}</span>
+          <span>${q}</span>
+        </div>`).join('')}
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════
+// SALARY NEGOTIATION SIMULATOR
+// ══════════════════════════════════════════════════
+const SALARY_SCENARIOS = [
+  { speaker:"interviewer", text:"Great news — we'd love to extend you an offer! We're thinking £{offer}. Are you happy with that?" },
+  { speaker:"tip", text:"💡 Don't accept immediately. Pause, express gratitude, then counter. Your goal is £{target}." },
+];
+const SALARY_RESPONSES = [
+  "That's great to hear, thank you! I'm very excited about this opportunity. I was actually hoping we could discuss the compensation a little — based on my research and the market rate for this role in London, I was expecting something closer to £{target}. Is there any flexibility there?",
+  "Wow, that's wonderful news! I do have a question about the package — I've been researching similar roles and my experience would put me at around £{target}. I'd love to find a number that works for both of us.",
+];
+let salaryStep = 0;
+
+function startNegotiation() {
+  const offer = parseInt(document.getElementById('salaryOffer').value) || 55000;
+  const target = parseInt(document.getElementById('salaryTarget').value) || 65000;
+  const chat = document.getElementById('salaryChat');
+  chat.innerHTML = '';
+  salaryStep = 0;
+
+  addSalaryBubble('interviewer', `Congratulations! We'd love to extend you an offer. We're proposing £${offer.toLocaleString()} base salary. Are you happy with that?`);
+  addSalaryTip(`Your target is £${target.toLocaleString()}. Don't accept immediately — express gratitude, then counter with your target and justify it with market data.`);
+  document.getElementById('salaryInputArea').style.display = 'block';
+  salaryStep = 1;
+}
+
+function addSalaryBubble(speaker, text) {
+  const chat = document.getElementById('salaryChat');
+  const el = document.createElement('div');
+  el.className = speaker === 'interviewer' ? 'salary-bubble-interviewer' : 'salary-bubble-user';
+  el.innerHTML = `<div class="bubble-label" style="color:${speaker==='interviewer'?'var(--orange)':'var(--muted)'}">${speaker === 'interviewer' ? '👔 Hiring Manager' : 'You'}</div><div class="bubble-text">${text}</div>`;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addSalaryTip(text) {
+  const chat = document.getElementById('salaryChat');
+  const el = document.createElement('div');
+  el.className = 'salary-tip';
+  el.innerHTML = `<strong>💡 Tip:</strong> ${text}`;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function submitSalaryResponse() {
+  const answer = document.getElementById('salaryAnswer').value.trim();
+  if (!answer) return;
+  addSalaryBubble('user', answer.replace(/</g,'&lt;'));
+  document.getElementById('salaryAnswer').value = '';
+  const target = parseInt(document.getElementById('salaryTarget').value) || 65000;
+  const offer = parseInt(document.getElementById('salaryOffer').value) || 55000;
+  const mid = Math.round((offer + target) / 2);
+
+  setTimeout(() => {
+    const responses = [
+      `Hmm, £${target.toLocaleString()} is above our band for this level. The best we can do is £${mid.toLocaleString()}. Would that work for you?`,
+      `I appreciate you sharing that. We do have some flexibility. We could potentially go to £${mid.toLocaleString()} — though that would be at the top of our range. How does that sound?`,
+      `I understand. Let me take that back to the team. In the meantime, is there anything else in the package — equity, bonus, remote days — that's important to you?`,
+    ];
+    addSalaryBubble('interviewer', responses[salaryStep % responses.length]);
+    addSalaryTip(salaryStep === 1
+      ? "They've come up but haven't reached your target. You can push further or negotiate the total package — equity, bonus, extra holiday days."
+      : "Consider the full package: a £2k difference in salary might be offset by better equity, bonuses or flexibility.");
+    salaryStep++;
+  }, 1200);
+}
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+renderBank();
+loadCompany('google', document.querySelector('.company-item'));
+</script>
+</body>
+</html>

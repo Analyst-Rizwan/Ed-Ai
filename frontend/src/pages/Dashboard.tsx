@@ -221,8 +221,8 @@ const Dashboard = () => {
           ) : (
             savedRoadmaps.map((r, i) => {
               const grad = ROADMAP_GRADIENTS[i % ROADMAP_GRADIENTS.length];
-              const totalDays = r.phases?.flatMap((p: any) => p.weeks?.flatMap((w: any) => w.days || []) || []).length || 0;
-              const completedDays = r.phases?.flatMap((p: any) => p.weeks?.flatMap((w: any) => (w.days || []).filter((d: any) => d.completed)) || []).length || 0;
+              const totalDays = r.roadmapJson?.phases?.flatMap((p: any) => p.weeks?.flatMap((w: any) => w.days || []) || []).length || 0;
+              const completedDays = r.roadmapJson?.phases?.flatMap((p: any) => p.weeks?.flatMap((w: any) => (w.days || []).filter((d: any) => d.completed)) || []).length || 0;
               const pct = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
               const diff = r.level === "advanced" ? "hard" : r.level === "beginner" ? "easy" : "medium";
               const diffStyle = diff === "hard"

@@ -1,630 +1,872 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EduAI – Dashboard (Light)</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #f2f2f0;
-    --surface: #ffffff;
-    --surface2: #f7f7f5;
-    --border: rgba(0,0,0,0.07);
-    --border2: rgba(0,0,0,0.11);
-    --text: #1a1a1a;
-    --muted: #9a9a9a;
-    --accent: #6b4ef0;
-    --accent-glow: rgba(107,78,240,0.2);
-    --accent-soft: rgba(107,78,240,0.09);
-    --red: #e04b37;
-    --orange: #e97d35;
-    --yellow: #d4a017;
-    --yellow-soft: rgba(212,160,23,0.12);
-    --green: #2db870;
-    --teal: #1faaaa;
-    --blue: #3d72e0;
-    --purple: #9b55e8;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduAI – Dashboard (Light)</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f2f2f0;
+      --surface: #ffffff;
+      --surface2: #f7f7f5;
+      --border: rgba(0, 0, 0, 0.07);
+      --border2: rgba(0, 0, 0, 0.11);
+      --text: #1a1a1a;
+      --muted: #9a9a9a;
+      --accent: #6b4ef0;
+      --accent-glow: rgba(107, 78, 240, 0.2);
+      --accent-soft: rgba(107, 78, 240, 0.09);
+      --red: #e04b37;
+      --orange: #e97d35;
+      --yellow: #d4a017;
+      --yellow-soft: rgba(212, 160, 23, 0.12);
+      --green: #2db870;
+      --teal: #1faaaa;
+      --blue: #3d72e0;
+      --purple: #9b55e8;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    display: flex;
-    height: 100vh;
-    overflow: hidden;
-  }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-  /* ── SIDEBAR ── */
-  .sidebar {
-    width: 220px;
-    min-width: 220px;
-    background: var(--surface);
-    border-right: 1px solid var(--border2);
-    display: flex;
-    flex-direction: column;
-    padding: 24px 16px;
-    gap: 4px;
-    box-shadow: var(--shadow-sm);
-  }
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border2);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      gap: 4px;
+      box-shadow: var(--shadow-sm);
+    }
 
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 0 8px 24px;
-    font-family: 'Space Mono', monospace;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--yellow);
-  }
-  .logo span { font-size: 22px; }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 8px 24px;
+      font-family: 'Space Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--yellow);
+    }
 
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.18s;
-    text-decoration: none;
-  }
-  .nav-item:hover { background: var(--surface2); color: var(--text); }
-  .nav-item.active { background: var(--accent-soft); color: var(--accent); }
-  .nav-item .icon { width: 18px; text-align: center; font-size: 16px; }
+    .logo span {
+      font-size: 22px;
+    }
 
-  .sidebar-footer {
-    margin-top: auto;
-    padding-top: 16px;
-    border-top: 1px solid var(--border2);
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .user-card {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 12px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-  }
-  .avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--purple), var(--blue));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    color: #fff;
-    flex-shrink: 0;
-  }
-  .user-info { flex: 1; min-width: 0; }
-  .user-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
-  .user-level { font-size: 11px; color: var(--muted); }
-  .settings-btn { color: var(--muted); cursor: pointer; font-size: 14px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.18s;
+      text-decoration: none;
+    }
 
-  /* ── MAIN ── */
-  .main {
-    flex: 1;
-    overflow-y: auto;
-    padding: 32px 36px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-  }
-  .main::-webkit-scrollbar { width: 5px; }
-  .main::-webkit-scrollbar-track { background: transparent; }
-  .main::-webkit-scrollbar-thumb { background: #ddd; border-radius: 99px; }
+    .nav-item:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
 
-  /* ── HEADER ── */
-  .header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-  }
-  .header-title { font-size: 26px; font-weight: 600; line-height: 1.2; }
-  .header-title span { color: var(--accent); }
-  .header-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
-  .header-actions { display: flex; gap: 10px; align-items: center; }
+    .nav-item.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
 
-  .btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
-    border-radius: 100px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: all 0.18s;
-    font-family: 'DM Sans', sans-serif;
-  }
-  .btn-ghost {
-    background: var(--surface);
-    color: var(--muted);
-    border: 1px solid var(--border2);
-    box-shadow: var(--shadow-sm);
-  }
-  .btn-ghost:hover { color: var(--text); border-color: rgba(0,0,0,0.18); }
-  .btn-primary {
-    background: var(--accent);
-    color: #fff;
-    box-shadow: 0 4px 14px var(--accent-glow);
-  }
-  .btn-primary:hover { background: #7c62f5; }
+    .nav-item .icon {
+      width: 18px;
+      text-align: center;
+      font-size: 16px;
+    }
 
-  .notif-btn {
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; font-size: 16px;
-    position: relative;
-    box-shadow: var(--shadow-sm);
-  }
-  .notif-btn::after {
-    content: '';
-    position: absolute;
-    top: 7px; right: 7px;
-    width: 7px; height: 7px;
-    background: var(--red);
-    border-radius: 50%;
-    border: 2px solid var(--surface);
-  }
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--border2);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
 
-  /* ── TOGGLE PILL ── */
-  .toggle-pill {
-    display: inline-flex;
-    background: var(--surface2);
-    border-radius: 100px;
-    padding: 4px;
-    gap: 2px;
-    border: 1px solid var(--border);
-  }
-  .toggle-opt {
-    padding: 6px 16px;
-    border-radius: 100px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.18s;
-    color: var(--muted);
-  }
-  .toggle-opt.active {
-    background: var(--surface);
-    color: var(--text);
-    box-shadow: var(--shadow-sm);
-  }
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+    }
 
-  /* ── STAT CARDS ── */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-  }
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.2s, transform 0.2s;
-  }
-  .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
-  .stat-header { display: flex; align-items: center; justify-content: space-between; }
-  .stat-label { font-size: 12px; color: var(--muted); font-weight: 500; }
-  .stat-icon {
-    width: 30px; height: 30px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-  }
-  .stat-value { font-size: 28px; font-weight: 600; font-family: 'Space Mono', monospace; line-height: 1; }
-  .stat-sub { font-size: 11px; color: var(--muted); }
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
 
-  /* colored dots */
-  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .user-info {
+      flex: 1;
+      min-width: 0;
+    }
 
-  /* ── TAGS ROW ── */
-  .tags-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .tags-label { font-size: 11px; color: var(--muted); margin-right: 4px; }
-  .tag-dot {
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: transform 0.15s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-  }
-  .tag-dot:hover { transform: scale(1.35); }
+    .user-name {
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text);
+    }
 
-  /* ── SECTIONS ── */
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-  }
-  .section-title {
-    font-size: 15px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .badge {
-    padding: 3px 10px;
-    border-radius: 100px;
-    font-size: 11px;
-    font-weight: 600;
-    background: var(--surface2);
-    color: var(--muted);
-    font-family: 'Space Mono', monospace;
-    border: 1px solid var(--border);
-  }
+    .user-level {
+      font-size: 11px;
+      color: var(--muted);
+    }
 
-  /* ── XP BAR ── */
-  .xp-bar-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 20px;
-    box-shadow: var(--shadow-sm);
-  }
-  .xp-bar-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-    font-size: 13px;
-    color: var(--muted);
-  }
-  .xp-bar-row span:last-child { color: var(--accent); font-weight: 600; font-family: 'Space Mono', monospace; }
-  .xp-track {
-    height: 6px;
-    background: var(--surface2);
-    border-radius: 99px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-  }
-  .xp-fill {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, var(--accent), var(--blue));
-    border-radius: 99px;
-    transition: width 1s cubic-bezier(0.22,1,0.36,1);
-  }
+    .settings-btn {
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+    }
 
-  /* ── TWO COL ── */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    /* ── MAIN ── */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
 
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 20px;
-    box-shadow: var(--shadow-sm);
-  }
+    .main::-webkit-scrollbar {
+      width: 5px;
+    }
 
-  /* ── ROADMAP ITEMS ── */
-  .roadmap-item {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 14px;
-    border-radius: 14px;
-    background: var(--surface2);
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: all 0.18s;
-    border: 1px solid var(--border);
-  }
-  .roadmap-item:last-child { margin-bottom: 0; }
-  .roadmap-item:hover { border-color: var(--border2); box-shadow: var(--shadow-sm); background: #fafafa; }
-  .roadmap-row { display: flex; align-items: center; justify-content: space-between; }
-  .roadmap-name { font-size: 13px; font-weight: 600; }
-  .diff-tag {
-    padding: 3px 10px;
-    border-radius: 100px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-  .diff-medium { background: rgba(212,160,23,0.12); color: #b8860b; }
-  .diff-hard { background: rgba(224,75,55,0.10); color: var(--red); }
-  .progress-track {
-    height: 4px;
-    background: var(--bg);
-    border-radius: 99px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-  }
-  .progress-fill {
-    height: 100%;
-    border-radius: 99px;
-  }
+    .main::-webkit-scrollbar-track {
+      background: transparent;
+    }
 
-  /* ── ACTIVITY ── */
-  .activity-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 12px 14px;
-    border-radius: 14px;
-    background: var(--surface2);
-    margin-bottom: 10px;
-    border: 1px solid var(--border);
-  }
-  .activity-item:last-child { margin-bottom: 0; }
-  .activity-dot-wrap {
-    width: 34px; height: 34px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    font-size: 14px;
-  }
-  .activity-text { flex: 1; }
-  .activity-title { font-size: 13px; font-weight: 500; }
-  .activity-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .main::-webkit-scrollbar-thumb {
+      background: #ddd;
+      border-radius: 99px;
+    }
 
-  /* ── TUTOR BANNER ── */
-  .tutor-banner {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 20px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: var(--shadow-sm);
-  }
-  .tutor-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-  .tutor-sub { font-size: 13px; color: var(--muted); }
+    /* ── HEADER ── */
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
 
-  /* ── ANIMATIONS ── */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(14px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .stat-card { animation: fadeUp 0.45s ease both; }
-  .stat-card:nth-child(1) { animation-delay: 0.05s; }
-  .stat-card:nth-child(2) { animation-delay: 0.10s; }
-  .stat-card:nth-child(3) { animation-delay: 0.15s; }
-  .stat-card:nth-child(4) { animation-delay: 0.20s; }
-  .xp-bar-wrap { animation: fadeUp 0.45s 0.25s ease both; }
-  .two-col { animation: fadeUp 0.45s 0.30s ease both; }
-  .tutor-banner { animation: fadeUp 0.45s 0.35s ease both; }
-</style>
+    .header-title {
+      font-size: 26px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .header-title span {
+      color: var(--accent);
+    }
+
+    .header-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.18s;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .btn-ghost {
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--border2);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: rgba(0, 0, 0, 0.18);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      background: #7c62f5;
+    }
+
+    .notif-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      position: relative;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .notif-btn::after {
+      content: '';
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      width: 7px;
+      height: 7px;
+      background: var(--red);
+      border-radius: 50%;
+      border: 2px solid var(--surface);
+    }
+
+    /* ── TOGGLE PILL ── */
+    .toggle-pill {
+      display: inline-flex;
+      background: var(--surface2);
+      border-radius: 100px;
+      padding: 4px;
+      gap: 2px;
+      border: 1px solid var(--border);
+    }
+
+    .toggle-opt {
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s;
+      color: var(--muted);
+    }
+
+    .toggle-opt.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ── STAT CARDS ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+
+    .stat-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+
+    .stat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .stat-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 600;
+      font-family: 'Space Mono', monospace;
+      line-height: 1;
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* colored dots */
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* ── TAGS ROW ── */
+    .tags-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tags-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-right: 4px;
+    }
+
+    .tag-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.15s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    }
+
+    .tag-dot:hover {
+      transform: scale(1.35);
+    }
+
+    /* ── SECTIONS ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--surface2);
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      border: 1px solid var(--border);
+    }
+
+    /* ── XP BAR ── */
+    .xp-bar-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .xp-bar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .xp-bar-row span:last-child {
+      color: var(--accent);
+      font-weight: 600;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .xp-track {
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .xp-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--blue));
+      border-radius: 99px;
+      transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* ── TWO COL ── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ── ROADMAP ITEMS ── */
+    .roadmap-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--surface2);
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.18s;
+      border: 1px solid var(--border);
+    }
+
+    .roadmap-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .roadmap-item:hover {
+      border-color: var(--border2);
+      box-shadow: var(--shadow-sm);
+      background: #fafafa;
+    }
+
+    .roadmap-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .roadmap-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .diff-tag {
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .diff-medium {
+      background: rgba(212, 160, 23, 0.12);
+      color: #b8860b;
+    }
+
+    .diff-hard {
+      background: rgba(224, 75, 55, 0.10);
+      color: var(--red);
+    }
+
+    .progress-track {
+      height: 4px;
+      background: var(--bg);
+      border-radius: 99px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+    }
+
+    /* ── ACTIVITY ── */
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--surface2);
+      margin-bottom: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .activity-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .activity-dot-wrap {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    .activity-text {
+      flex: 1;
+    }
+
+    .activity-title {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .activity-time {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── TUTOR BANNER ── */
+    .tutor-banner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tutor-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .tutor-sub {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .stat-card {
+      animation: fadeUp 0.45s ease both;
+    }
+
+    .stat-card:nth-child(1) {
+      animation-delay: 0.05s;
+    }
+
+    .stat-card:nth-child(2) {
+      animation-delay: 0.10s;
+    }
+
+    .stat-card:nth-child(3) {
+      animation-delay: 0.15s;
+    }
+
+    .stat-card:nth-child(4) {
+      animation-delay: 0.20s;
+    }
+
+    .xp-bar-wrap {
+      animation: fadeUp 0.45s 0.25s ease both;
+    }
+
+    .two-col {
+      animation: fadeUp 0.45s 0.30s ease both;
+    }
+
+    .tutor-banner {
+      animation: fadeUp 0.45s 0.35s ease both;
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- SIDEBAR -->
-<aside class="sidebar">
-  <div class="logo"><span>⚡</span> EduAI</div>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo"><span>⚡</span> EduAI</div>
 
-  <a class="nav-item active"><span class="icon">⊞</span> Dashboard</a>
-  <a class="nav-item"><span class="icon">🗺</span> Roadmaps</a>
-  <a class="nav-item"><span class="icon">&lt;/&gt;</span> Practice</a>
-  <a class="nav-item"><span class="icon">◉</span> Profile</a>
-  <a class="nav-item"><span class="icon">✦</span> AI Tutor</a>
+    <a class="nav-item active"><span class="icon">⊞</span> Dashboard</a>
+    <a class="nav-item"><span class="icon">🗺</span> Roadmaps</a>
+    <a class="nav-item"><span class="icon">&lt;/&gt;</span> Practice</a>
+    <a class="nav-item"><span class="icon">◉</span> Profile</a>
+    <a class="nav-item"><span class="icon">✦</span> AI Tutor</a>
 
-  <div class="tags-row" style="margin-top:20px; padding:0 8px;">
-    <span class="tags-label">Tags</span>
-    <div class="tag-dot" style="background:var(--red)"></div>
-    <div class="tag-dot" style="background:var(--orange)"></div>
-    <div class="tag-dot" style="background:var(--yellow)"></div>
-    <div class="tag-dot" style="background:var(--green)"></div>
-    <div class="tag-dot" style="background:var(--teal)"></div>
-    <div class="tag-dot" style="background:var(--blue)"></div>
-    <div class="tag-dot" style="background:var(--purple)"></div>
-  </div>
-
-  <div class="sidebar-footer">
-    <div class="user-card">
-      <div class="avatar">MR</div>
-      <div class="user-info">
-        <div class="user-name">Mohamed R.</div>
-        <div class="user-level">Level 1</div>
-      </div>
-      <div class="settings-btn">⚙</div>
+    <div class="tags-row" style="margin-top:20px; padding:0 8px;">
+      <span class="tags-label">Tags</span>
+      <div class="tag-dot" style="background:var(--red)"></div>
+      <div class="tag-dot" style="background:var(--orange)"></div>
+      <div class="tag-dot" style="background:var(--yellow)"></div>
+      <div class="tag-dot" style="background:var(--green)"></div>
+      <div class="tag-dot" style="background:var(--teal)"></div>
+      <div class="tag-dot" style="background:var(--blue)"></div>
+      <div class="tag-dot" style="background:var(--purple)"></div>
     </div>
-    <a class="nav-item" style="font-size:13px;"><span class="icon">→</span> Logout</a>
-  </div>
-</aside>
 
-<!-- MAIN -->
-<main class="main">
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="avatar">MR</div>
+        <div class="user-info">
+          <div class="user-name">Mohamed R.</div>
+          <div class="user-level">Level 1</div>
+        </div>
+        <div class="settings-btn">⚙</div>
+      </div>
+      <a class="nav-item" style="font-size:13px;"><span class="icon">→</span> Logout</a>
+    </div>
+  </aside>
 
-  <!-- HEADER -->
-  <div class="header">
-    <div>
-      <div class="header-title">Welcome back, <span>Mohamed Rizwan</span> 👋</div>
-      <div class="header-sub">Ready to continue your learning journey?</div>
-      <div style="margin-top:14px;">
-        <div class="toggle-pill">
-          <div class="toggle-opt active">Overview</div>
-          <div class="toggle-opt">Activity</div>
-          <div class="toggle-opt">Goals</div>
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div>
+        <div class="header-title">Welcome back, <span>Mohamed Rizwan</span> 👋</div>
+        <div class="header-sub">Ready to continue your learning journey?</div>
+        <div style="margin-top:14px;">
+          <div class="toggle-pill">
+            <div class="toggle-opt active">Overview</div>
+            <div class="toggle-opt">Activity</div>
+            <div class="toggle-opt">Goals</div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="header-actions">
-      <button class="btn btn-ghost">🗺 Browse Roadmaps</button>
-      <button class="btn btn-primary">&lt;/&gt; Start Practice</button>
-      <div class="notif-btn">🔔</div>
-    </div>
-  </div>
-
-  <!-- STATS -->
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-header">
-        <span class="stat-label">Current Streak</span>
-        <div class="stat-icon" style="background:rgba(224,75,55,0.10)">🔥</div>
+      <div class="header-actions">
+        <button class="btn btn-ghost">🗺 Browse Roadmaps</button>
+        <button class="btn btn-primary">&lt;/&gt; Start Practice</button>
+        <div class="notif-btn">🔔</div>
       </div>
-      <div class="stat-value" style="color:var(--red)">—</div>
-      <div class="stat-sub">days in a row</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-header">
-        <span class="stat-label">Total XP</span>
-        <div class="stat-icon" style="background:var(--yellow-soft)">🏆</div>
-      </div>
-      <div class="stat-value" style="color:var(--yellow)">0</div>
-      <div class="stat-sub">Level</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-header">
-        <span class="stat-label">Active Roadmaps</span>
-        <div class="stat-icon" style="background:rgba(45,184,112,0.10)">◎</div>
-      </div>
-      <div class="stat-value" style="color:var(--green)">3</div>
-      <div class="stat-sub">in progress</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-header">
-        <span class="stat-label">Problems Solved</span>
-        <div class="stat-icon" style="background:var(--accent-soft)">✦</div>
-      </div>
-      <div class="stat-value" style="color:var(--accent)">127</div>
-      <div class="stat-sub">this month</div>
-    </div>
-  </div>
 
-  <!-- XP BAR -->
-  <div class="xp-bar-wrap">
-    <div class="section-header">
-      <div class="section-title">Level Progress <span class="badge">LVL 1</span></div>
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Current Streak</span>
+          <div class="stat-icon" style="background:rgba(224,75,55,0.10)">🔥</div>
+        </div>
+        <div class="stat-value" style="color:var(--red)">—</div>
+        <div class="stat-sub">days in a row</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Total XP</span>
+          <div class="stat-icon" style="background:var(--yellow-soft)">🏆</div>
+        </div>
+        <div class="stat-value" style="color:var(--yellow)">0</div>
+        <div class="stat-sub">Level</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Active Roadmaps</span>
+          <div class="stat-icon" style="background:rgba(45,184,112,0.10)">◎</div>
+        </div>
+        <div class="stat-value" style="color:var(--green)">3</div>
+        <div class="stat-sub">in progress</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Problems Solved</span>
+          <div class="stat-icon" style="background:var(--accent-soft)">✦</div>
+        </div>
+        <div class="stat-value" style="color:var(--accent)">127</div>
+        <div class="stat-sub">this month</div>
+      </div>
     </div>
-    <div class="xp-bar-row">
-      <span>0 / 500 XP</span>
-      <span>0%</span>
-    </div>
-    <div class="xp-track">
-      <div class="xp-fill" id="xpFill"></div>
-    </div>
-  </div>
 
-  <!-- TWO COL -->
-  <div class="two-col">
-
-    <div class="card">
+    <!-- XP BAR -->
+    <div class="xp-bar-wrap">
       <div class="section-header">
-        <div class="section-title">Continue Learning</div>
-        <span class="badge">3 active</span>
+        <div class="section-title">Level Progress <span class="badge">LVL 1</span></div>
       </div>
-
-      <div class="roadmap-item">
-        <div class="roadmap-row">
-          <span class="roadmap-name">Frontend Developer</span>
-          <span class="diff-tag diff-medium">medium</span>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" style="width:38%;background:linear-gradient(90deg,var(--yellow),var(--orange))"></div>
-        </div>
+      <div class="xp-bar-row">
+        <span>0 / 500 XP</span>
+        <span>0%</span>
       </div>
-
-      <div class="roadmap-item">
-        <div class="roadmap-row">
-          <span class="roadmap-name">Backend Developer</span>
-          <span class="diff-tag diff-hard">hard</span>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" style="width:24%;background:linear-gradient(90deg,var(--red),var(--orange))"></div>
-        </div>
-      </div>
-
-      <div class="roadmap-item">
-        <div class="roadmap-row">
-          <span class="roadmap-name">DSA Mastery</span>
-          <span class="diff-tag diff-medium">medium</span>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" style="width:55%;background:linear-gradient(90deg,var(--teal),var(--blue))"></div>
-        </div>
+      <div class="xp-track">
+        <div class="xp-fill" id="xpFill"></div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="section-header">
-        <div class="section-title">Recent Activity</div>
+    <!-- TWO COL -->
+    <div class="two-col">
+
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">Continue Learning</div>
+          <span class="badge">3 active</span>
+        </div>
+
+        <div class="roadmap-item">
+          <div class="roadmap-row">
+            <span class="roadmap-name">Frontend Developer</span>
+            <span class="diff-tag diff-medium">medium</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:38%;background:linear-gradient(90deg,var(--yellow),var(--orange))">
+            </div>
+          </div>
+        </div>
+
+        <div class="roadmap-item">
+          <div class="roadmap-row">
+            <span class="roadmap-name">Backend Developer</span>
+            <span class="diff-tag diff-hard">hard</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:24%;background:linear-gradient(90deg,var(--red),var(--orange))">
+            </div>
+          </div>
+        </div>
+
+        <div class="roadmap-item">
+          <div class="roadmap-row">
+            <span class="roadmap-name">DSA Mastery</span>
+            <span class="diff-tag diff-medium">medium</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:55%;background:linear-gradient(90deg,var(--teal),var(--blue))">
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="activity-item">
-        <div class="activity-dot-wrap" style="background:var(--accent-soft)">
-          <span style="color:var(--accent)">&lt;/&gt;</span>
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">Recent Activity</div>
         </div>
-        <div class="activity-text">
-          <div class="activity-title">Solved Two Sum</div>
-          <div class="activity-time">2h ago</div>
+
+        <div class="activity-item">
+          <div class="activity-dot-wrap" style="background:var(--accent-soft)">
+            <span style="color:var(--accent)">&lt;/&gt;</span>
+          </div>
+          <div class="activity-text">
+            <div class="activity-title">Solved Two Sum</div>
+            <div class="activity-time">2h ago</div>
+          </div>
+          <div class="dot" style="background:var(--accent)"></div>
         </div>
-        <div class="dot" style="background:var(--accent)"></div>
+
+        <div class="activity-item">
+          <div class="activity-dot-wrap" style="background:var(--yellow-soft)">
+            <span style="color:var(--yellow)">🔥</span>
+          </div>
+          <div class="activity-text">
+            <div class="activity-title">7-Day Streak Achieved</div>
+            <div class="activity-time">6h ago</div>
+          </div>
+          <div class="dot" style="background:var(--yellow)"></div>
+        </div>
+
+        <div class="activity-item">
+          <div class="activity-dot-wrap" style="background:rgba(45,184,112,0.10)">
+            <span style="color:var(--green)">✓</span>
+          </div>
+          <div class="activity-text">
+            <div class="activity-title">Completed Python Roadmap</div>
+            <div class="activity-time">1d ago</div>
+          </div>
+          <div class="dot" style="background:var(--green)"></div>
+        </div>
       </div>
 
-      <div class="activity-item">
-        <div class="activity-dot-wrap" style="background:var(--yellow-soft)">
-          <span style="color:var(--yellow)">🔥</span>
-        </div>
-        <div class="activity-text">
-          <div class="activity-title">7-Day Streak Achieved</div>
-          <div class="activity-time">6h ago</div>
-        </div>
-        <div class="dot" style="background:var(--yellow)"></div>
-      </div>
-
-      <div class="activity-item">
-        <div class="activity-dot-wrap" style="background:rgba(45,184,112,0.10)">
-          <span style="color:var(--green)">✓</span>
-        </div>
-        <div class="activity-text">
-          <div class="activity-title">Completed Python Roadmap</div>
-          <div class="activity-time">1d ago</div>
-        </div>
-        <div class="dot" style="background:var(--green)"></div>
-      </div>
     </div>
 
-  </div>
-
-  <!-- TUTOR BANNER -->
-  <div class="tutor-banner">
-    <div>
-      <div class="tutor-title">Need help with a concept? ✦</div>
-      <div class="tutor-sub">Ask the AI Tutor for explanations, debugging help, or learning strategies.</div>
+    <!-- TUTOR BANNER -->
+    <div class="tutor-banner">
+      <div>
+        <div class="tutor-title">Need help with a concept? ✦</div>
+        <div class="tutor-sub">Ask the AI Tutor for explanations, debugging help, or learning strategies.</div>
+      </div>
+      <button class="btn btn-primary">💬 Ask AI Tutor</button>
     </div>
-    <button class="btn btn-primary">💬 Ask AI Tutor</button>
-  </div>
 
-</main>
+  </main>
 
-<script>
-  document.querySelectorAll('.toggle-opt').forEach(opt => {
-    opt.addEventListener('click', () => {
-      opt.closest('.toggle-pill').querySelectorAll('.toggle-opt').forEach(o => o.classList.remove('active'));
-      opt.classList.add('active');
+  <script>
+    document.querySelectorAll('.toggle-opt').forEach(opt => {
+      opt.addEventListener('click', () => {
+        opt.closest('.toggle-pill').querySelectorAll('.toggle-opt').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+      });
     });
-  });
-</script>
+  </script>
 </body>
+
 </html>
