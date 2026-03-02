@@ -1,9 +1,7 @@
 const CACHE_NAME = 'eduai-v1';
 const urlsToCache = [
   '/',
-  '/index.html',
-  '/src/index.css',
-  '/src/main.tsx'
+  '/index.html'
 ];
 
 self.addEventListener('install', (event) => {
