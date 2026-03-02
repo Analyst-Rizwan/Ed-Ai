@@ -122,7 +122,9 @@ const AITutorDrawer: React.FC<AITutorDrawerProps> = ({ open, onOpenChange }) => 
               {messages.map((m) => (
                 <div
                   key={m.id}
-                  className={`rounded-md p-3 max-w-[85%] ${m.role === "user" ? "ml-auto bg-yellow-100 text-black" : "mr-auto bg-slate-100 text-slate-900"
+                  className={`rounded-md p-3 max-w-[85%] ${m.role === "user"
+                      ? "ml-auto bg-primary text-primary-foreground"
+                      : "mr-auto bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
                     }`}
                 >
                   <div className="text-xs text-muted-foreground mb-1">{m.role === "user" ? "You" : "Tutor"}</div>
