@@ -60,8 +60,8 @@ def login_access_token(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=False, # Set to False for local Docker/HTTP
-        samesite="lax",
+        secure=True, # Must be True for samesite="none"
+        samesite="none", # Allow cross-origin requests
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     )
     
@@ -155,8 +155,8 @@ def refresh_token(
         key="refresh_token",
         value=new_refresh_token,
         httponly=True,
-        secure=False,
-        samesite="lax",
+        secure=True,
+        samesite="none",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     )
     
@@ -188,7 +188,12 @@ def logout(
                 break
         db.commit()
 
-    response.delete_cookie("refresh_token")
+    response.delete_cookie(
+        "refresh_token",
+        httponly=True,
+        secure=True,
+        samesite="none"
+    )
     return {"message": "Logged out successfully"}
 
 @router.get("/me", response_model=UserOut)
