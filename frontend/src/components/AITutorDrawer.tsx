@@ -6,6 +6,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Send, Sparkles } from "lucide-react";
 import { askAI } from "@/lib/ai";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css"; // Ensure you have this installed or imported for math to render nicely
 
 interface AITutorDrawerProps {
   open: boolean;
@@ -117,12 +122,24 @@ const AITutorDrawer: React.FC<AITutorDrawerProps> = ({ open, onOpenChange }) => 
               {messages.map((m) => (
                 <div
                   key={m.id}
-                  className={`rounded-md p-3 max-w-[85%] ${
-                    m.role === "user" ? "ml-auto bg-yellow-100 text-black" : "mr-auto bg-slate-100 text-slate-900"
-                  }`}
+                  className={`rounded-md p-3 max-w-[85%] ${m.role === "user" ? "ml-auto bg-yellow-100 text-black" : "mr-auto bg-slate-100 text-slate-900"
+                    }`}
                 >
                   <div className="text-xs text-muted-foreground mb-1">{m.role === "user" ? "You" : "Tutor"}</div>
-                  <div className="text-sm whitespace-pre-wrap">{m.text}</div>
+                  <div className="text-sm">
+                    {m.role === "user" ? (
+                      <div className="whitespace-pre-wrap">{m.text}</div>
+                    ) : (
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm, remarkMath]}
+                          rehypePlugins={[rehypeKatex]}
+                        >
+                          {m.text}
+                        </ReactMarkdown>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
 
