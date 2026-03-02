@@ -1,10 +1,11 @@
-const CACHE_NAME = 'eduai-v1';
+const CACHE_NAME = 'eduai-v2';
 const urlsToCache = [
   '/',
   '/index.html'
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(urlsToCache))
@@ -13,8 +14,21 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => response || fetch(event.request))
+    fetch(event.request)
+      .then((networkResponse) => {
+        // If it was a successful network request, put a copy in the cache
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        // If network fails (offline), fallback to cache
+        return caches.match(event.request);
+      })
   );
 });
 
