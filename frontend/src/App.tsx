@@ -11,6 +11,7 @@ import Practice from "./pages/Practice";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import Opportunities from "./pages/Opportunities";
+import PortfolioBuilder from "./pages/PortfolioBuilder";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -49,6 +50,7 @@ const App = () => {
                     <Route path="roadmaps" element={<Roadmaps />} />
                     <Route path="practice" element={<Practice />} />
                     <Route path="opportunities" element={<Opportunities />} />
+                    <Route path="portfolio" element={<PortfolioBuilder />} />
                     <Route path="profile" element={<Profile />} />
                     <Route path="admin" element={<Admin />} />
                   </Route>

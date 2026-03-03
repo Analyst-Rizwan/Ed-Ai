@@ -10,6 +10,7 @@ const navItems = [
   { icon: "🗺", label: "Roadmaps", path: "/roadmaps" },
   { icon: "</>", label: "Practice", path: "/practice" },
   { icon: "◈", label: "Opportunities", path: "/opportunities" },
+  { icon: "🌐", label: "Portfolio", path: "/portfolio" },
   { icon: "◉", label: "Profile", path: "/profile" },
 ];
 

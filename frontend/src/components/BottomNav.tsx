@@ -1,6 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Map, Code, User, MessageSquare } from "lucide-react";
+import { LayoutDashboard, Map, Code, User, MessageSquare, Globe } from "lucide-react";
 
 interface BottomNavProps {
   onOpenAITutor: () => void;
@@ -11,6 +11,7 @@ const BottomNav = ({ onOpenAITutor }: BottomNavProps) => {
     { icon: LayoutDashboard, label: "Dashboard", path: "/" },
     { icon: Map, label: "Roadmaps", path: "/roadmaps" },
     { icon: Code, label: "Practice", path: "/practice" },
+    { icon: Globe, label: "Portfolio", path: "/portfolio" },
     { icon: User, label: "Profile", path: "/profile" },
   ];
 
