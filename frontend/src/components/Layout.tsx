@@ -25,6 +25,8 @@ const Layout = () => {
         transition: "background 0.25s ease",
       }}>
         <Outlet />
+        {/* Spacer so content is never hidden behind the fixed bottom nav */}
+        {isMobile && <div style={{ minHeight: 80, flexShrink: 0 }} />}
       </main>
 
       {isMobile && <BottomNav onOpenAITutor={() => setAiTutorOpen(true)} />}
