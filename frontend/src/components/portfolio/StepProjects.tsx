@@ -2,7 +2,7 @@
 import { useState } from "react";
 import type { Project, PortfolioState } from "@/hooks/usePortfolioState";
 import { GITHUB_REPOS } from "@/hooks/usePortfolioState";
-import { sendMessageToAI } from "@/lib/ai";
+import { askAI } from "@/lib/ai";
 
 interface Props {
     state: PortfolioState;
@@ -49,7 +49,7 @@ const StepProjects = ({ state, addProject, deleteProject, updateProject, importP
     const aiEnhanceProject = async (p: Project) => {
         try {
             const prompt = `Enhance this project description for a developer portfolio. Project: "${p.name}". Current description: "${p.desc}". Tech: ${p.tech.join(", ")}. Write a compelling 2-sentence description. Return ONLY the description text, no quotes.`;
-            const result = await sendMessageToAI(prompt, { temperature: 0.7, max_tokens: 150 });
+            const result = await askAI(prompt, { temperature: 0.7, max_tokens: 150 });
             if (result && !result.startsWith("⚠️")) {
                 updateProject(p.id, "desc", result);
             }

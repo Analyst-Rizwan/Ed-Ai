@@ -222,6 +222,45 @@ def create_conversation(user=Depends(get_current_user), db: Session = Depends(ge
     return {"conversation_id": conv.id}
 
 
+@router.get("/conversations", summary="List user conversations")
+def list_conversations(user=Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Returns all conversations for the current user, ordered by most recent first.
+    Each includes a preview snippet and message count.
+    """
+    from app.db.models_tutor import Conversation, TutorMessage
+    from sqlalchemy import func
+
+    user_id = getattr(user, "id", None)
+    convs = (
+        db.query(Conversation)
+        .filter(Conversation.user_id == user_id)
+        .order_by(Conversation.created_at.desc())
+        .all()
+    )
+
+    result = []
+    for c in convs:
+        msg_count = db.query(func.count(TutorMessage.id)).filter(TutorMessage.conversation_id == c.id).scalar()
+        # Get the first user message as preview
+        first_msg = (
+            db.query(TutorMessage)
+            .filter(TutorMessage.conversation_id == c.id, TutorMessage.role == "user")
+            .order_by(TutorMessage.created_at.asc())
+            .first()
+        )
+        preview = (first_msg.content[:80] + "...") if first_msg and len(first_msg.content) > 80 else (first_msg.content if first_msg else "")
+        result.append({
+            "id": c.id,
+            "topic": c.topic,
+            "preview": preview,
+            "message_count": msg_count,
+            "created_at": c.created_at.isoformat() if c.created_at else None,
+        })
+
+    return {"conversations": result}
+
+
 @router.get("/conversations/{conv_id}", summary="Get conversation messages")
 def get_conversation(conv_id: int, user=Depends(get_current_user), db: Session = Depends(get_db)):
     msgs = tutor_service.get_conversation_messages(db, conv_id)
@@ -236,6 +275,22 @@ def get_conversation(conv_id: int, user=Depends(get_current_user), db: Session =
             for m in msgs
         ]
     }
+
+
+@router.delete("/conversations/{conv_id}", summary="Delete a conversation")
+def delete_conversation(conv_id: int, user=Depends(get_current_user), db: Session = Depends(get_db)):
+    """Delete a conversation and all its messages."""
+    from app.db.models_tutor import Conversation
+
+    conv = db.query(Conversation).filter(
+        Conversation.id == conv_id,
+        Conversation.user_id == getattr(user, "id", None),
+    ).first()
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    db.delete(conv)
+    db.commit()
+    return {"status": "deleted"}
 
 
 # ---------------------------

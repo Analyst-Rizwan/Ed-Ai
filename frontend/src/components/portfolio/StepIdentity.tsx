@@ -2,7 +2,7 @@
 import { useRef } from "react";
 import type { PortfolioState } from "@/hooks/usePortfolioState";
 import { AVATAR_EMOJIS } from "@/hooks/usePortfolioState";
-import { sendMessageToAI } from "@/lib/ai";
+import { askAI } from "@/lib/ai";
 
 interface Props {
     state: PortfolioState;
@@ -63,7 +63,7 @@ const StepIdentity = ({ state, setField, setAvatar }: Props) => {
     const aiSuggestBio = async () => {
         try {
             const prompt = `Write a 2-3 sentence professional bio for a developer portfolio. Name: ${state.name || "a developer"}. Title: ${state.title || "Software Developer"}. Keep it concise and impressive. Return ONLY the bio text, no quotes.`;
-            const result = await sendMessageToAI(prompt, { temperature: 0.8, max_tokens: 200 });
+            const result = await askAI(prompt, { temperature: 0.8, max_tokens: 200 });
             if (result && !result.startsWith("⚠️")) {
                 setField("bio", result);
                 flashField(bioRef.current);
@@ -83,7 +83,7 @@ const StepIdentity = ({ state, setField, setAvatar }: Props) => {
     const aiSuggestTitle = async () => {
         try {
             const prompt = `Suggest a short professional title for a developer portfolio (max 6 words). Name: ${state.name || "Developer"}. Return ONLY the title, no quotes.`;
-            const result = await sendMessageToAI(prompt, { temperature: 0.9, max_tokens: 30 });
+            const result = await askAI(prompt, { temperature: 0.9, max_tokens: 30 });
             if (result && !result.startsWith("⚠️")) {
                 setField("title", result);
                 flashField(titleRef.current);
@@ -98,7 +98,7 @@ const StepIdentity = ({ state, setField, setAvatar }: Props) => {
     const aiSuggestTagline = async () => {
         try {
             const prompt = `Suggest a short portfolio tagline/CTA (max 10 words). E.g. "Open to internships · Building in public". Return ONLY the tagline, no quotes.`;
-            const result = await sendMessageToAI(prompt, { temperature: 0.9, max_tokens: 30 });
+            const result = await askAI(prompt, { temperature: 0.9, max_tokens: 30 });
             if (result && !result.startsWith("⚠️")) {
                 setField("tagline", result);
                 flashField(taglineRef.current);

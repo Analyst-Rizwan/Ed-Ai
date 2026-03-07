@@ -1,6 +1,6 @@
 // frontend/src/components/portfolio/StepExperience.tsx
 import type { Experience, PortfolioState } from "@/hooks/usePortfolioState";
-import { sendMessageToAI } from "@/lib/ai";
+import { askAI } from "@/lib/ai";
 
 interface Props {
     state: PortfolioState;
@@ -28,7 +28,7 @@ const StepExperience = ({ state, addExperience, deleteExperience, updateExperien
     const aiEnhanceExp = async (e: Experience) => {
         try {
             const prompt = `Enhance this ${e.type === "work" ? "work experience" : "education"} description for a portfolio. Role: "${e.role}" at "${e.org}". Current: "${e.desc}". Make it more impactful, 2-3 sentences. Return ONLY the text.`;
-            const result = await sendMessageToAI(prompt, { temperature: 0.7, max_tokens: 150 });
+            const result = await askAI(prompt, { temperature: 0.7, max_tokens: 150 });
             if (result && !result.startsWith("⚠️")) {
                 updateExperience(e.id, "desc", result);
             }

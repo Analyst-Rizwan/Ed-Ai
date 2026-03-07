@@ -76,19 +76,19 @@ const Profile = () => {
   return (
     <div className="space-y-6 animate-in">
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row gap-6">
-        <Card className="glass border-border/50 flex-1">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-6">
+      <div className="flex flex-col gap-4">
+        <Card className="glass border-border/50">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-start gap-4">
               <img
                 src={user.avatar_url || "/avatar.png"}
                 alt={user.full_name || user.username}
-                className="h-24 w-24 rounded-full ring-4 ring-primary/20 object-cover"
+                className="h-16 w-16 sm:h-24 sm:w-24 rounded-full ring-4 ring-primary/20 object-cover flex-shrink-0"
               />
 
-              <div className="flex-1 space-y-4">
+              <div className="flex-1 min-w-0 space-y-3">
                 <div>
-                  <h1 className="text-3xl font-heading font-bold">{user.full_name || user.username}</h1>
+                  <h1 className="text-xl sm:text-3xl font-heading font-bold break-words">{user.full_name || user.username}</h1>
                   <p className="text-muted-foreground">{user.email}</p>
                   {user.bio && <p className="text-sm mt-2 max-w-lg">{user.bio}</p>}
 
@@ -205,8 +205,26 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        {/* STATS CARDS */}
-        <div className="flex flex-col gap-4 w-full md:w-64">
+        {/* STATS CARDS - side by side on mobile */}
+        <div className="grid grid-cols-2 gap-3 sm:hidden">
+          <Card className="glass border-border/50">
+            <CardContent className="p-4 text-center">
+              <Flame className="h-6 w-6 text-destructive mx-auto mb-1" />
+              <div className="text-2xl font-bold">0</div>
+              <p className="text-xs text-muted-foreground">Day Streak</p>
+            </CardContent>
+          </Card>
+          <Card className="glass border-border/50">
+            <CardContent className="p-4 text-center">
+              <Trophy className="h-6 w-6 text-primary mx-auto mb-1" />
+              <div className="text-2xl font-bold">{(xp).toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">Total XP</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* STATS CARDS - stacked on desktop */}
+        <div className="hidden sm:flex flex-col gap-4 w-full md:w-64">
           <Card className="glass border-border/50">
             <CardContent className="p-4 text-center">
               <Flame className="h-8 w-8 text-destructive mx-auto mb-2" />
@@ -214,7 +232,6 @@ const Profile = () => {
               <p className="text-sm text-muted-foreground">Day Streak</p>
             </CardContent>
           </Card>
-
           <Card className="glass border-border/50">
             <CardContent className="p-4 text-center">
               <Trophy className="h-8 w-8 text-primary mx-auto mb-2" />
@@ -227,11 +244,11 @@ const Profile = () => {
 
       {/* TABS */}
       <Tabs defaultValue="activity" className="space-y-6">
-        <TabsList className="glass border border-border/50">
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-          <TabsTrigger value="achievements">Achievements</TabsTrigger>
-          <TabsTrigger value="stats">Statistics</TabsTrigger>
-          <TabsTrigger value="sync">Sync Profile</TabsTrigger>
+        <TabsList className="glass border border-border/50 w-full flex">
+          <TabsTrigger value="activity" className="flex-1 text-xs sm:text-sm">Activity</TabsTrigger>
+          <TabsTrigger value="achievements" className="flex-1 text-xs sm:text-sm">Achievements</TabsTrigger>
+          <TabsTrigger value="stats" className="flex-1 text-xs sm:text-sm">Statistics</TabsTrigger>
+          <TabsTrigger value="sync" className="flex-1 text-xs sm:text-sm">Sync</TabsTrigger>
         </TabsList>
 
         {/* ACTIVITY TAB */}

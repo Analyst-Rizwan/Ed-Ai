@@ -31,6 +31,7 @@ def init_db():
     from app.models.roadmap import Roadmap
     from app.models.problem import Problem
     from app.models.refresh_token import RefreshToken
+    from app.models.otp_code import OTPCode
 
     Base.metadata.create_all(bind=engine)
     logger.info("Database initialized successfully")

@@ -15,24 +15,14 @@ load_dotenv()
 # DATABASE CONFIG
 # =========================
 
-# Supabase pooler connection (6543)
+# Direct connection from .env
 DATABASE_URL = (
-    "postgresql://postgres.hcidjkbsrkygdimdfura:"
-    "HgqV62%24cH%2B%2Bz%3FwG"
-    "@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres"
+    "postgresql://postgres.aetctkzideeievhuktnp:"
+    "GeLJf612pX5MGiha"
+    "@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres"
 )
 
-engine = create_engine(
-    DATABASE_URL,
-    echo=False,
-    pool_pre_ping=True,
-)
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-)
 
 # =========================
 # LEETCODE CONFIG
@@ -143,6 +133,24 @@ async def fetch_all_problems() -> list[dict]:
 # =========================
 
 def batch_insert_postgres(problems: list[dict]) -> None:
+    print(f"Opening database connection to insert {len(problems)} problems...")
+    
+    engine = create_engine(
+        DATABASE_URL,
+        echo=False,
+        pool_size=10,
+        max_overflow=20,
+        pool_timeout=120,
+        pool_recycle=1800,
+        connect_args={'connect_timeout': 60}
+    )
+    
+    SessionLocal = sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        bind=engine,
+    )
+    
     session = SessionLocal()
 
     try:
@@ -238,12 +246,12 @@ def batch_insert_postgres(problems: list[dict]) -> None:
 
         session.commit()
         print(
-            f"✅ Done! Inserted: {inserted}, Updated: {updated}"
+            f"Done! Inserted: {inserted}, Updated: {updated}"
         )
 
     except Exception as e:
         session.rollback()
-        print(f"❌ Error: {e}")
+        print(f"Error: {e}")
         raise
     finally:
         session.close()
@@ -254,11 +262,11 @@ def batch_insert_postgres(problems: list[dict]) -> None:
 # =========================
 
 async def main():
-    print("🔄 Fetching problems from LeetCode...")
+    print("Fetching problems from LeetCode...")
     problems = await fetch_all_problems()
 
     print(
-        f"\n📥 Inserting {len(problems)} problems into PostgreSQL..."
+        f"\nInserting {len(problems)} problems into PostgreSQL..."
     )
     batch_insert_postgres(problems)
 

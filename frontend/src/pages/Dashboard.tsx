@@ -61,6 +61,7 @@ const Dashboard = () => {
       } finally {
         setLoading(false);
       }
+      return null;
     };
     load();
   }, []);
@@ -99,8 +100,8 @@ const Dashboard = () => {
     <>
       {/* ── HEADER ── */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }} className="fade-up">
-        <div>
-          <div style={{ fontSize: 26, fontWeight: 600, lineHeight: 1.2, color: "var(--text)" }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 22, fontWeight: 600, lineHeight: 1.3, color: "var(--text)", wordBreak: "break-word" }}>
             Welcome back, <span style={{ color: "var(--accent)" }}>{username}</span> 👋
           </div>
           <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
@@ -113,7 +114,7 @@ const Dashboard = () => {
             }}>
               {["Overview", "Activity", "Goals"].map((tab) => (
                 <div key={tab} onClick={() => setActiveTab(tab)} style={{
-                  padding: "6px 16px", borderRadius: 100, fontSize: 13, fontWeight: 500,
+                  padding: "6px 12px", borderRadius: 100, fontSize: 12, fontWeight: 500,
                   cursor: "pointer", transition: "all 0.18s",
                   background: activeTab === tab ? "var(--surface)" : "transparent",
                   color: activeTab === tab ? "var(--text)" : "var(--muted)",
@@ -124,8 +125,9 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <Link to="/roadmaps" style={{
+        {/* Bell icon only on mobile, full buttons on desktop */}
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0, marginLeft: 10 }}>
+          <Link to="/roadmaps" className="dash-desktop-only" style={{
             display: "flex", alignItems: "center", gap: 8,
             padding: "10px 18px", borderRadius: 100, fontSize: 13, fontWeight: 600,
             background: "var(--surface)", color: "var(--muted)",
@@ -136,7 +138,7 @@ const Dashboard = () => {
             onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted)"; }}
           >🗺 Browse Roadmaps</Link>
 
-          <Link to="/practice" style={{
+          <Link to="/practice" className="dash-desktop-only" style={{
             display: "flex", alignItems: "center", gap: 8,
             padding: "10px 18px", borderRadius: 100, fontSize: 13, fontWeight: 600,
             background: "var(--accent)", color: "#fff",
@@ -149,7 +151,7 @@ const Dashboard = () => {
             background: "var(--surface)", border: "1px solid var(--border2)",
             display: "flex", alignItems: "center", justifyContent: "center",
             cursor: "pointer", fontSize: 16, position: "relative",
-            boxShadow: "var(--shadow-sm)",
+            boxShadow: "var(--shadow-sm)", flexShrink: 0,
           }}>
             🔔
             <div style={{
@@ -161,8 +163,26 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Mobile quick-action buttons shown below header */}
+      <div className="dash-mobile-only" style={{ display: "flex", gap: 10 }}>
+        <Link to="/roadmaps" style={{
+          flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+          padding: "10px", borderRadius: 100, fontSize: 13, fontWeight: 600,
+          background: "var(--surface)", color: "var(--muted)",
+          border: "1px solid var(--border2)", boxShadow: "var(--shadow-sm)",
+          textDecoration: "none",
+        }}>🗺 Roadmaps</Link>
+        <Link to="/practice" style={{
+          flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+          padding: "10px", borderRadius: 100, fontSize: 13, fontWeight: 600,
+          background: "var(--accent)", color: "#fff",
+          boxShadow: "0 4px 14px var(--accent-glow)",
+          textDecoration: "none",
+        }}>&lt;/&gt; Practice</Link>
+      </div>
+
       {/* ── STAT CARDS ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>
         {[
           { label: "Current Streak", icon: "🔥", iconBg: "rgba(224,75,55,0.10)", value: summary.streak || "—", sub: "days in a row", color: "var(--red)" },
           { label: "Total XP", icon: "🏆", iconBg: "var(--yellow-soft)", value: summary.xp.toLocaleString(), sub: `Level ${summary.level}`, color: "var(--yellow)" },
@@ -202,7 +222,7 @@ const Dashboard = () => {
       </div>
 
       {/* ── TWO COLUMN ── */}
-      <div className="fade-up-6" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+      <div className="fade-up-6" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
 
         {/* Continue Learning */}
         <div style={{ ...card }}>
@@ -303,6 +323,11 @@ const Dashboard = () => {
           fontFamily: "'DM Sans', sans-serif",
         }}>💬 Ask AI Tutor</button>
       </div>
+
+      <style>{`
+        @media (min-width: 640px) { .dash-mobile-only { display: none !important; } }
+        @media (max-width: 639px) { .dash-desktop-only { display: none !important; } }
+      `}</style>
     </>
   );
 };
