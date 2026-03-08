@@ -5,6 +5,7 @@ from typing import Optional, Dict, Any
 import logging
 import json
 import re
+import asyncio
 
 from sqlalchemy.orm import Session
 from openai import AsyncOpenAI, OpenAIError
@@ -354,21 +355,14 @@ Do not include any 'days' arrays in the planner output.
     if not isinstance(phases, list) or len(phases) == 0:
         raise HTTPException(status_code=502, detail="Planner returned no phases. Check model output and logs.")
 
-    # 2) Expand each week (cheaper model)
-    total_xp = 0
-    for phase in phases:
-        phase_weeks = phase.get("weeks") or []
-        if not isinstance(phase_weeks, list):
-            continue
+    # 2) Expand each week (cheaper model) concurrently
+    async def process_week(phase_idx: int, week_idx: int, week: Dict[str, Any]):
+        week_number = week.get("week_number")
+        theme = week.get("theme", "")
+        outcome = week.get("outcome", "")
+        summary = week.get("summary", "")
 
-        phase_xp = 0
-        for week in phase_weeks:
-            week_number = week.get("week_number")
-            theme = week.get("theme", "")
-            outcome = week.get("outcome", "")
-            summary = week.get("summary", "")
-
-            week_prompt = f"""
+        week_prompt = f"""
 Expand this week into daily tasks (5 days OK). Context:
 - Topic: {topic}
 - Level: {level}
@@ -404,22 +398,47 @@ Rules:
 - CRITICAL: Provide ONLY REAL, USABLE, and FREE learning resources. Use actual links to active websites such as official documentation (e.g., MDN, Python.org), well-known tutorials (e.g., freeCodeCamp, W3Schools), or specific real YouTube videos/channels. NEVER use placeholder links like "example.com" or fabricated URLs.
 - Return valid JSON only.
 """
+        try:
             expanded = await _call_week_expander(week_prompt)
+        except Exception as e:
+            logger.error("Failed to expand week %s: %s", week_number, e)
+            expanded = {}
 
-            days = expanded.get("days") or []
-            week_xp = expanded.get("week_xp") or 0
-            weekly_resources = expanded.get("weekly_resources") or []
+        days = expanded.get("days") or []
+        week_xp = expanded.get("week_xp") or 0
+        weekly_resources = expanded.get("weekly_resources") or []
 
-            # attach the expanded week data
-            week["days"] = days
-            week["week_xp"] = week_xp
-            week["weekly_resources"] = weekly_resources
+        # attach the expanded week data
+        week["days"] = days
+        week["week_xp"] = week_xp
+        week["weekly_resources"] = weekly_resources
+        
+        return phase_idx, week_idx, week_xp
 
-            if isinstance(week_xp, (int, float)):
-                phase_xp += week_xp
+    # Gather all week tasks
+    tasks = []
+    for p_idx, phase in enumerate(phases):
+        phase_weeks = phase.get("weeks") or []
+        if not isinstance(phase_weeks, list):
+            continue
+        for w_idx, week in enumerate(phase_weeks):
+            tasks.append(process_week(p_idx, w_idx, week))
 
-        phase["phase_xp"] = phase_xp
-        total_xp += phase_xp
+    # Execute all concurrently
+    results = await asyncio.gather(*tasks)
+
+    # Accumulate XP
+    total_xp = 0
+    phase_xp_sums = [0] * len(phases)
+    
+    for r in results:
+        p_idx, w_idx, w_xp = r
+        if isinstance(w_xp, (int, float)):
+            phase_xp_sums[p_idx] += w_xp
+            total_xp += w_xp
+
+    for p_idx, phase in enumerate(phases):
+        phase["phase_xp"] = phase_xp_sums[p_idx]
 
     skeleton["total_xp"] = total_xp
     skeleton["phases"] = phases
