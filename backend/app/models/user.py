@@ -41,6 +41,12 @@ class User(Base):
     location = Column(String, nullable=True)
 
     # ============================================================
+    # OAUTH FIELDS
+    # ============================================================
+    github_access_token = Column(String, nullable=True)
+    github_username = Column(String, nullable=True)
+
+    # ============================================================
     # RELATIONSHIPS
     # ============================================================
 

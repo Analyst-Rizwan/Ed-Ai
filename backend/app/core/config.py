@@ -63,6 +63,10 @@ class Settings(BaseSettings):
     DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "info")
 
+    # === GitHub OAuth ===
+    GITHUB_CLIENT_ID: str | None = os.getenv("GITHUB_CLIENT_ID")
+    GITHUB_CLIENT_SECRET: str | None = os.getenv("GITHUB_CLIENT_SECRET")
+
     # Pydantic v2 settings config
     model_config = SettingsConfigDict(
         env_file=".env",

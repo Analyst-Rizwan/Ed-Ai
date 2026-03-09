@@ -17,6 +17,8 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import GitHubCallback from "./pages/GitHubCallback";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 
 
@@ -43,6 +45,8 @@ const App = () => {
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/github/callback" element={<GitHubCallback />} />
 
                 <Route element={<ProtectedRoute />}>
                   <Route path="/" element={<Layout />}>

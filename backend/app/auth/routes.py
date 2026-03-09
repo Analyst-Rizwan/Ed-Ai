@@ -252,3 +252,105 @@ def register_user(
     db.commit()
     db.refresh(user)
     return user
+
+
+# ===============================
+# 🔒 FORGOT PASSWORD (OTP)
+# ===============================
+import secrets
+from pydantic import BaseModel, EmailStr
+from app.models.otp_code import OTPCode
+from app.services.email_service import send_otp_email
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class VerifyOTPRequest(BaseModel):
+    email: EmailStr
+    code: str
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    code: str
+    new_password: str
+
+
+@router.post("/forgot-password")
+def forgot_password(body: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """Generate a 6-digit OTP and send it to the user's email."""
+    user = db.query(User).filter(User.email == body.email).first()
+    if not user:
+        # Don't reveal whether the email exists
+        return {"message": "If that email is registered, you will receive a reset code."}
+
+    # Invalidate any existing unused OTPs for this email
+    db.query(OTPCode).filter(
+        OTPCode.email == body.email,
+        OTPCode.used == False,
+    ).update({"used": True})
+
+    # Generate a new 6-digit OTP
+    code = "".join([str(secrets.randbelow(10)) for _ in range(6)])
+    otp = OTPCode(
+        email=body.email,
+        code=code,
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
+    )
+    db.add(otp)
+    db.commit()
+
+    # Send email (falls back to console if SMTP not configured)
+    send_otp_email(body.email, code)
+
+    return {"message": "If that email is registered, you will receive a reset code."}
+
+
+@router.post("/verify-otp")
+def verify_otp(body: VerifyOTPRequest, db: Session = Depends(get_db)):
+    """Validate an OTP code."""
+    otp = db.query(OTPCode).filter(
+        OTPCode.email == body.email,
+        OTPCode.code == body.code,
+        OTPCode.used == False,
+    ).order_by(OTPCode.created_at.desc()).first()
+
+    if not otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP code")
+
+    if otp.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="OTP code has expired")
+
+    return {"valid": True}
+
+
+@router.post("/reset-password")
+def reset_password(body: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Reset password using a valid OTP code."""
+    otp = db.query(OTPCode).filter(
+        OTPCode.email == body.email,
+        OTPCode.code == body.code,
+        OTPCode.used == False,
+    ).order_by(OTPCode.created_at.desc()).first()
+
+    if not otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP code")
+
+    if otp.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="OTP code has expired")
+
+    user = db.query(User).filter(User.email == body.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Mark OTP as used
+    otp.used = True
+
+    # Update password using get_password_hash
+    user.password_hash = get_password_hash(body.new_password)
+
+    db.commit()
+
+    return {"message": "Password reset successfully. You can now login with your new password."}

@@ -416,6 +416,42 @@ export const opportunitiesApi = {
 };
 
 // ============================================================
+// GITHUB TYPES & API
+// ============================================================
+export interface GitHubStatus {
+  connected: boolean;
+  github_username: string | null;
+}
+
+export const githubApi = {
+  getAuthUrl: async (): Promise<{ url: string }> => {
+    return fetchWithAuth("/github/auth-url");
+  },
+
+  connect: async (code: string): Promise<{ status: string; github_username: string }> => {
+    return fetchWithAuth("/github/connect", {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    });
+  },
+
+  getStatus: async (): Promise<GitHubStatus> => {
+    return fetchWithAuth("/github/status");
+  },
+
+  deployPortfolio: async (data: {
+    html_content: string;
+    repo_name: string;
+    workflow_yaml: string;
+  }): Promise<{ status: string; url: string; message: string }> => {
+    return fetchWithAuth("/github/deploy-portfolio", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+};
+
+// ============================================================
 // EXPORT DEFAULT
 // ============================================================
 export default {
@@ -426,4 +462,5 @@ export default {
   leetcode: leetcodeApi,
   dashboard: dashboardApi,
   opportunities: opportunitiesApi,
+  github: githubApi,
 };
