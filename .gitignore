@@ -32,3 +32,7 @@ gen_hash.py
 test_login.py
 test_jwt_hash.py
 *.log
+
+# Credential files — NEVER commit these
+1-Run
+backend/scripts/import_to_supabase.py

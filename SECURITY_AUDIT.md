@@ -42,7 +42,7 @@
 **The `.env` file contains real, live production credentials:**
 
 ```
-DATABASE_URL=postgresql://postgres.aetctkzideeievhuktnp:GeLJf612pX5MGiha@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres
+DATABASE_URL=postgresql://postgres.***:***@aws-***.pooler.supabase.com:6543/postgres
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...  (full admin key that bypasses all RLS)
 SUPABASE_JWT_SECRET=xXV8PPeJKY2Tv...
 SECRET_KEY=7SS2iLjfi9nEZDg37op_Xok_...
