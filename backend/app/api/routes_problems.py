@@ -83,16 +83,19 @@ def get_problems(
     skip = (page - 1) * page_size
     problems = query.order_by(Problem.id).offset(skip).limit(page_size).all()
 
-    # Build response with solved status
+    # Build response with solved status — single batch query instead of N+1
+    problem_ids = [p.id for p in problems]
+    solved_set = set()
+    if problem_ids:
+        solved_rows = db.query(Progress.problem_id).filter(
+            Progress.user_id == user_id,
+            Progress.problem_id.in_(problem_ids),
+            Progress.solved == True,
+        ).all()
+        solved_set = {row[0] for row in solved_rows}
+
     problem_list = []
     for p in problems:
-        progress = db.query(Progress).filter(
-            Progress.user_id == user_id,
-            Progress.problem_id == p.id
-        ).first()
-        
-        solved = progress.solved if progress else False
-        
         problem_list.append(
             ProblemSchema(
                 id=p.id,
@@ -106,7 +109,7 @@ def get_problems(
                 starter_code=p.starter_code,
                 test_cases=p.test_cases,
                 hints=p.hints,
-                solved=solved,
+                solved=p.id in solved_set,
                 leetcode_slug=p.leetcode_slug,
             )
         )

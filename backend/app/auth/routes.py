@@ -228,7 +228,7 @@ def register_user(
     if user:
         raise HTTPException(
             status_code=400,
-            detail="The user with this email already exists in the system.",
+            detail="Registration failed. Please try again or use a different email.",
         )
     
     user = User(
