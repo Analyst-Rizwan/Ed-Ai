@@ -27,7 +27,8 @@ class TestRegister:
         _register_user(client, "dup@example.com", "user1")
         resp = _register_user(client, "dup@example.com", "user2")
         assert resp.status_code == 400
-        assert "already exists" in resp.json()["detail"]
+        # SECURITY: Generic message to prevent email enumeration (VULN-12)
+        assert "Registration failed" in resp.json()["detail"]
 
     def test_register_missing_fields(self, client):
         resp = client.post("/api/auth/register", json={"email": "x@x.com"})

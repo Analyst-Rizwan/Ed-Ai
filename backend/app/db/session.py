@@ -1,13 +1,16 @@
+"""
+Single source of truth for database engine, session, and dependency injection.
+
+All routes should import `get_db` from this module:
+    from app.db.session import get_db
+"""
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
-from app.db.base_class import Base
+from app.db.base_class import Base  # noqa: F401 – re-exported for Alembic
 
 DATABASE_URL = settings.DATABASE_URL
-
-connect_args = {}
-if DATABASE_URL.startswith("sqlite"):
-    connect_args = {"check_same_thread": False}
 
 # Connection pool tuning for 2000+ concurrent users.
 # pool_size=20 base + max_overflow=30 = 50 connections per worker.
@@ -16,13 +19,10 @@ if DATABASE_URL.startswith("sqlite"):
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
-    connect_args=connect_args,
-    **({
-        "pool_size": 20,
-        "max_overflow": 30,
-        "pool_timeout": 30,
-        "pool_recycle": 1800,
-    } if not DATABASE_URL.startswith("sqlite") else {}),
+    pool_size=20,
+    max_overflow=30,
+    pool_timeout=30,
+    pool_recycle=1800,
 )
 
 SessionLocal = sessionmaker(
@@ -31,10 +31,9 @@ SessionLocal = sessionmaker(
     bind=engine,
 )
 
-# Base moved to app.db.base_class
-
 
 def get_db():
+    """FastAPI dependency that yields a SQLAlchemy session."""
     db = SessionLocal()
     try:
         yield db

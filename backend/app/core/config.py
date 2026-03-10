@@ -11,13 +11,15 @@ class Settings(BaseSettings):
     APP_PORT: int = int(os.getenv("APP_PORT", "8000"))
 
     # === Database ===
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./eduai.db")
+    # REQUIRED: Must be set in .env — no SQLite fallback.
+    # Local dev should use the same Supabase PostgreSQL as production.
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "")
 
     # === Security ===
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
-        os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "43200")
+        os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")  # Was 43200 (30 days!) — now 30 min
     )
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(
         os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7")
@@ -60,7 +62,7 @@ class Settings(BaseSettings):
     SMTP_FROM: str = os.getenv("SMTP_FROM", "")
 
     # === Debug / logging ===
-    DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
+    DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"  # Was True — now defaults off
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "info")
 
     # === GitHub OAuth ===

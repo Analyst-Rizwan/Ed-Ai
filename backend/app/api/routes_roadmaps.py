@@ -1,6 +1,6 @@
 # backend/app/api/routes_roadmaps.py
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Depends, Request
+from pydantic import BaseModel, field_validator
 from typing import Optional, Dict, Any
 import logging
 import json
@@ -40,6 +40,24 @@ class RoadmapGenerateRequest(BaseModel):
     hours_per_week: int = 10
     learner_background: Optional[str] = None
     target_goal: Optional[str] = None
+
+    # SECURITY: Input sanitization to prevent prompt injection (VULN-06)
+    @field_validator("topic")
+    @classmethod
+    def validate_topic(cls, v):
+        if v and len(v) > 100:
+            raise ValueError("Topic must be 100 characters or less")
+        # Strip control characters and newlines
+        import re
+        return re.sub(r'[\x00-\x1f\x7f]', '', v).strip() if v else v
+
+    @field_validator("learner_background", "target_goal")
+    @classmethod
+    def validate_text_fields(cls, v):
+        if v and len(v) > 500:
+            raise ValueError("Field must be 500 characters or less")
+        import re
+        return re.sub(r'[\x00-\x1f\x7f]', '', v).strip() if v else v
 
 
 # ------------------------------------------------------
@@ -272,8 +290,13 @@ async def _call_week_expander(prompt: str) -> Dict[str, Any]:
 # ------------------------------------------------------
 # Main endpoint: hybrid planner -> expander approach
 # ------------------------------------------------------
+from app.core.rate_limit import limiter
+
+
 @router.post("/generate", summary="Generate a detailed AI/ML roadmap using hybrid models (planner + expander)")
+@limiter.limit("3/minute")  # SECURITY: rate limit expensive GPT-4o calls (VULN-16)
 async def generate_roadmap(
+    request: Request,
     payload: RoadmapGenerateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),

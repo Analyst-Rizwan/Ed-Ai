@@ -15,9 +15,8 @@ from fastapi.testclient import TestClient
 from app.db.base_class import Base
 from app.main import app
 
-# Import get_db from BOTH places the codebase uses
-from app.db.session import get_db as get_db_session
-from app.db.base import get_db as get_db_base
+# Import get_db from the canonical source
+from app.db.session import get_db
 
 # ============================================================
 # TEST DATABASE (In-memory SQLite)
@@ -51,12 +50,7 @@ TestingSessionLocal = sessionmaker(
 def create_tables():
     """Create all tables once for the test session."""
     # Import all models so Base.metadata knows about them
-    from app.models.user import User  # noqa: F401
-    from app.models.progress import UserProgress, Progress  # noqa: F401
-    from app.models.roadmap import Roadmap  # noqa: F401
-    from app.models.problem import Problem  # noqa: F401
-    from app.models.refresh_token import RefreshToken  # noqa: F401
-    from app.models.leetcode_sync import LeetCodeSync  # noqa: F401
+    import app.models  # noqa: F401
     from app.db.models_tutor import Conversation, TutorMessage  # noqa: F401
     from app.db.models_tutor import Roadmap as TutorRoadmap  # noqa: F401
 
@@ -90,9 +84,8 @@ def client(db):
         finally:
             pass
 
-    # Override both get_db sources
-    app.dependency_overrides[get_db_session] = _override_get_db
-    app.dependency_overrides[get_db_base] = _override_get_db
+    # Single override — session.py is the canonical source
+    app.dependency_overrides[get_db] = _override_get_db
 
     # Disable rate limiting during tests
     limiter.enabled = False

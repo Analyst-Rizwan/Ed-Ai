@@ -1,8 +1,10 @@
 """FastAPI route for job opportunities. Serves aggregated job listings."""
 from typing import Optional
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends, Request
 from app.services.job_scraper import aggregator
 from app.services.job_scraper.models import JobListing
+from app.auth.dependencies import get_current_user
+from app.core.rate_limit import limiter
 
 router = APIRouter(prefix="/opportunities", tags=["Opportunities"])
 
@@ -37,6 +39,7 @@ async def get_jobs(
     region: str = Query(default="all", description="all|india|global"),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=50, le=500),
+    user=Depends(get_current_user),  # SECURITY: require auth (VULN-04)
 ):
     """Return aggregated job listings with filtering and pagination."""
     query_term = q if q else "software"
@@ -62,7 +65,12 @@ async def get_jobs(
 
 
 @router.get("/refresh")
-async def refresh_jobs(q: str = Query(default="software")):
+@limiter.limit("1/minute")  # SECURITY: prevent scraper abuse (VULN-04)
+async def refresh_jobs(
+    request: Request,
+    q: str = Query(default="software"),
+    user=Depends(get_current_user),  # SECURITY: require auth (VULN-04)
+):
     """Force-refresh the job cache and return fresh listings."""
     jobs = await aggregator.get_jobs(query=q, force_refresh=True)
     return {
@@ -71,3 +79,4 @@ async def refresh_jobs(q: str = Query(default="software")):
         "platforms": len({j.platform for j in jobs}),
         "cached_at": aggregator.get_cached_at(),
     }
+

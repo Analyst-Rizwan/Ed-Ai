@@ -122,27 +122,81 @@ def get_roadmap_for_topic(db: Session, topic: str):
 
 def run_python_safely(code: str, timeout: int = 5) -> Dict[str, Any]:
     """
-    Execute python code in a temporary directory, with timeouts.
-    WARNING: This is a limited sandbox using subprocess with timeout.
-    It restricts CPU time via timeout and uses a fresh temp dir.
-    Do NOT allow untrusted users without stronger sandboxing (containers).
+    Execute python code in a temporary directory, with defense-in-depth protections.
+
+    ⚠️  PRODUCTION WARNING: This is NOT a true sandbox. For production use,
+    replace with Docker containers (--network=none --memory=50m --cpus=0.1),
+    gVisor, or a hosted service like Piston/Judge0.
+
+    Current mitigations (defense-in-depth):
+    - Import blocklist for dangerous modules
+    - Code size limit (10 KB)
+    - Output truncation (50 KB)
+    - Clean environment (no SECRET_KEY, DB creds, API keys leaked)
+    - Subprocess timeout
+    - Temp directory isolation + cleanup
     """
+    # --- Guard: code size limit ---
+    MAX_CODE_SIZE = 10 * 1024  # 10 KB
+    MAX_OUTPUT_SIZE = 50 * 1024  # 50 KB
+
+    if len(code) > MAX_CODE_SIZE:
+        return {"stdout": "", "stderr": f"Code too large ({len(code)} bytes, max {MAX_CODE_SIZE})", "returncode": -3}
+
+    # --- Guard: block dangerous imports ---
+    BLOCKED_MODULES = [
+        "os", "sys", "subprocess", "socket", "shutil", "importlib",
+        "ctypes", "signal", "_thread", "multiprocessing", "pathlib",
+        "http", "urllib", "requests", "io", "pickle", "shelve",
+        "code", "codeop", "compile", "compileall",
+    ]
+    code_lower = code.lower()
+    for mod in BLOCKED_MODULES:
+        # Check for: import os, from os, __import__("os")
+        if (f"import {mod}" in code_lower or
+            f"from {mod}" in code_lower or
+            f'__import__("{mod}")' in code_lower or
+            f"__import__('{mod}')" in code_lower):
+            return {
+                "stdout": "",
+                "stderr": f"Blocked: import of '{mod}' is not allowed for security reasons.",
+                "returncode": -4,
+            }
+
+    # Also block common escape hatches
+    BLOCKED_PATTERNS = ["__import__", "eval(", "exec(", "compile(", "open(", "globals(", "locals("]
+    for pattern in BLOCKED_PATTERNS:
+        if pattern in code:
+            return {
+                "stdout": "",
+                "stderr": f"Blocked: '{pattern}' is not allowed for security reasons.",
+                "returncode": -4,
+            }
+
     tmpdir = tempfile.mkdtemp(prefix="exec_")
     fname = os.path.join(tmpdir, "main.py")
     with open(fname, "w", encoding="utf-8") as f:
         f.write(code)
 
+    # --- Run with clean environment (strip all secrets) ---
+    clean_env = {
+        "PATH": os.environ.get("PATH", ""),
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONNOUSERSITE": "1",
+    }
+
     try:
         proc = subprocess.run(
-            ["python", fname],
+            ["python", "-I", fname],  # -I = isolated mode (no user site, no PYTHON* env vars)
             cwd=tmpdir,
             capture_output=True,
             text=True,
             timeout=timeout,
+            env=clean_env,
         )
         return {
-            "stdout": proc.stdout,
-            "stderr": proc.stderr,
+            "stdout": proc.stdout[:MAX_OUTPUT_SIZE],
+            "stderr": proc.stderr[:MAX_OUTPUT_SIZE],
             "returncode": proc.returncode,
         }
     except subprocess.TimeoutExpired:

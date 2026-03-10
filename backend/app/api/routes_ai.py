@@ -78,30 +78,9 @@ def ai_root():
 
 
 # ---------------------------
-# Test endpoint (no auth required)
-# ---------------------------
-
-
-@router.post("/test", summary="Test AI (no auth required)")
-async def test_ai(req: AskRequest):
-    """
-    Test endpoint for AI tutor without authentication.
-    Used for debugging and testing.
-    """
-    try:
-        if not req.prompt:
-            return {"response": "Please provide a prompt"}
-
-        answer = await _safe_ask_ai(prompt=req.prompt, temperature=0.7, max_tokens=450)
-        return {"response": answer}
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception("test_ai error: %s", e)
-        raise HTTPException(status_code=500, detail=f"AI error: {str(e)}")
-
-
-# ---------------------------
+# [REMOVED] /test endpoint — was unauthenticated (VULN-02)
+# Use /ask with auth instead.
+# ------------------------------------------------------
 # Main endpoints
 # ---------------------------
 
@@ -183,6 +162,14 @@ async def stream_response(
     Streams a model response as server-sent events (SSE).
     Example client: use EventSource('/api/ai/stream/123') and parse events.
     """
+    # SECURITY: Verify conversation ownership (VULN-05 IDOR fix)
+    from app.db.models_tutor import Conversation
+    conv = db.query(Conversation).filter(
+        Conversation.id == conv_id,
+        Conversation.user_id == getattr(user, "id", None),
+    ).first()
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
 
     async def event_generator() -> AsyncIterator[str]:
         msgs = tutor_service.get_conversation_messages(db, conv_id)
@@ -263,6 +250,15 @@ def list_conversations(user=Depends(get_current_user), db: Session = Depends(get
 
 @router.get("/conversations/{conv_id}", summary="Get conversation messages")
 def get_conversation(conv_id: int, user=Depends(get_current_user), db: Session = Depends(get_db)):
+    # SECURITY: Verify conversation ownership (IDOR fix)
+    from app.db.models_tutor import Conversation
+    conv = db.query(Conversation).filter(
+        Conversation.id == conv_id,
+        Conversation.user_id == getattr(user, "id", None),
+    ).first()
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
     msgs = tutor_service.get_conversation_messages(db, conv_id)
     return {
         "messages": [

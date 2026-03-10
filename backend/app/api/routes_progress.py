@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.db.base import get_db
+from app.db.session import get_db
 from app.models.user import User
 from app.models.progress import UserProgress
 from app.models.roadmap import Roadmap

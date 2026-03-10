@@ -123,7 +123,10 @@ def get_problems(
 # GET CATEGORIES
 # ============================================================
 @router.get("/categories", response_model=List[str])
-def get_categories(db: Session = Depends(get_db)):
+def get_categories(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),  # SECURITY: require auth (VULN-14)
+):
     categories = db.query(Problem.category).distinct().all()
     return [c[0] for c in categories if c[0]]
 

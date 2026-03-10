@@ -36,8 +36,9 @@ logger = logging.getLogger(__name__)
 # ============================================================
 app = FastAPI(
     title=settings.APP_NAME,
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
+    # SECURITY: Disable API docs in production (VULN-13)
+    docs_url="/api/docs" if settings.APP_ENV == "development" else None,
+    redoc_url="/api/redoc" if settings.APP_ENV == "development" else None,
 )
 
 # ============================================================
@@ -57,7 +58,7 @@ origins = [
     "https://www.eduaiajk.in",
     "https://eduaiajk.in",
     "https://ed-ai-frontend.vercel.app",
-    "https://ed-ai-backend.onrender.com",
+    # SECURITY: Removed backend URL — it should never be a browser CORS origin
 ]
 
 app.add_middleware(
@@ -101,6 +102,17 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        # SECURITY: Content-Security-Policy (VULN-10)
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' https://*.supabase.co; "
+            "frame-ancestors 'none';"
+        )
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         if request.url.scheme == "https":
             response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
         return response

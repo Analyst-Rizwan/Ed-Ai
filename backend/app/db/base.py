@@ -1,37 +1,18 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from app.core.config import settings
-from app.db.base_class import Base
+"""
+Backward-compatible re-exports from app.db.session.
 
-
-DATABASE_URL = settings.DATABASE_URL  # must be in .env
-
-engine = create_engine(DATABASE_URL, echo=False, future=True)
-
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
+New code should import directly from app.db.session.
+This file exists so old imports don't break.
+"""
 
 import logging
+from app.db.session import engine, SessionLocal, get_db, Base  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
 
 def init_db():
-    """Create all tables."""
-    from app.models.user import User
-    from app.models.progress import UserProgress
-    from app.models.roadmap import Roadmap
-    from app.models.problem import Problem
-    from app.models.refresh_token import RefreshToken
-    from app.models.otp_code import OTPCode
-
+    """Create all tables (only used for development bootstrapping)."""
+    import app.models  # noqa: F401 — registers all models with Base.metadata
     Base.metadata.create_all(bind=engine)
     logger.info("Database initialized successfully")
