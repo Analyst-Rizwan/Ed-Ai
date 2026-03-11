@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Select } from "../shared";
 
 function genArr(n=16){return Array.from({length:n},()=>Math.floor(Math.random()*90+8));}
 
@@ -144,16 +144,17 @@ export default function SortingViz(){
       <Side>
         <div>
           <SLabel>Algorithm</SLabel>
-          <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:6}}>
-            {(["bubble","selection","insertion","merge","quick"] as const).map(k=>(
-              <button key={k} onClick={()=>{if(!running)setAlgo(k)}} style={{
-                padding:"7px 12px",borderRadius:9,fontSize:11,fontWeight:600,
-                cursor:running?"not-allowed":"pointer",textAlign:"left",
-                fontFamily:"'DM Sans',sans-serif",background:algo===k?T.accentSoft:T.surface2,
-                border:`1px solid ${algo===k?T.accent+"66":T.border2}`,
-                color:algo===k?T.accent:T.muted2,transition:"all .15s"
-              }}>{k.charAt(0).toUpperCase()+k.slice(1)} Sort</button>
-            ))}
+          <div style={{marginTop:6}}>
+            <Select
+              value={algo} onChange={(v)=>{if(!running)setAlgo(v)}} disabled={running}
+              options={[
+                ["bubble","Bubble Sort"],
+                ["selection","Selection Sort"],
+                ["insertion","Insertion Sort"],
+                ["merge","Merge Sort"],
+                ["quick","Quick Sort"]
+              ]}
+            />
           </div>
         </div>
         <div style={{display:"flex",gap:6}}>

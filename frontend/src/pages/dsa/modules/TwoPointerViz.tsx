@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, InfoBox, CRow, Input } from "../shared";
+import { Btn, Side, SLabel, InfoBox, CRow, Input, Select } from "../shared";
 
 export default function TwoPointerViz(){
   const [mode,setMode]=useState("twosum");
@@ -47,10 +47,14 @@ export default function TwoPointerViz(){
       <Side>
         <div>
           <SLabel>Technique</SLabel>
-          <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:6}}>
-            {[["twosum","Two Pointer — Two Sum"],["sliding","Sliding Window — Max Sum"]].map(([k,l])=>(
-              <button key={k} onClick={()=>{setMode(k);setSteps([]);setStepIdx(-1)}} style={{padding:"7px 10px",borderRadius:9,fontSize:11,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'DM Sans',sans-serif",background:mode===k?T.accentSoft:T.surface2,border:`1px solid ${mode===k?T.accent+"66":T.border2}`,color:mode===k?T.accent:T.muted2,transition:"all .15s"}}>{l}</button>
-            ))}
+          <div style={{marginTop:6}}>
+            <Select
+              value={mode} onChange={(v)=>{setMode(v);setSteps([]);setStepIdx(-1)}}
+              options={[
+                ["twosum","Two Pointer — Two Sum"],
+                ["sliding","Sliding Window — Max Sum"]
+              ]}
+            />
           </div>
         </div>
         <div><SLabel>Array (space-separated)</SLabel><div style={{marginTop:6}}><Input value={arrInput} onChange={setArrInput} placeholder="1 3 5 7 9..." mono/></div></div>

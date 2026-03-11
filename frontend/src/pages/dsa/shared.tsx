@@ -91,3 +91,25 @@ export const SpeedRow = ({speed,setSpeed}:{speed:number,setSpeed:(n:number)=>voi
 export const Badge = ({children,color=T.accent}:{children:any,color?:string})=>(
   <span style={{background:color+"22",color,border:`1px solid ${color}44`,padding:"2px 7px",borderRadius:100,fontSize:9,fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{children}</span>
 );
+
+/* ── Select Dropdown ── */
+export const Select = ({value,onChange,disabled,options,style={}}:{
+  value:string,onChange:(v:string)=>void,disabled?:boolean,options:[string,string][],style?:any
+})=>(
+  <div style={{position:"relative",...style}}>
+    <select
+      value={value} onChange={e=>onChange(e.target.value)} disabled={disabled}
+      style={{
+        width:"100%",padding:"9px 32px 9px 12px",borderRadius:10,fontSize:12,fontWeight:600,
+        fontFamily:"'DM Sans',sans-serif",background:T.surface2,color:disabled?T.muted:T.accent,
+        border:`1px solid ${T.border2}`,cursor:disabled?"not-allowed":"pointer",
+        appearance:"none",outline:"none"
+      }}
+    >
+      {options.map(([k,l])=>(
+        <option key={k} value={k} style={{background:T.surface,color:T.text}}>{l}</option>
+      ))}
+    </select>
+    <div style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",pointerEvents:"none",color:T.muted,fontSize:10}}>▼</div>
+  </div>
+);

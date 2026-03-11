@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, InfoBox, CRow, Log, Input, Badge } from "../shared";
+import { Btn, Side, SLabel, InfoBox, CRow, Log, Input, Badge, Select } from "../shared";
 
 export default function DPViz(){
   const [dpType,setDpType]=useState("fib");
@@ -60,10 +60,15 @@ export default function DPViz(){
       <Side>
         <div>
           <SLabel>Problem</SLabel>
-          <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:6}}>
-            {[["fib","Fibonacci (1D DP)"],["lcs","LCS — Longest Common Subseq."],["knapsack","0/1 Knapsack"]].map(([k,l])=>(
-              <button key={k} onClick={()=>{setDpType(k);setSteps([]);setStepIdx(-1)}} style={{padding:"7px 10px",borderRadius:9,fontSize:11,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"'DM Sans',sans-serif",background:dpType===k?T.accentSoft:T.surface2,border:`1px solid ${dpType===k?T.accent+"66":T.border2}`,color:dpType===k?T.accent:T.muted2,transition:"all .15s"}}>{l}</button>
-            ))}
+          <div style={{marginTop:6}}>
+            <Select
+              value={dpType} onChange={(v)=>{setDpType(v);setSteps([]);setStepIdx(-1)}}
+              options={[
+                ["fib","Fibonacci (1D DP)"],
+                ["lcs","LCS — Longest Common Subseq."],
+                ["knapsack","0/1 Knapsack"]
+              ]}
+            />
           </div>
         </div>
         {dpType==="fib"&&<div><SLabel>n</SLabel><div style={{marginTop:6}}><Input value={n} onChange={setN} placeholder="8" mono/></div></div>}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, InfoBox, CRow, Log, Input, Badge } from "../shared";
+import { Btn, Side, SLabel, InfoBox, CRow, Log, Input, Badge, Select } from "../shared";
 
 export default function HashViz(){
   const SIZE=11;
@@ -65,10 +65,14 @@ export default function HashViz(){
       <Side>
         <div>
           <SLabel>Collision Strategy</SLabel>
-          <div style={{display:"flex",gap:6,marginTop:6}}>
-            {[["linear","Linear Probe"],["chaining","Chaining"]].map(([k,l])=>(
-              <button key={k} onClick={()=>{setMode(k);reset()}} style={{flex:1,padding:"7px 6px",borderRadius:8,fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",background:mode===k?T.accentSoft:T.surface2,border:`1px solid ${mode===k?T.accent+"66":T.border2}`,color:mode===k?T.accent:T.muted2,transition:"all .15s"}}>{l}</button>
-            ))}
+          <div style={{marginTop:6}}>
+            <Select
+              value={mode} onChange={(v)=>{setMode(v);reset()}}
+              options={[
+                ["linear","Linear Probe"],
+                ["chaining","Chaining"]
+              ]}
+            />
           </div>
         </div>
         <div><SLabel>Insert Key</SLabel><div style={{marginTop:6}}><Input value={val} onChange={setVal} placeholder="integer key" onEnter={insert} mono/></div></div>

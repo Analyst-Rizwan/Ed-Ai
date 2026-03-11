@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Badge } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Badge, Select } from "../shared";
 
 const GRAPH_PRESET={
   nodes:[
@@ -94,10 +94,15 @@ export default function GraphViz(){
       <Side>
         <div>
           <SLabel>Algorithm</SLabel>
-          <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:6}}>
-            {[["bfs","BFS — Breadth First"],["dfs","DFS — Depth First"],["dijkstra","Dijkstra — Shortest Path"]].map(([k,l])=>(
-              <button key={k} onClick={()=>{if(!running)setAlgo(k)}} style={{padding:"7px 10px",borderRadius:9,fontSize:11,fontWeight:600,cursor:running?"not-allowed":"pointer",textAlign:"left",fontFamily:"'DM Sans',sans-serif",background:algo===k?T.accentSoft:T.surface2,border:`1px solid ${algo===k?T.accent+"66":T.border2}`,color:algo===k?T.accent:T.muted2,transition:"all .15s"}}>{l}</button>
-            ))}
+          <div style={{marginTop:6}}>
+            <Select
+              value={algo} onChange={(v)=>{if(!running)setAlgo(v)}} disabled={running}
+              options={[
+                ["bfs","BFS — Breadth First"],
+                ["dfs","DFS — Depth First"],
+                ["dijkstra","Dijkstra — Shortest Path"]
+              ]}
+            />
           </div>
         </div>
         <div>
