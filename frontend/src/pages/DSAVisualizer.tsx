@@ -32,7 +32,7 @@ export default function DSAVisualizer(){
   const [active,setActive] = useState("sort");
 
   return(
-    <div style={{height:"calc(100vh - 0px)",display:"flex",flexDirection:"column",background:T.bg,color:T.text,fontFamily:"'DM Sans',sans-serif",overflow:"hidden",borderRadius:12,margin:"-24px -24px 0",width:"calc(100% + 48px)"}}>
+    <div className="flex flex-col h-[calc(100vh-0px)] sm:h-screen w-full overflow-hidden rounded-xl" style={{background:T.bg,color:T.text,fontFamily:"'DM Sans',sans-serif",margin:"-24px -24px 0",width:"calc(100% + 48px)"}}>
       <style>{CSS}</style>
 
       {/* ── Top Bar ── */}
@@ -67,7 +67,7 @@ export default function DSAVisualizer(){
       </div>
 
       {/* ── Active Module ── */}
-      <div style={{flex:1,display:"flex",overflow:"hidden"}}>
+      <div className="flex flex-1 overflow-hidden w-full h-full">
         {active==="sort"   && <SortingViz/>}
         {active==="merge"  && <MergeViz/>}
         {active==="graph"  && <GraphViz/>}

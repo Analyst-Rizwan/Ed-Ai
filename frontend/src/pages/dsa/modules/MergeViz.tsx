@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { T } from "../theme";
 import { Btn, Side, SLabel, InfoBox, CRow, Log, Badge } from "../shared";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function MergeViz(){
   const [leftInput,setLeftInput]=useState("2 5 8 12");
@@ -10,20 +11,20 @@ export default function MergeViz(){
   const [log,setLog]=useState<{m:string,t:string}[]>([]);
 
   const buildSteps=()=>{
-    const L=leftInput.trim().split(/\s+/).map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b);
-    const R=rightInput.trim().split(/\s+/).map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b);
+    const L=leftInput.trim().split(/\s+/).map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b).map((v,i)=>({v,id:`l-${i}`}));
+    const R=rightInput.trim().split(/\s+/).map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b).map((v,i)=>({v,id:`r-${i}`}));
     if(!L.length||!R.length)return;
-    const ss:any[]=[]; let i=0,j=0; const merged:number[]=[];
+    const ss:any[]=[]; let i=0,j=0; const merged:any[]=[];
     ss.push({L:[...L],R:[...R],merged:[],li:0,ri:0,desc:"Start: compare pointers at index 0 of each array"});
     while(i<L.length&&j<R.length){
-      const take=L[i]<=R[j]?"left":"right";
+      const take=L[i].v<=R[j].v?"left":"right";
       merged.push(take==="left"?L[i]:R[j]);
-      const desc=take==="left"?`L[${i}]=${L[i]} ≤ R[${j}]=${R[j]} → take from Left`:`R[${j}]=${R[j]} < L[${i}]=${L[i]} → take from Right`;
+      const desc=take==="left"?`L[${i}]=${L[i].v} ≤ R[${j}]=${R[j].v} → take from Left`:`R[${j}]=${R[j].v} < L[${i}]=${L[i].v} → take from Right`;
       if(take==="left")i++;else j++;
       ss.push({L,R,merged:[...merged],li:i,ri:j,desc,last:take});
     }
-    while(i<L.length){merged.push(L[i]);ss.push({L,R,merged:[...merged],li:i+1,ri:j,desc:`Drain Left: append ${L[i]}`,last:"left"});i++;}
-    while(j<R.length){merged.push(R[j]);ss.push({L,R,merged:[...merged],li:i,ri:j+1,desc:`Drain Right: append ${R[j]}`,last:"right"});j++;}
+    while(i<L.length){merged.push(L[i]);ss.push({L,R,merged:[...merged],li:i+1,ri:j,desc:`Drain Left: append ${L[i].v}`,last:"left"});i++;}
+    while(j<R.length){merged.push(R[j]);ss.push({L,R,merged:[...merged],li:i,ri:j+1,desc:`Drain Right: append ${R[j].v}`,last:"right"});j++;}
     ss.push({L,R,merged:[...merged],li:i,ri:j,desc:"✓ Merged! Result is sorted.",done:true});
     setSteps(ss);setStepIdx(0);setLog([{m:"Built merge steps. Press Next →",t:"info"}]);
   };
@@ -31,7 +32,7 @@ export default function MergeViz(){
   const step=steps[stepIdx]||null;
 
   return(
-    <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+    <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full h-full">
       <Side>
         <div><SLabel>Left Array (space-separated)</SLabel>
           <input value={leftInput} onChange={e=>setLeftInput(e.target.value)} style={{background:T.surface2,border:`1px solid ${T.border2}`,borderRadius:10,padding:"8px 11px",color:T.text,fontSize:13,width:"100%",outline:"none",fontFamily:"'Space Mono',monospace",marginTop:6}}/>
@@ -60,17 +61,17 @@ export default function MergeViz(){
                   <div key={label} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
                     <div style={{fontSize:11,fontWeight:600,color}}>{label}</div>
                     <div style={{display:"flex",gap:6}}>
-                      {arr.map((v:number,i:number)=>{
+                      {arr.map((item:any,i:number)=>{
                         const isPtr=i===ptr,isDone=i<ptr;
                         return(
-                          <div key={i} className={isPtr?"pop":""} style={{
+                          <motion.div layout transition={{type:"spring",stiffness:300,damping:25}} key={item.id} className={isPtr?"pop":""} style={{
                             width:44,height:44,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",
                             fontFamily:"'Space Mono',monospace",fontSize:13,fontWeight:700,
                             background:isDone?T.surface3:isPtr?color+"33":T.surface2,
                             border:`2px solid ${isDone?T.surface3:isPtr?color:color+"55"}`,
                             color:isDone?T.muted:isPtr?"#fff":color,
                             opacity:isDone?.45:1,boxShadow:isPtr?`0 0 14px ${color}66`:"none",transition:"all .2s",
-                          }}>{v}</div>
+                          }}>{item.v}</motion.div>
                         );
                       })}
                     </div>
@@ -88,19 +89,21 @@ export default function MergeViz(){
               <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
                 <div style={{fontSize:11,fontWeight:600,color:step.done?T.yellow:T.muted2}}>Merged Result</div>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"center"}}>
-                  {step.merged.map((v:number,i:number)=>{
-                    const isLast=i===step.merged.length-1&&!step.done;
-                    return(
-                      <div key={i} className={isLast?"mgr":""} style={{
-                        width:44,height:44,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",
-                        fontFamily:"'Space Mono',monospace",fontSize:13,fontWeight:700,
-                        background:step.done?T.yellowSoft:isLast?T.accentSoft:T.surface2,
-                        border:`2px solid ${step.done?T.yellow:isLast?T.purple:T.border2}`,
-                        color:step.done?T.yellow:isLast?T.purple:T.muted2,
-                        boxShadow:isLast?`0 0 12px ${T.purple}66`:"none",
-                      }}>{v}</div>
-                    );
-                  })}
+                  <AnimatePresence mode="popLayout">
+                    {step.merged.map((item:any,i:number)=>{
+                      const isLast=i===step.merged.length-1&&!step.done;
+                      return(
+                        <motion.div layout initial={{opacity:0,scale:0.5,y:-20}} animate={{opacity:1,scale:1,y:0}} transition={{type:"spring",stiffness:400,damping:25}} key={item.id} className={isLast?"mgr":""} style={{
+                          width:44,height:44,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",
+                          fontFamily:"'Space Mono',monospace",fontSize:13,fontWeight:700,
+                          background:step.done?T.yellowSoft:isLast?T.accentSoft:T.surface2,
+                          border:`2px solid ${step.done?T.yellow:isLast?T.purple:T.border2}`,
+                          color:step.done?T.yellow:isLast?T.purple:T.muted2,
+                          boxShadow:isLast?`0 0 12px ${T.purple}66`:"none",
+                        }}>{item.v}</motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
                   {step.merged.length===0&&<div style={{color:T.muted,fontSize:13}}>empty so far</div>}
                 </div>
               </div>

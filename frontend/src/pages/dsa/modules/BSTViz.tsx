@@ -26,7 +26,7 @@ export default function BSTViz(){
   toArr(root,300,30,140,nodes);
 
   return(
-    <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+    <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full h-full">
       <Side>
         <div><SLabel>Value</SLabel><div style={{marginTop:6}}><Input value={val} onChange={setVal} placeholder="e.g. 50" onEnter={insert} mono/></div></div>
         <Btn onClick={insert} variant="primary" full>⊕ Insert</Btn>

@@ -45,7 +45,7 @@ export default function LinkedListViz(){
   };
 
   return(
-    <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+    <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full h-full">
       <Side>
         <div><SLabel>Value</SLabel><div style={{marginTop:6}}><Input value={val} onChange={setVal} placeholder="e.g. 42" onEnter={insertHead} mono/></div></div>
         <div style={{display:"flex",gap:6}}>

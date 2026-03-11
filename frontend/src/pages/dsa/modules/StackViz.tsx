@@ -32,7 +32,7 @@ export default function StackViz(){
   };
 
   return(
-    <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+    <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full h-full">
       <Side>
         <div><SLabel>Push Value</SLabel><div style={{marginTop:6}}><Input value={val} onChange={setVal} placeholder="e.g. 42" onEnter={push} mono/></div></div>
         <Btn onClick={push} variant="primary" full>⊕ Push</Btn>

@@ -61,7 +61,7 @@ export default function HashViz(){
   const reset=()=>{setTable(Array.from({length:SIZE},()=>[]));setHighlighted([]);addLog("reset","info");};
 
   return(
-    <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+    <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full h-full">
       <Side>
         <div>
           <SLabel>Collision Strategy</SLabel>

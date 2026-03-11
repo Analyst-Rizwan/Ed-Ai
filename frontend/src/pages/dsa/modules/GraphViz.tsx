@@ -90,7 +90,7 @@ export default function GraphViz(){
   const nodePos=Object.fromEntries(GRAPH_PRESET.nodes.map(n=>[n.id,{x:n.x,y:n.y}]));
 
   return(
-    <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+    <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full h-full">
       <Side>
         <div>
           <SLabel>Algorithm</SLabel>

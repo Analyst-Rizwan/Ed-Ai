@@ -27,7 +27,7 @@ export default function TrieViz(){
   tiToTree(trie,"root",300,25,80,nodes);
 
   return(
-    <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+    <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full h-full">
       <Side>
         <div><SLabel>Word</SLabel><div style={{marginTop:6}}><Input value={word} onChange={setWord} placeholder={`e.g. "apple"`} onEnter={insert} mono/></div></div>
         <Btn onClick={insert} variant="primary" full>⊕ Insert Word</Btn>

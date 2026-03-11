@@ -43,7 +43,7 @@ export default function TwoPointerViz(){
   const step=steps[stepIdx];
 
   return(
-    <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+    <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full h-full">
       <Side>
         <div>
           <SLabel>Technique</SLabel>

@@ -67,7 +67,7 @@ export const Log = ({entries}:{entries:{m:string,t:string}[]})=>{
 
 /* ── Sidebar Panel ── */
 export const Side = ({children}:{children:any})=>(
-  <div style={{width:224,minWidth:224,borderRight:`1px solid ${T.border}`,padding:14,display:"flex",flexDirection:"column",gap:11,overflowY:"auto",background:T.surface,flexShrink:0}}>
+  <div className="w-full max-h-[45vh] md:max-h-none md:w-56 md:min-w-[224px] border-b md:border-b-0 md:border-r p-3.5 flex flex-col gap-3 overflow-y-auto shrink-0" style={{borderColor:T.border, background:T.surface}}>
     {children}
   </div>
 );

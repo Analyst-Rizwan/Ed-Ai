@@ -1,12 +1,12 @@
 import { useState, useRef } from "react";
 import { T, sleep } from "../theme";
 import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Select } from "../shared";
+import { motion } from "framer-motion";
 
-function genArr(n=16){return Array.from({length:n},()=>Math.floor(Math.random()*90+8));}
+function genArr(n=16){return Array.from({length:n},(_,i)=>({id:`id-${Date.now()}-${i}`,val:Math.floor(Math.random()*90+8),state:"idle"}));}
 
 export default function SortingViz(){
-  const [arr,setArr]=useState(genArr());
-  const [bars,setBars]=useState<{val:number,state:string}[]>([]);
+  const [bars,setBars]=useState<{id:string,val:number,state:string}[]>(genArr());
   const [algo,setAlgo]=useState("bubble");
   const [running,setRunning]=useState(false);
   const [speed,setSpeed]=useState(400);
@@ -20,14 +20,13 @@ export default function SortingViz(){
 
   const reset=()=>{
     stopRef.current=true;
-    const a=genArr();setArr(a);
-    setBars(a.map(v=>({val:v,state:"idle"})));
+    setBars(genArr());
     statsRef.current={comps:0,swaps:0};
     setStats({comps:0,swaps:0});
     setLabel("Press ▶ Run to start");setRunning(false);
   };
 
-  const updateBars=(b:{val:number,state:string}[],label?:string,t="info")=>{
+  const updateBars=(b:{id:string,val:number,state:string}[],label?:string,t="info")=>{
     setBars([...b]);
     if(label){setLabel(label);addLog(label,t);}
     setStats({...statsRef.current});
@@ -103,12 +102,12 @@ export default function SortingViz(){
     let i=0,j=0,k=l;
     while(i<left.length&&j<right.length){
       statsRef.current.comps++;
-      if(left[i].val<=right[j].val){b[k]={val:left[i].val,state:"merge"};i++;}
-      else{b[k]={val:right[j].val,state:"merge"};j++;}
+      if(left[i].val<=right[j].val){b[k]={...left[i],state:"merge"};i++;}
+      else{b[k]={...right[j],state:"merge"};j++;}
       await tick(b,`Merge: placed ${b[k].val} at [${k}]`,"warn");b[k].state="sorted";k++;
     }
-    while(i<left.length){b[k]={val:left[i].val,state:"sorted"};i++;k++;}
-    while(j<right.length){b[k]={val:right[j].val,state:"sorted"};j++;k++;}
+    while(i<left.length){b[k]={...left[i],state:"sorted"};i++;k++;}
+    while(j<right.length){b[k]={...right[j],state:"sorted"};j++;k++;}
     await tick(b,`Merged [${l}..${r}]`,"ok");
   }
   async function quickSort(b:any[],tick:any,lo:number,hi:number){
@@ -140,7 +139,7 @@ export default function SortingViz(){
   const info=algoInfo[algo];
 
   return(
-    <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+    <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full h-full">
       <Side>
         <div>
           <SLabel>Algorithm</SLabel>
@@ -183,22 +182,21 @@ export default function SortingViz(){
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>
         <div style={{flex:1,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"20px 24px 0",gap:3,overflowX:"auto"}}>
-          {bars.map((bar,i)=>{
+          {bars.map((bar)=>{
             const col=stateColor[bar.state]||T.blue;
             const h=Math.max(6,Math.floor((bar.val/maxVal)*260));
             return(
-              <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+              <motion.div layout transition={{type:"spring",stiffness:300,damping:25}} key={bar.id} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
                 <div style={{fontSize:9,color:col,fontFamily:"'Space Mono',monospace",opacity:bar.state!=="idle"?1:0.4}}>{bar.val}</div>
-                <div style={{
+                <motion.div layout style={{
                   width:Math.max(16,Math.floor(620/bars.length)-3),height:h,
                   borderRadius:"5px 5px 0 0",
                   background:`linear-gradient(to top, ${col}cc, ${col}88)`,
                   border:`1px solid ${col}66`,
-                  transition:running?"none":"height .3s ease",
                   boxShadow:bar.state!=="idle"?`0 0 10px ${col}88`:"none",
-                  transform:bar.state==="swap"?"translateY(-8px)":"none",
+                  transform:bar.state==="swap"||bar.state==="compare"?"translateY(-4px)":"none",
                 }}/>
-              </div>
+              </motion.div>
             );
           })}
         </div>
