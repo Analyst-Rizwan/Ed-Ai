@@ -22,6 +22,7 @@ import { ProtectedRoute } from "./routes/ProtectedRoute";
 const Admin = lazy(() => import("./pages/Admin"));
 const Opportunities = lazy(() => import("./pages/Opportunities"));
 const PortfolioBuilder = lazy(() => import("./pages/PortfolioBuilder"));
+const DSAVisualizer = lazy(() => import("./pages/DSAVisualizer"));
 
 
 const queryClient = new QueryClient({
@@ -64,6 +65,7 @@ const App = () => {
                     <Route index element={<Dashboard />} />
                     <Route path="roadmaps" element={<Roadmaps />} />
                     <Route path="practice" element={<Practice />} />
+                    <Route path="dsa" element={<Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}><DSAVisualizer /></Suspense>} />
                     <Route path="opportunities" element={<Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}><Opportunities /></Suspense>} />
                     <Route path="portfolio" element={<Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}><PortfolioBuilder /></Suspense>} />
                     <Route path="profile" element={<Profile />} />
