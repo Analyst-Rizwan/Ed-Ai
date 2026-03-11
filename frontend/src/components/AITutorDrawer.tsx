@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Send, Sparkles, Plus, Trash2, MessageSquare, ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
-import { sendMessageToAI } from "@/lib/ai";
+import { streamMessageFromAI } from "@/lib/ai";
 import { getAccessToken } from "@/lib/api";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ReactMarkdown from "react-markdown";
@@ -166,37 +166,65 @@ const AITutorDrawer: React.FC<AITutorDrawerProps> = ({ open, onOpenChange }) => 
       text: trimmed,
       createdAt: new Date().toISOString(),
     };
-    setMessages(prev => [...prev, userMsg]);
+
+    // Create placeholder assistant message for streaming
+    const assistantMsgId = `${Date.now()}-a`;
+    const placeholderMsg: Message = {
+      id: assistantMsgId,
+      role: "assistant",
+      text: "",
+      createdAt: new Date().toISOString(),
+    };
+
+    setMessages(prev => [...prev, userMsg, placeholderMsg]);
     setInput("");
     setLoading(true);
 
     try {
-      const result = await sendMessageToAI(trimmed, { conversation_id: activeConvId });
+      await streamMessageFromAI(
+        trimmed,
+        // onToken: update the placeholder message progressively
+        (tokenText: string) => {
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === assistantMsgId
+                ? { ...m, text: m.text + tokenText }
+                : m
+            )
+          );
+        },
+        // onDone: finalize the message and update conversation ID
+        (fullText: string, conversationId: number | null) => {
+          // Set final text (in case streaming missed something)
+          if (fullText) {
+            setMessages(prev =>
+              prev.map(m =>
+                m.id === assistantMsgId
+                  ? { ...m, text: fullText }
+                  : m
+              )
+            );
+          }
 
-      // Update active conversation ID (first message auto-creates a conversation)
-      if (result.conversation_id && !activeConvId) {
-        setActiveConvId(result.conversation_id);
-      }
+          if (conversationId && !activeConvId) {
+            setActiveConvId(conversationId);
+          }
 
-      const assistantMsg: Message = {
-        id: `${Date.now()}-a`,
-        role: "assistant",
-        text: result.reply,
-        createdAt: new Date().toISOString(),
-      };
-      setMessages(prev => [...prev, assistantMsg]);
-
-      // Refresh conversation list
-      loadConversations();
+          // Refresh conversation list
+          loadConversations();
+          setLoading(false);
+        },
+        { conversation_id: activeConvId }
+      );
     } catch (err) {
-      setMessages(prev => [...prev, {
-        id: `${Date.now()}-e`,
-        role: "assistant",
-        text: "There was an error contacting the AI. Try again later.",
-        createdAt: new Date().toISOString(),
-      }]);
-      console.error("askAI error:", err);
-    } finally {
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === assistantMsgId
+            ? { ...m, text: "There was an error contacting the AI. Try again later." }
+            : m
+        )
+      );
+      console.error("stream error:", err);
       setLoading(false);
     }
   };

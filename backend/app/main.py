@@ -4,6 +4,7 @@ from pathlib import Path
 import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from slowapi import _rate_limit_exceeded_handler
@@ -58,6 +59,7 @@ origins = [
     "https://www.eduaiajk.in",
     "https://eduaiajk.in",
     "https://ed-ai-frontend.vercel.app",
+    "https://ed-ai-gules.vercel.app",   # Production Vercel deployment
     # SECURITY: Removed backend URL — it should never be a browser CORS origin
 ]
 
@@ -79,10 +81,15 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
     # Add CORS headers manually to the error response
     origin = request.headers.get("origin")
-    if origin in origins or (origin and "eduaiajk.in" in origin):
+    if origin in origins or (origin and "eduaiajk.in" in origin) or (origin and "vercel.app" in origin):
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
     return response
+
+# ============================================================
+# GZIP COMPRESSION (compresses responses >= 1KB by ~70%)
+# ============================================================
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # ============================================================
 # REQUEST LOGGING MIDDLEWARE
@@ -143,6 +150,22 @@ def health_root():
 @app.get("/api/health")
 def health_api():
     return {"status": "ok"}
+
+@app.get("/api/ping")
+def ping():
+    """Lightweight warm-up endpoint for UptimeRobot keep-alive pings.
+    Validates DB connectivity so the connection pool stays warm.
+    Set UptimeRobot to hit this every 10 minutes to prevent Render cold starts.
+    """
+    import sqlalchemy
+    from app.db.session import SessionLocal
+    try:
+        session = SessionLocal()
+        session.execute(sqlalchemy.text("SELECT 1"))
+        session.close()
+        return {"status": "ok", "db": "ok"}
+    except Exception:
+        return {"status": "ok", "db": "unavailable"}
 
 # ============================================================
 # FRONTEND SERVING (SPA FALLBACK) - ONLY IF FILES EXIST

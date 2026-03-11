@@ -21,4 +21,28 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Split vendor chunks for better caching
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // React core — rarely changes, cached aggressively
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          // UI framework
+          "vendor-ui": ["@tanstack/react-query", "lucide-react"],
+          // Markdown + KaTeX — heavy, only used by AI Tutor
+          "vendor-markdown": [
+            "react-markdown",
+            "remark-gfm",
+            "remark-math",
+            "rehype-katex",
+          ],
+        },
+      },
+    },
+    // Enable source maps only in dev
+    sourcemap: mode === "development",
+    // Increase chunk size warning limit (KaTeX fonts are large but fine)
+    chunkSizeWarningLimit: 600,
+  },
 }));
