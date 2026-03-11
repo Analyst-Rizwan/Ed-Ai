@@ -151,7 +151,7 @@ def health_root():
 def health_api():
     return {"status": "ok"}
 
-@app.get("/api/ping")
+@app.api_route("/api/ping", methods=["GET", "HEAD"])
 def ping():
     """Lightweight warm-up endpoint for UptimeRobot keep-alive pings.
     Validates DB connectivity so the connection pool stays warm.
