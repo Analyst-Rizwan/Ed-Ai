@@ -17,6 +17,7 @@ const BottomNav = ({ onOpenAITutor }: BottomNavProps) => {
     { icon: LayoutDashboard, label: "Dashboard", path: "/" },
     { icon: Map, label: "Roadmaps", path: "/roadmaps" },
     { icon: Code, label: "Practice", path: "/practice" },
+    { icon: Code, label: "Code Viz", path: "/dsa" },
     { icon: Briefcase, label: "Jobs", path: "/opportunities" },
     { icon: FolderOpen, label: "Portfolio", path: "/portfolio" },
     { icon: User, label: "Profile", path: "/profile" },
