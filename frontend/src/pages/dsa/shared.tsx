@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { T } from "./theme";
 
 /* ── Button ── */
@@ -16,7 +16,7 @@ export const Btn = ({children,onClick,variant="ghost",disabled,full,style={}}:{
     blue:{background:T.blueSoft,color:T.blue,border:`1px solid ${T.blue}44`},
   };
   return <button onClick={onClick} disabled={disabled} style={{
-    padding:"8px 14px",borderRadius:100,fontSize:12,fontWeight:600,
+    padding:"6px 12px",borderRadius:100,fontSize:11,fontWeight:600,
     fontFamily:"'DM Sans',sans-serif",cursor:disabled?"not-allowed":"pointer",
     opacity:disabled?.38:1,transition:"all .18s",display:"flex",alignItems:"center",
     gap:5,whiteSpace:"nowrap",width:full?"100%":undefined,justifyContent:full?"center":undefined,
@@ -41,10 +41,18 @@ export const SLabel = ({children}:{children:any})=>(
   <div style={{fontSize:11,color:T.muted,fontWeight:600,textTransform:"uppercase",letterSpacing:".08em"}}>{children}</div>
 );
 
-/* ── Info Box ── */
+/* ── Info Box (Collapsible on Mobile) ── */
 export const InfoBox = ({children,style={}}:{children:any,style?:any})=>(
-  <div style={{background:T.surface2,border:`1px solid ${T.border}`,borderRadius:12,padding:13,fontSize:12,color:T.muted2,lineHeight:1.65,...style}}>
-    {children}
+  <div style={{background:T.surface2,border:`1px solid ${T.border}`,borderRadius:12,fontSize:12,color:T.muted2,lineHeight:1.65,overflow:"hidden",...style}}>
+    <details className="md:pointer-events-none group">
+      <summary className="md:list-none p-2.5 md:p-3 cursor-pointer md:cursor-default font-semibold text-[10px] uppercase tracking-wider flex items-center justify-between outline-none" style={{color:T.muted}}>
+         Complexity Details
+        <span className="md:hidden opacity-50 group-open:rotate-180 transition-transform">⌄</span>
+      </summary>
+      <div className="px-3 pb-3 md:p-3 md:pt-0 border-t md:border-t-0" style={{borderColor:T.border}}>
+        {children}
+      </div>
+    </details>
   </div>
 );
 
@@ -67,7 +75,7 @@ export const Log = ({entries}:{entries:{m:string,t:string}[]})=>{
 
 /* ── Sidebar Panel ── */
 export const Side = ({children}:{children:any})=>(
-  <div className="w-full max-h-[45vh] md:max-h-none md:w-56 md:min-w-[224px] border-b md:border-b-0 md:border-r p-3.5 flex flex-col gap-3 overflow-y-auto shrink-0" style={{borderColor:T.border, background:T.surface}}>
+  <div className="w-full max-h-[35vh] md:max-h-none md:w-56 md:min-w-[224px] border-b md:border-b-0 md:border-r p-2.5 md:p-4 flex flex-col gap-2.5 md:gap-4 overflow-y-auto shrink-0" style={{borderColor:T.border, background:T.surface}}>
     {children}
   </div>
 );

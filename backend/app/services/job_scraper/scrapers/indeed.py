@@ -1,18 +1,16 @@
-"""Indeed — HTML scraper. Uses rotating user-agents and rate limiting."""
 import asyncio
 import hashlib
 import random
-import httpx
 from bs4 import BeautifulSoup
+from playwright.async_api import async_playwright
 from app.services.job_scraper.models import JobListing
 
 BASE_URL = "https://www.indeed.com"
 INDIA_URL = "https://in.indeed.com"
 
 USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/121.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
 ]
 
 TYPE_MAP = {"intern": "internship", "apprentice": "apprenticeship"}
@@ -37,26 +35,33 @@ def _field(title: str, tags: list) -> str:
 
 async def fetch(query: str = "software developer", location: str = "India", limit: int = 15) -> list[JobListing]:
     results: list[JobListing] = []
-    headers = {
-        "User-Agent": random.choice(USER_AGENTS),
-        "Accept": "text/html,application/xhtml+xml;q=0.9",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Referer": "https://www.google.com/",
-    }
+    
     base = INDIA_URL if "india" in location.lower() else BASE_URL
-    params = {"q": query, "l": location, "sort": "date"}
+    
+    # Strip junior prefix for Indeed since it does exact match on the string
+    cleaned_query = query.replace("junior software", "software")
+    qs = f"?q={cleaned_query.replace(' ', '+')}&l={location}&sc=0kf%3Aexplvl%28ENTRY_LEVEL%29%3B&sort=date"
+    url = f"{base}/jobs{qs}"
     is_india = "india" in location.lower()
-
+    
     try:
-        await asyncio.sleep(random.uniform(1.0, 2.0))
-        async with httpx.AsyncClient(timeout=12, headers=headers, follow_redirects=True) as client:
-            resp = await client.get(f"{base}/jobs", params=params)
-            if resp.status_code in (403, 429):
-                print(f"[indeed] blocked ({resp.status_code})")
-                return []
-            resp.raise_for_status()
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                           "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            )
+            page = await context.new_page()
+            try:
+                await page.goto(url, wait_until="domcontentloaded", timeout=20000)
+                await page.wait_for_timeout(3000) # Wait for CF challenge or React loads
+            except Exception as e:
+                print(f"[indeed] timeout or nav error: {e}")
+                
+            content = await page.content()
+            await browser.close()
 
-        soup = BeautifulSoup(resp.text, "lxml")
+        soup = BeautifulSoup(content, "lxml")
         cards = soup.select("div.job_seen_beacon, div[class*='jobCard'], td.resultContent")
 
         for card in cards[:limit]:

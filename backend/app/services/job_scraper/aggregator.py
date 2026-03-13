@@ -5,10 +5,10 @@ import time
 from typing import Optional
 from app.services.job_scraper.models import JobListing
 from app.services.job_scraper.scrapers import (
-    himalayas, remoteok, weworkremotely,
+    remoteok, weworkremotely,
     naukri, internshala, yc_jobs,
     indeed, glassdoor, greenhouse,
-    adzuna, reed,
+    adzuna, reed, linkedin, instahyre
 )
 
 logger = logging.getLogger(__name__)
@@ -22,14 +22,31 @@ def _is_cache_valid() -> bool:
 
 
 def _dedup(jobs: list[JobListing]) -> list[JobListing]:
-    """Remove near-duplicate jobs by (normalised title, company)."""
+    """Remove near-duplicate jobs by (normalised title, company) & sort by junior freshness."""
     seen: set = set()
     result = []
+    
+    # Priority keywords for students/freshers
+    priority_keywords = ["junior", "entry level", "fresher", "intern", "apprentice", "grad", "trainee"]
+    
     for j in jobs:
         key = (j.title.lower()[:40], j.company.lower()[:30])
         if key not in seen:
             seen.add(key)
             result.append(j)
+            
+    # Sort: Internships/Junior roles first, then others
+    def _score(j: JobListing) -> int:
+        score = 0
+        t = j.title.lower()
+        if j.type in ["internship", "apprenticeship"]:
+            score += 10
+        if any(kw in t for kw in priority_keywords):
+            score += 5
+        # We negate the score so higher scores (junior/intern) sort first (0)
+        return -score
+
+    result.sort(key=_score)
     return result
 
 
@@ -50,21 +67,22 @@ async def _run_all(query: str = "software") -> list[JobListing]:
 
     tasks = [
         # ── Tier 1: Free APIs / RSS — most reliable ──────────
-        safe("himalayas",      himalayas.fetch(query=query, limit=50)),
         safe("remoteok",       remoteok.fetch(query=query, limit=60)),
         safe("weworkremotely", weworkremotely.fetch(query=query, limit=40)),
 
         # ── Tier 1: Greenhouse JSON boards (40 companies) ────
-        safe("greenhouse",     greenhouse.fetch(query=query, limit=100), timeout=25),
+        safe("greenhouse",     greenhouse.fetch(query=query, limit=150), timeout=25),
 
         # ── Tier 2: HTML scrapers (best-effort, may get blocked)
-        safe("yc_jobs",        yc_jobs.fetch(query=query, limit=20)),
-        safe("naukri",         naukri.fetch(query=query, limit=20)),
-        safe("internshala",    internshala.fetch(query=query, limit=15)),
-        safe("indeed_india",   indeed.fetch(query=query, location="India", limit=15)),
-        safe("indeed_remote",  indeed.fetch(query=query, location="Remote", limit=15)),
-        safe("glassdoor",      glassdoor.fetch(query=query, limit=15)),
-        safe("wellfound",      glassdoor.fetch_wellfound(query=query, limit=15)),
+        safe("linkedin",       linkedin.fetch(query=query, limit=100)),
+        safe("instahyre",      instahyre.fetch(query=query, limit=50)),
+        safe("yc_jobs",        yc_jobs.fetch(query=query, limit=150)),
+        safe("naukri",         naukri.fetch(query=query, limit=100)),
+        safe("internshala",    internshala.fetch(query=query, limit=100)),
+        safe("indeed_india",   indeed.fetch(query=query, location="India", limit=100)),
+        safe("indeed_remote",  indeed.fetch(query=query, location="Remote", limit=100)),
+        safe("glassdoor",      glassdoor.fetch(query=query, limit=40)),
+        safe("wellfound",      glassdoor.fetch_wellfound(query=query, limit=40)),
 
         # ── Tier 3: Optional API-keyed scrapers ──────────────
         safe("adzuna_in",      adzuna.fetch(query=query, country="in", limit=20)),
@@ -84,10 +102,19 @@ async def _run_all(query: str = "software") -> list[JobListing]:
     return deduped
 
 
-async def get_jobs(query: str = "software", force_refresh: bool = False) -> list[JobListing]:
-    """Return cached jobs or fetch fresh ones."""
+async def get_jobs(query: str = "software intern junior", force_refresh: bool = False) -> list[JobListing]:
+    """Return cached jobs or fetch fresh ones, biased towards freshers."""
+    
+    # Expand generic queries to target junior roles heavily without being too strict
+    if query.lower().strip() in ["", "software", "developer", "engineer"]:
+        query = "junior software"
+        
     if not force_refresh and _is_cache_valid():
-        return _CACHE["jobs"]
+        jobs = _CACHE["jobs"]
+        # If cache is valid, we just re-return the sorted deduped jobs
+        # However, if the user searched something specific, this simple cache design
+        # might need to just return all. We will rely on the frontend filtering for now.
+        return jobs
 
     jobs = await _run_all(query)
     _CACHE["jobs"] = jobs

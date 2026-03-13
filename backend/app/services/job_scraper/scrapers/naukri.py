@@ -2,8 +2,8 @@
 import asyncio
 import hashlib
 import random
-import httpx
 from bs4 import BeautifulSoup
+from playwright.async_api import async_playwright
 from app.services.job_scraper.models import JobListing
 
 BASE_URL = "https://www.naukri.com"
@@ -37,25 +37,29 @@ def _field(tags: list, title: str) -> str:
 
 async def fetch(query: str = "software developer", limit: int = 15) -> list[JobListing]:
     results: list[JobListing] = []
-    headers = {
-        "User-Agent": random.choice(USER_AGENTS),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Referer": "https://www.google.com/",
-    }
-    params = {"keyword": query, "jobAge": 7}
+    
+    path = f"{query.replace(' ', '-')}-jobs-in-india"
+    url = f"https://www.naukri.com/{path}?jobAge=7"
 
     try:
-        await asyncio.sleep(random.uniform(0.5, 1.5))
-        async with httpx.AsyncClient(timeout=12, headers=headers, follow_redirects=True) as client:
-            resp = await client.get(SEARCH_URL, params=params)
-            if resp.status_code in (403, 429):
-                print(f"[naukri] blocked ({resp.status_code})")
-                return []
-            resp.raise_for_status()
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                           "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            )
+            page = await context.new_page()
+            try:
+                await page.goto(url, wait_until="domcontentloaded", timeout=20000)
+                await page.wait_for_timeout(3000)  # Wait for JS to render the jobs
+            except Exception as e:
+                print(f"[naukri] timeout or nav error: {e}")
+                
+            content = await page.content()
+            await browser.close()
 
-        soup = BeautifulSoup(resp.text, "lxml")
-        articles = soup.select("article.jobTuple, div.jobTuple, div[class*='srp-jobtuple']")
+        soup = BeautifulSoup(content, "lxml")
+        articles = soup.select("article.jobTuple, div.jobTuple, div[class*='srp-jobtuple'], div.srp-jobtuple-wrapper")
 
         for art in articles[:limit]:
             title_el = art.select_one("a.title, a[class*='title']")

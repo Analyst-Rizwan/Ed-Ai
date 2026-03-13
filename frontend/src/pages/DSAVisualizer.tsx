@@ -39,10 +39,10 @@ export default function DSAVisualizer(){
       <div style={{padding:"11px 22px",borderBottom:`1px solid ${T.border}`,background:T.surface,display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <span style={{fontFamily:"'Space Mono',monospace",fontSize:15,fontWeight:700,color:T.yellow}}>⚡ EduAI</span>
-          <span style={{color:T.surface3}}>/</span>
-          <span style={{fontSize:13,color:T.muted2}}>Advanced DSA Visualizer</span>
+          <span className="hidden sm:inline" style={{color:T.surface3}}>/</span>
+          <span className="hidden sm:inline" style={{fontSize:13,color:T.muted2}}>Advanced DSA Visualizer</span>
         </div>
-        <div style={{fontSize:11,color:T.muted2,background:T.surface2,padding:"4px 12px",borderRadius:100,border:`1px solid ${T.border}`}}>
+        <div className="hidden md:block" style={{fontSize:11,color:T.muted2,background:T.surface2,padding:"4px 12px",borderRadius:100,border:`1px solid ${T.border}`}}>
           12 Visualizers · Sorting · Graph · DP · Trees
         </div>
       </div>
@@ -51,7 +51,7 @@ export default function DSAVisualizer(){
       <div style={{display:"flex",borderBottom:`1px solid ${T.border}`,background:T.surface,paddingLeft:12,overflowX:"auto",flexShrink:0}}>
         {TABS.map(tab=>(
           <button key={tab.id} onClick={()=>setActive(tab.id)} style={{
-            padding:"10px 14px",fontSize:12,fontWeight:500,cursor:"pointer",
+            padding:"8px 12px",fontSize:12,fontWeight:500,cursor:"pointer",
             fontFamily:"'DM Sans',sans-serif",background:"none",
             borderTop:"none",borderLeft:"none",borderRight:"none",
             borderBottom:active===tab.id?`2px solid ${T.accent}`:"2px solid transparent",
@@ -59,7 +59,7 @@ export default function DSAVisualizer(){
             display:"flex",alignItems:"center",gap:7,whiteSpace:"nowrap",transition:"all .15s",
           }}>
             {tab.label}
-            <span style={{fontSize:9,fontFamily:"'Space Mono',monospace",fontWeight:700,background:active===tab.id?T.accentSoft:T.surface2,color:active===tab.id?T.accent:T.muted,padding:"1px 6px",borderRadius:100,border:`1px solid ${active===tab.id?T.accent+"44":T.border2}`}}>
+            <span className="hidden xs:inline" style={{fontSize:9,fontFamily:"'Space Mono',monospace",fontWeight:700,background:active===tab.id?T.accentSoft:T.surface2,color:active===tab.id?T.accent:T.muted,padding:"1px 6px",borderRadius:100,border:`1px solid ${active===tab.id?T.accent+"44":T.border2}`}}>
               {tab.badge}
             </span>
           </button>
