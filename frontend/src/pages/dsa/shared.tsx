@@ -121,3 +121,118 @@ export const Select = ({value,onChange,disabled,options,style={}}:{
     <div style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",pointerEvents:"none",color:T.muted,fontSize:10}}>▼</div>
   </div>
 );
+
+/* ── Step Guide (educational popup for demos) ── */
+export interface GuideStep {
+  title: string;
+  body: string;
+  tip?: string;
+}
+
+export function useStepGuide() {
+  const [step, setStep] = useState<(GuideStep & { idx: number; total: number }) | null>(null);
+  const resolveRef = useRef<(() => void) | null>(null);
+
+  const show = (s: GuideStep, idx: number, total: number): Promise<void> =>
+    new Promise(resolve => {
+      resolveRef.current = resolve;
+      setStep({ ...s, idx, total });
+    });
+
+  const next = () => {
+    setStep(null);
+    resolveRef.current?.();
+    resolveRef.current = null;
+  };
+
+  const skip = () => {
+    setStep(null);
+    resolveRef.current?.();
+    resolveRef.current = null;
+    return true; // signals caller to skip remaining
+  };
+
+  const skipRef = useRef(false);
+  const showGuide = async (s: GuideStep, idx: number, total: number) => {
+    if (skipRef.current) return;
+    await show(s, idx, total);
+  };
+
+  const Overlay = () => {
+    if (!step) return null;
+    return (
+      <div style={{
+        position: "absolute", inset: 0, zIndex: 100,
+        background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        animation: "fadeIn .2s ease",
+      }}>
+        <div style={{
+          background: T.surface, border: `1px solid ${T.border2}`,
+          borderRadius: 16, padding: "24px 28px", maxWidth: 420, width: "90%",
+          boxShadow: `0 20px 60px rgba(0,0,0,.5), 0 0 20px ${T.accent}22`,
+          animation: "popIn .3s cubic-bezier(.34,1.56,.64,1) both",
+        }}>
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{
+              background: T.accentSoft, border: `1px solid ${T.accent}44`,
+              borderRadius: 8, width: 32, height: 32,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontFamily: "'Space Mono',monospace", fontSize: 13, fontWeight: 700, color: T.accent,
+            }}>{step.idx}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: T.text }}>{step.title}</div>
+              <div style={{ fontSize: 10, color: T.muted, fontFamily: "'Space Mono',monospace" }}>
+                Step {step.idx} of {step.total}
+              </div>
+            </div>
+            <div style={{
+              fontSize: 18, opacity: 0.15,
+            }}>📘</div>
+          </div>
+
+          {/* Body */}
+          <div style={{
+            fontSize: 13, color: T.muted2, lineHeight: 1.7,
+            padding: "12px 14px", background: T.surface2,
+            borderRadius: 10, border: `1px solid ${T.border}`,
+            marginBottom: step.tip ? 10 : 16,
+          }}>{step.body}</div>
+
+          {/* Tip */}
+          {step.tip && (
+            <div style={{
+              fontSize: 11, color: T.yellow, lineHeight: 1.6,
+              padding: "8px 12px", background: T.yellowSoft,
+              borderRadius: 8, border: `1px solid ${T.yellow}33`,
+              marginBottom: 16, display: "flex", gap: 6, alignItems: "flex-start",
+            }}>
+              <span style={{ fontSize: 13, flexShrink: 0 }}>💡</span>
+              <span>{step.tip}</span>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <button onClick={() => { skipRef.current = true; next(); }} style={{
+              padding: "8px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600,
+              fontFamily: "'DM Sans',sans-serif", cursor: "pointer",
+              background: T.surface2, color: T.muted, border: `1px solid ${T.border2}`,
+            }}>Skip All</button>
+            <button onClick={next} style={{
+              padding: "8px 20px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+              fontFamily: "'DM Sans',sans-serif", cursor: "pointer",
+              background: T.accent, color: "#fff", border: "none",
+              boxShadow: `0 4px 14px ${T.accent}44`,
+            }}>{step.idx === step.total ? "✓ Done" : "Next Step →"}</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const resetGuide = () => { skipRef.current = false; setStep(null); resolveRef.current = null; };
+
+  return { showGuide, Overlay, resetGuide, isSkipped: () => skipRef.current };
+}

@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Select } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Select, useStepGuide } from "../shared";
 import { motion } from "framer-motion";
 
 function genArr(n=16){return Array.from({length:n},(_,i)=>({id:`id-${Date.now()}-${i}`,val:Math.floor(Math.random()*90+8),state:"idle"}));}
@@ -17,6 +17,7 @@ export default function SortingViz(){
   const statsRef=useRef({comps:0,swaps:0});
 
   const addLog=(m:string,t="info")=>setLog(l=>[...l.slice(-30),{m,t}]);
+  const guide = useStepGuide();
 
   const reset=()=>{
     stopRef.current=true;
@@ -24,6 +25,53 @@ export default function SortingViz(){
     statsRef.current={comps:0,swaps:0};
     setStats({comps:0,swaps:0});
     setLabel("Press ▶ Run to start");setRunning(false);
+  };
+
+  const runExample=async()=>{
+    guide.resetGuide();
+    stopRef.current=true;
+    const algoNames:Record<string,string>={bubble:"Bubble Sort",selection:"Selection Sort",insertion:"Insertion Sort",merge:"Merge Sort",quick:"Quick Sort"};
+    const algoDescs:Record<string,{body:string,tip:string}>={ 
+      bubble:{body:"Bubble Sort repeatedly compares adjacent elements and swaps them if they're in the wrong order. Each pass 'bubbles' the largest unsorted element to its final position.",tip:"Bubble Sort is O(n²) average/worst but O(n) best case (already sorted). It's adaptive and stable but rarely used in practice."},
+      selection:{body:"Selection Sort divides the array into sorted and unsorted parts. It repeatedly finds the minimum element from the unsorted part and moves it to the sorted section.",tip:"Always O(n²) regardless of input. Makes minimal swap operations — useful when writes are expensive."},
+      insertion:{body:"Insertion Sort builds the sorted array one element at a time. It takes each element and inserts it into its correct position among the previously sorted elements.",tip:"Excellent on nearly-sorted data (O(n)). Used in practice for small arrays — even within Timsort (Python/Java's built-in sort)."},
+      merge:{body:"Merge Sort divides the array in half recursively, sorts each half, then merges them. It's a divide-and-conquer algorithm guaranteed O(n log n) in all cases.",tip:"Stable sort, always O(n log n), but requires O(n) extra space. Commonly used in external sorting (sorting data too large for memory)."},
+      quick:{body:"Quick Sort picks a 'pivot' element, partitions the array so elements less than pivot go left and greater go right, then recursively sorts both partitions.",tip:"Fastest in practice — O(n log n) average. Worst case O(n²) on already sorted input. Used in C's qsort and many standard libraries."},
+    };
+    const desc=algoDescs[algo]||algoDescs.bubble;
+
+    await guide.showGuide({
+      title:"Sorting Algorithms Overview",
+      body:"Sorting algorithms arrange elements in order. They differ in time complexity, space usage, stability (preserving order of equal elements), and adaptiveness (performance on nearly-sorted input).",
+      tip:"In interviews, know when to use each: Merge Sort for stability guarantees, Quick Sort for average-case speed, Insertion Sort for small/nearly-sorted data."
+    }, 1, 3);
+
+    if(!guide.isSkipped()) await guide.showGuide({
+      title:`How ${algoNames[algo]} Works`,
+      body:desc.body,
+      tip:desc.tip
+    }, 2, 3);
+
+    const examples:Record<string,number[]>={
+      bubble:[72,14,55,27,88,43,61,9,36,79,24,52],
+      selection:[64,25,12,22,11,90,47,38,56,73,8,44],
+      insertion:[5,2,4,6,1,3,8,7,9,12,10,11],
+      merge:[38,27,43,3,9,82,10,15,74,50,36,92],
+      quick:[10,80,30,90,40,50,70,20,60,35,85,15],
+    };
+    const preset=examples[algo]||examples.bubble;
+    setBars(preset.map((val,i)=>({id:`ex-${i}`,val,state:"idle"})));
+    statsRef.current={comps:0,swaps:0};
+    setStats({comps:0,swaps:0});
+
+    if(!guide.isSkipped()) await guide.showGuide({
+      title:"Example Array Loaded!",
+      body:`A pre-set array is loaded for ${algoNames[algo]}. Press ▶ Run to watch the algorithm sort it step-by-step. Observe the compare (yellow), swap (orange), and sorted (green) highlights.`,
+      tip:"Watch the comparison and swap counters at the bottom — they show the real cost of the algorithm."
+    }, 3, 3);
+
+    setLabel(`⚡ Example loaded — press ▶ Run to sort`);
+    setRunning(false);
   };
 
   const updateBars=(b:{id:string,val:number,state:string}[],label?:string,t="info")=>{
@@ -160,6 +208,7 @@ export default function SortingViz(){
           <Btn onClick={run} variant="primary" disabled={running} style={{flex:1}}>▶ Run</Btn>
           <Btn onClick={reset} variant="ghost" disabled={running} style={{flex:1}}>↺ New</Btn>
         </div>
+        <Btn onClick={runExample} variant="yellow" disabled={running} full>⚡ Learn Sorting</Btn>
         <div><SLabel>Speed</SLabel><div style={{marginTop:6}}><SpeedRow speed={speed} setSpeed={setSpeed}/></div></div>
         <InfoBox>
           <strong style={{color:T.text}}>{algo.charAt(0).toUpperCase()+algo.slice(1)} Sort</strong><br/><br/>
@@ -181,7 +230,8 @@ export default function SortingViz(){
         <SLabel>Log</SLabel><Log entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>
-        <div style={{flex:1,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"20px 24px 0",gap:3,overflowX:"auto"}}>
+        <div style={{flex:1,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"20px 24px 0",gap:3,overflowX:"auto",position:"relative"}}>
+          <guide.Overlay/>
           {bars.map((bar)=>{
             const col=stateColor[bar.state]||T.blue;
             const h=Math.max(6,Math.floor((bar.val/maxVal)*260));

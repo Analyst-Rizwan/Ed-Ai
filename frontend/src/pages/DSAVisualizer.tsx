@@ -12,6 +12,8 @@ import QueueViz      from "./dsa/modules/QueueViz";
 import LinkedListViz from "./dsa/modules/LinkedListViz";
 import BSTViz        from "./dsa/modules/BSTViz";
 import TrieViz       from "./dsa/modules/TrieViz";
+import NQueensViz    from "./dsa/modules/NQueensViz";
+import KMPViz        from "./dsa/modules/KMPViz";
 
 const TABS = [
   {id:"sort",   label:"📊 Sorting",        badge:"5 Algos"},
@@ -24,8 +26,10 @@ const TABS = [
   {id:"stack",  label:"📚 Stack",           badge:"LIFO"},
   {id:"queue",  label:"🔄 Queue",           badge:"FIFO"},
   {id:"linked", label:"🔗 Linked List",     badge:"Singly"},
-  {id:"bst",    label:"🌲 BST",             badge:"Binary Search"},
-  {id:"trie",   label:"🔤 Trie",            badge:"Prefix Tree"},
+  {id:"bst",      label:"🌲 BST",           badge:"Binary Search"},
+  {id:"trie",     label:"🔤 Trie",          badge:"Prefix Tree"},
+  {id:"nqueens",  label:"♛ N-Queens",      badge:"Backtracking"},
+  {id:"kmp",      label:"🔍 KMP Search",   badge:"String Match"},
 ];
 
 export default function DSAVisualizer(){
@@ -43,7 +47,7 @@ export default function DSAVisualizer(){
           <span className="hidden sm:inline" style={{fontSize:13,color:T.muted2}}>Advanced DSA Visualizer</span>
         </div>
         <div className="hidden md:block" style={{fontSize:11,color:T.muted2,background:T.surface2,padding:"4px 12px",borderRadius:100,border:`1px solid ${T.border}`}}>
-          12 Visualizers · Sorting · Graph · DP · Trees
+          14 Visualizers · Sorting · Graph · DP · Trees · Backtracking · KMP
         </div>
       </div>
 
@@ -78,8 +82,10 @@ export default function DSAVisualizer(){
         {active==="stack"  && <StackViz/>}
         {active==="queue"  && <QueueViz/>}
         {active==="linked" && <LinkedListViz/>}
-        {active==="bst"    && <BSTViz/>}
-        {active==="trie"   && <TrieViz/>}
+        {active==="bst"      && <BSTViz/>}
+        {active==="trie"     && <TrieViz/>}
+        {active==="nqueens"  && <NQueensViz/>}
+        {active==="kmp"      && <KMPViz/>}
       </div>
     </div>
   );

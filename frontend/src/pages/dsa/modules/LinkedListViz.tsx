@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, InfoBox, CRow, Log, Input } from "../shared";
+import { Btn, Side, SLabel, InfoBox, CRow, Log, Input, useStepGuide } from "../shared";
 
 export default function LinkedListViz(){
   const [nodes,setNodes]=useState<{val:number,id:number}[]>([]);
@@ -12,6 +12,7 @@ export default function LinkedListViz(){
   const [label,setLabel]=useState("Insert values to build the list");
   const idRef=useRef(0);
   const addLog=(m:string,t="info")=>setLog(l=>[...l.slice(-25),{m,t}]);
+  const guide = useStepGuide();
 
   const insertHead=()=>{
     const v=parseInt(val)||Math.floor(Math.random()*90+5);setVal("");
@@ -44,6 +45,81 @@ export default function LinkedListViz(){
     setLabel(`<strong>search(${k})</strong> → not found`);addLog(`${k} not in list`,"err");setSearchHL(-1);
   };
 
+  const runDemo=async()=>{
+    guide.resetGuide();
+    setNodes([]);setHighlighted(-1);setSearchHL(-1);setLog([]);setLabel("⚡ Guided demo...");
+    const T_STEPS = 7;
+
+    await guide.showGuide({
+      title:"What is a Linked List?",
+      body:"A Linked List stores elements as nodes, where each node contains data and a pointer to the next node. Unlike arrays, elements are NOT stored contiguously in memory.",
+      tip:"Key advantage: insertions and deletions don't require shifting elements. Key disadvantage: no random access (can't jump to index i directly)."
+    }, 1, T_STEPS);
+
+    const items=[20,15,30,10,25];
+    for(let i=0;i<items.length;i++){
+      if(guide.isSkipped()) break;
+      const v=items[i];const n={val:v,id:idRef.current++};
+      if(i%2===0){setNodes(ns=>{const r=[n,...ns];setHighlighted(0);return r;});addLog(`insertHead(${v})`,"ok");setLabel(`<strong>insertHead(${v})</strong>`);}
+      else{setNodes(ns=>{const r=[...ns,n];setHighlighted(r.length-1);return r;});addLog(`insertTail(${v})`,"ok");setLabel(`<strong>insertTail(${v})</strong>`);}
+      await new Promise(r=>setTimeout(r,500));
+      if(i===0) await guide.showGuide({
+        title:"Insert at Head — O(1)",
+        body:"insertHead(20) creates a new node and makes it the head. We just update the head pointer — no traversal needed. This is always O(1).",
+        tip:"The new node's 'next' pointer is set to the old head, then the head reference is updated to the new node."
+      }, 2, T_STEPS);
+      if(i===1) await guide.showGuide({
+        title:"Insert at Tail — O(n)",
+        body:"insertTail(15) adds a node at the end. We must traverse the entire list to find the last node, then set its 'next' pointer to the new node.",
+        tip:"Unlike insertHead, insertTail is O(n) because we need to walk to the end. A doubly-linked list with a tail pointer makes this O(1)."
+      }, 3, T_STEPS);
+      setHighlighted(-1);await new Promise(r=>setTimeout(r,150));
+    }
+
+    if(!guide.isSkipped()){
+      // Search
+      await guide.showGuide({
+        title:"Search — Sequential Traversal",
+        body:"To find a value, we must start at the head and follow 'next' pointers one by one until we find it (or reach NULL). This is O(n) — no shortcuts.",
+        tip:"This is the main tradeoff vs arrays: arrays give O(1) access by index, but linked lists need O(n) traversal."
+      }, 4, T_STEPS);
+
+      const target=30;
+      for(let i=0;i<5;i++){
+        if(guide.isSkipped()) break;
+        setSearchHL(i);
+        const nodeVal=[25,10,30,15,20][i];
+        addLog(`checking node ${i}...`,nodeVal===target?"ok":"info");
+        await new Promise(r=>setTimeout(r,450));
+        if(nodeVal===target){setLabel(`<strong>search(${target})</strong> → found!`);await new Promise(r=>setTimeout(r,400));break;}
+      }
+      setSearchHL(-1);
+
+      await guide.showGuide({
+        title:"Delete Head — O(1)",
+        body:"Deleting the head is simple: just move the head pointer to the next node. The old head is garbage collected. No traversal needed.",
+        tip:"Deleting from the middle or tail requires traversal to find the previous node — that's O(n)."
+      }, 5, T_STEPS);
+
+      setHighlighted(0);addLog("deleteHead()","warn");setLabel(`<strong>deleteHead()</strong>`);
+      await new Promise(r=>setTimeout(r,500));setNodes(ns=>ns.slice(1));setHighlighted(-1);
+
+      await guide.showGuide({
+        title:"When to Use Linked Lists?",
+        body:"Use linked lists when you need frequent insertions/deletions (especially at the head), when you don't know the size in advance, or when implementing stacks/queues.",
+        tip:"Interview tip: Linked list problems often involve two-pointer technique, reversals, cycle detection (Floyd's), or merge operations."
+      }, 6, T_STEPS);
+
+      await guide.showGuide({
+        title:"Complexity Summary",
+        body:"Insert Head: O(1) | Insert Tail: O(n) | Delete Head: O(1) | Search: O(n) | Access by index: O(n). Space: O(n) with extra pointer overhead per node.",
+        tip:"Compared to arrays: arrays have O(1) access but O(n) insertion. Linked lists have O(1) insertion at head but O(n) access."
+      }, 7, T_STEPS);
+    }
+
+    setLabel("✓ Demo complete!");
+  };
+
   return(
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full h-full">
       <Side>
@@ -55,6 +131,7 @@ export default function LinkedListViz(){
         <Btn onClick={deleteHead} variant="red" disabled={!nodes.length} full>⊖ Delete Head</Btn>
         <div><SLabel>Search</SLabel><div style={{marginTop:6}}><Input value={searchVal} onChange={setSearchVal} placeholder="find value" onEnter={search} mono/></div></div>
         <Btn onClick={search} variant="ghost" full>🔍 Search</Btn>
+        <Btn onClick={runDemo} variant="yellow" full>⚡ Learn Linked List</Btn>
         <Btn onClick={()=>{setNodes([]);addLog("reset","info")}} variant="ghost" full>↺ Reset</Btn>
         <InfoBox>
           <strong style={{color:T.text}}>Singly Linked List</strong><br/><br/>
@@ -67,7 +144,8 @@ export default function LinkedListViz(){
         <SLabel>Log</SLabel><Log entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>
-        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:28,overflowX:"auto"}}>
+        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:28,overflowX:"auto",position:"relative"}}>
+          <guide.Overlay/>
           {nodes.length===0?<div style={{color:T.muted,fontSize:13}}>List is empty — insert values</div>:(
             <div style={{display:"flex",gap:0,alignItems:"center"}}>
               <span style={{fontSize:9,color:T.accent,fontWeight:700,marginRight:8}}>HEAD</span>

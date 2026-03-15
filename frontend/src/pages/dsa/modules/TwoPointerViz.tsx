@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, InfoBox, CRow, Input, Select } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Input, Select, useStepGuide } from "../shared";
 
 export default function TwoPointerViz(){
   const [mode,setMode]=useState("twosum");
   const [arrInput,setArrInput]=useState("1 3 5 7 9 11 14 17 20");
   const [targetInput,setTargetInput]=useState("18");
   const [windowK,setWindowK]=useState("3");
+  const guide = useStepGuide();
   const [steps,setSteps]=useState<any[]>([]);
   const [stepIdx,setStepIdx]=useState(-1);
 
@@ -61,6 +62,34 @@ export default function TwoPointerViz(){
         {mode==="twosum"&&<div><SLabel>Target Sum</SLabel><div style={{marginTop:6}}><Input value={targetInput} onChange={setTargetInput} placeholder="18" mono/></div></div>}
         {mode==="sliding"&&<div><SLabel>Window Size k</SLabel><div style={{marginTop:6}}><Input value={windowK} onChange={setWindowK} placeholder="3" mono/></div></div>}
         <Btn onClick={build} variant="primary" full>⚙ Build Steps</Btn>
+        <Btn onClick={async()=>{
+          guide.resetGuide();
+          if(mode==="twosum"){
+            await guide.showGuide({
+              title:"Two Pointer: Two Sum",
+              body:"On a SORTED array, place one pointer at the start and one at the end. If sum < target, move left pointer right (need bigger). If sum > target, move right pointer left (need smaller).",
+              tip:"This reduces Two Sum from O(n²) brute force to O(n). Works ONLY on sorted arrays. For unsorted, use a hash map approach."
+            }, 1, 2);
+            if(!guide.isSkipped()) await guide.showGuide({
+              title:"Why It Works",
+              body:"Since the array is sorted, moving left pointer right always increases the sum, and moving right pointer left always decreases it. We never need to check pairs we skip.",
+              tip:"Interview classic! If asked 'find two numbers that sum to X in a sorted array' — always think Two Pointers."
+            }, 2, 2);
+            setArrInput("1 3 5 7 9 11 14 17 20");setTargetInput("18");setTimeout(build,50);
+          } else {
+            await guide.showGuide({
+              title:"Sliding Window",
+              body:"Maintain a 'window' of size k. Slide it one position at a time: add the new element entering the window, subtract the element leaving. Compute the result (max sum, min, etc.) for each window position.",
+              tip:"Reduces 'max sum of k elements' from O(nk) to O(n). The window 'slides' — reusing previous computation instead of recalculating from scratch."
+            }, 1, 2);
+            if(!guide.isSkipped()) await guide.showGuide({
+              title:"Fixed vs Variable Window",
+              body:"Fixed window: window size k stays constant (max sum of k elements). Variable window: window size changes based on conditions (smallest subarray with sum ≥ target).",
+              tip:"Pattern recognition: 'subarray of size k' = fixed window. 'Smallest/longest subarray with condition' = variable window."
+            }, 2, 2);
+            setArrInput("2 1 5 1 3 2 6 4");setWindowK("3");setTimeout(build,50);
+          }
+        }} variant="yellow" full>⚡ Learn {mode==="twosum"?"Two Pointer":"Sliding Window"}</Btn>
         <InfoBox>
           {mode==="twosum"&&<><strong style={{color:T.text}}>Two Pointers</strong><br/><br/>Works on sorted arrays. Start from both ends, move inward. O(n) vs O(n²) brute force.</>}
           {mode==="sliding"&&<><strong style={{color:T.text}}>Sliding Window</strong><br/><br/>Maintain a fixed window, slide right. Add new, remove oldest. O(n) instead of O(nk).</>}
@@ -71,7 +100,8 @@ export default function TwoPointerViz(){
         </InfoBox>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>
-        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:24,overflowX:"auto"}}>
+        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:24,position:"relative",overflowX:"auto"}}>
+          <guide.Overlay/>
           {!step?<div style={{color:T.muted,fontSize:13}}>Configure and click Build Steps</div>:(
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:20,width:"100%"}}>
               <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"center"}}>

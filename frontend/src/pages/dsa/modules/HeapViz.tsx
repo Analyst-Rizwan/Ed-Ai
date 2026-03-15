@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Input } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Input, useStepGuide } from "../shared";
 
 export default function HeapViz(){
   const [heap,setHeap]=useState<number[]>([]);
@@ -12,6 +12,7 @@ export default function HeapViz(){
   const [speed,setSpeed]=useState(400);
   const stopRef=useRef(false);
   const addLog=(m:string,t="info")=>setLog(l=>[...l.slice(-25),{m,t}]);
+  const guide = useStepGuide();
 
   const hl=async(h:number[],idxs:number[],msg:string,t="info")=>{
     if(stopRef.current)throw new Error("s");
@@ -57,10 +58,26 @@ export default function HeapViz(){
     setRunning(false);
   };
 
-  const loadExample=()=>{
+  const loadExample=async()=>{
+    guide.resetGuide();
+    await guide.showGuide({
+      title:"What is a Heap?",
+      body:"A Heap is a complete binary tree stored as an array where the parent is always ≤ its children (min-heap) or ≥ (max-heap). The ROOT always holds the min (or max) value.",
+      tip:"Heaps are used to implement Priority Queues. Common uses: Dijkstra's algorithm, job scheduling, finding k-th largest/smallest element."
+    }, 1, 3);
+    if(!guide.isSkipped()) await guide.showGuide({
+      title:"Heap Operations",
+      body:"Insert: Add at the end, then 'bubble up' (swap with parent until heap property is restored). Extract-Min: Remove root, move last element to root, then 'sink down' (swap with smaller child). Both are O(log n).",
+      tip:"Array indexing: parent(i) = ⌊(i-1)/2⌋, left(i) = 2i+1, right(i) = 2i+2. No pointers needed!"
+    }, 2, 3);
     const vals=[5,12,3,8,20,1,15,7];const h:number[]=[];
     vals.forEach(v=>{h.push(v);let i=h.length-1;while(i>0){const p=Math.floor((i-1)/2);if(h[p]>h[i]){[h[i],h[p]]=[h[p],h[i]];i=p;}else break;}});
     setHeap(h);setHighlighted([]);addLog("Loaded min-heap example","info");setLabel("Example heap loaded. Try extract-min or insert.");
+    if(!guide.isSkipped()) await guide.showGuide({
+      title:"Min-Heap Loaded!",
+      body:"A min-heap with values [5,12,3,8,20,1,15,7] is loaded. The root (1) is the smallest. Try: Insert a value to see bubble-up, or Extract Min to see sink-down.",
+      tip:"Notice the array view at the bottom — the tree is stored as a flat array! This is memory-efficient with no pointer overhead."
+    }, 3, 3);
   };
 
   const W=600,H=280,R=22;
@@ -77,7 +94,7 @@ export default function HeapViz(){
         <div><SLabel>Insert Value</SLabel><div style={{marginTop:6}}><Input value={val} onChange={setVal} placeholder="e.g. 14" onEnter={insert} mono/></div></div>
         <Btn onClick={insert} variant="primary" disabled={running} full>⊕ Insert</Btn>
         <Btn onClick={extractMin} variant="red" disabled={running||!heap.length} full>⊖ Extract Min</Btn>
-        <Btn onClick={loadExample} variant="ghost" disabled={running} full>⚡ Load Example</Btn>
+        <Btn onClick={loadExample} variant="yellow" disabled={running} full>⚡ Learn Heap</Btn>
         <Btn onClick={()=>{setHeap([]);setHighlighted([]);addLog("reset","info")}} variant="ghost" disabled={running} full>↺ Reset</Btn>
         <div><SLabel>Speed</SLabel><div style={{marginTop:6}}><SpeedRow speed={speed} setSpeed={setSpeed}/></div></div>
         <InfoBox>
@@ -97,7 +114,8 @@ export default function HeapViz(){
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>
         <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-          <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
+            <guide.Overlay/>
             {heap.length===0?(
               <div style={{color:T.muted,fontSize:13}}>Heap is empty — insert values</div>
             ):(

@@ -29,6 +29,7 @@ export const CSS = `
   @keyframes logIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
   @keyframes barGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
   @keyframes mergeSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+  @keyframes drawIn{to{stroke-dashoffset:0}}
   @keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(124,92,252,0.5)}100%{box-shadow:0 0 0 10px rgba(124,92,252,0)}}
   .pop{animation:popIn .36s cubic-bezier(.34,1.56,.64,1) both}
   .sup{animation:slideUp .28s ease both}

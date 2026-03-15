@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, InfoBox, CRow, Log, Badge } from "../shared";
+import { Btn, Side, SLabel, InfoBox, CRow, Log, Badge, useStepGuide } from "../shared";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function MergeViz(){
@@ -9,6 +9,8 @@ export default function MergeViz(){
   const [steps,setSteps]=useState<any[]>([]);
   const [stepIdx,setStepIdx]=useState(-1);
   const [log,setLog]=useState<{m:string,t:string}[]>([]);
+
+  const guide = useStepGuide();
 
   const buildSteps=()=>{
     const L=leftInput.trim().split(/\s+/).map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b).map((v,i)=>({v,id:`l-${i}`}));
@@ -41,6 +43,20 @@ export default function MergeViz(){
           <input value={rightInput} onChange={e=>setRightInput(e.target.value)} style={{background:T.surface2,border:`1px solid ${T.border2}`,borderRadius:10,padding:"8px 11px",color:T.text,fontSize:13,width:"100%",outline:"none",fontFamily:"'Space Mono',monospace",marginTop:6}}/>
         </div>
         <Btn onClick={buildSteps} variant="primary" full>⚙ Build Merge Steps</Btn>
+        <Btn onClick={async()=>{
+          guide.resetGuide();
+          await guide.showGuide({
+            title:"Merge Step (Merge Sort)",
+            body:"Merging is the core operation of Merge Sort. Given two SORTED arrays, we combine them into one sorted array using two pointers. Each pointer starts at the beginning of its array.",
+            tip:"The merge operation is O(n) where n = total elements. Merge Sort recursively divides, then merges — total: O(n log n)."
+          }, 1, 2);
+          if(!guide.isSkipped()) await guide.showGuide({
+            title:"Two-Pointer Merge",
+            body:"Compare elements at both pointers. Take the smaller one, advance that pointer. Repeat until one array is exhausted, then append the remaining elements.",
+            tip:"This is why Merge Sort is STABLE — equal elements maintain their relative order. It always takes O(n) extra space for the merged output."
+          }, 2, 2);
+          setLeftInput("3 8 14 21 35");setRightInput("1 6 10 18 28 42");setTimeout(buildSteps,50);
+        }} variant="yellow" full>⚡ Learn Merge</Btn>
         <InfoBox>
           <strong style={{color:T.text}}>Merge (Two Sorted Arrays)</strong><br/><br/>
           Core of Merge Sort. Two pointers walk both arrays, always picking the smaller element.
@@ -53,7 +69,8 @@ export default function MergeViz(){
         <SLabel>Log</SLabel><Log entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:28,padding:28}}>
+          <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:24,position:"relative"}}>
+            <guide.Overlay/>
           {step?(
             <>
               <div style={{display:"flex",gap:40}}>
