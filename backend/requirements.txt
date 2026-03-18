@@ -40,3 +40,5 @@ slowapi>=0.1.9
 python-json-logger>=2.0.0
 beautifulsoup4>=4.12.0
 lxml>=5.0.0
+playwright>=1.42.0
+nest_asyncio>=1.6.0

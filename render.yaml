@@ -12,7 +12,7 @@ services:
     region: oregon
     plan: free
     buildCommand: |
-      cd backend && pip install -r requirements.txt &&
+      cd backend && pip install -r requirements.txt && playwright install chromium &&
       cd ../frontend && npm ci && npm run build &&
       mkdir -p ../backend/app/static/dist &&
       cp -r dist/* ../backend/app/static/dist/
