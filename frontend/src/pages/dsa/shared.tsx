@@ -68,14 +68,14 @@ export const CRow = ({op,val,color}:{op:string,val:string,color:string})=>(
 export const Log = ({entries}:{entries:{m:string,t:string}[]})=>{
   const r=useRef<HTMLDivElement>(null);
   useEffect(()=>{if(r.current)r.current.scrollTop=r.current.scrollHeight},[entries]);
-  return <div ref={r} style={{background:T.surface3,borderRadius:10,padding:"8px 10px",fontFamily:"'Space Mono',monospace",fontSize:10,color:T.muted2,lineHeight:1.9,maxHeight:100,overflowY:"auto"}}>
+  return <div ref={r} style={{background:T.surface3,borderRadius:10,padding:"8px 10px",fontFamily:"'Space Mono',monospace",fontSize:10,color:T.muted2,lineHeight:1.9,minHeight:48,maxHeight:120,overflowY:"auto"}}>
     {entries.map((e,i)=><div key={i} className="log" style={{color:e.t==="ok"?T.green:e.t==="err"?T.red:e.t==="warn"?T.yellow:T.accent}}>› {e.m}</div>)}
   </div>;
 };
 
 /* ── Sidebar Panel ── */
 export const Side = ({children}:{children:any})=>(
-  <div className="w-full max-h-[35vh] md:max-h-none md:w-56 md:min-w-[224px] border-b md:border-b-0 md:border-r p-2.5 md:p-4 flex flex-col gap-2.5 md:gap-4 overflow-y-auto shrink-0" style={{borderColor:T.border, background:T.surface}}>
+  <div className="w-full max-h-[42vh] md:max-h-none md:w-56 md:min-w-[224px] border-b md:border-b-0 md:border-r p-3 md:p-4 flex flex-col gap-2.5 md:gap-4 overflow-y-auto shrink-0" style={{borderColor:T.border, background:T.bg}}>
     {children}
   </div>
 );
@@ -162,16 +162,19 @@ export function useStepGuide() {
     if (!step) return null;
     return (
       <div style={{
-        position: "absolute", inset: 0, zIndex: 100,
+        position: "fixed", inset: 0, zIndex: 200,
         background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)",
         display: "flex", alignItems: "center", justifyContent: "center",
         animation: "fadeIn .2s ease",
+        padding: "16px",
+        overflowY: "auto",
       }}>
         <div style={{
           background: T.surface, border: `1px solid ${T.border2}`,
-          borderRadius: 16, padding: "24px 28px", maxWidth: 420, width: "90%",
+          borderRadius: 16, padding: "20px 22px", maxWidth: 420, width: "100%",
           boxShadow: `0 20px 60px rgba(0,0,0,.5), 0 0 20px ${T.accent}22`,
           animation: "popIn .3s cubic-bezier(.34,1.56,.64,1) both",
+          maxHeight: "calc(100vh - 32px)", overflowY: "auto",
         }}>
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>

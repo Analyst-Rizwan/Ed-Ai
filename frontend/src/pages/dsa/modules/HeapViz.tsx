@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Input, useStepGuide } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, Log, Input, useStepGuide } from "../shared";
 
 export default function HeapViz(){
   const [heap,setHeap]=useState<number[]>([]);
@@ -77,7 +77,12 @@ export default function HeapViz(){
       title:"Min-Heap Loaded!",
       body:"A min-heap with values [5,12,3,8,20,1,15,7] is loaded. The root (1) is the smallest. Try: Insert a value to see bubble-up, or Extract Min to see sink-down.",
       tip:"Notice the array view at the bottom — the tree is stored as a flat array! This is memory-efficient with no pointer overhead."
-    }, 3, 3);
+    }, 3, 4);
+    if(!guide.isSkipped()) await guide.showGuide({
+      title:"Complexity Breakdown",
+      body:"Insert: O(log n) to bubble up. Extract Min: O(log n) to sink down. Peek Min: O(1).",
+      tip:"A complete binary tree stored as an array is perfect for priority queues!"
+    }, 4, 4);
   };
 
   const W=600,H=280,R=22;
@@ -97,19 +102,7 @@ export default function HeapViz(){
         <Btn onClick={loadExample} variant="yellow" disabled={running} full>⚡ Learn Heap</Btn>
         <Btn onClick={()=>{setHeap([]);setHighlighted([]);addLog("reset","info")}} variant="ghost" disabled={running} full>↺ Reset</Btn>
         <div><SLabel>Speed</SLabel><div style={{marginTop:6}}><SpeedRow speed={speed} setSpeed={setSpeed}/></div></div>
-        <InfoBox>
-          <strong style={{color:T.text}}>Min-Heap</strong><br/><br/>
-          Parent ≤ Children always. Root = minimum element. Complete binary tree stored as array.
-          <div style={{marginTop:8,borderTop:`1px solid ${T.border}`,paddingTop:8}}>
-            <CRow op="Insert" val="O(log n)" color={T.green}/>
-            <CRow op="Extract Min" val="O(log n)" color={T.green}/>
-            <CRow op="Peek Min" val="O(1)" color={T.green}/>
-            <CRow op="Used in" val="Priority Queue" color={T.teal}/>
-          </div>
-          <div style={{marginTop:8,borderTop:`1px solid ${T.border}`,paddingTop:8,fontSize:10,fontFamily:"'Space Mono',monospace",color:T.muted}}>
-            parent(i) = ⌊(i-1)/2⌋<br/>left(i) = 2i+1<br/>right(i) = 2i+2
-          </div>
-        </InfoBox>
+
         <SLabel>Log</SLabel><Log entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>
@@ -119,7 +112,7 @@ export default function HeapViz(){
             {heap.length===0?(
               <div style={{color:T.muted,fontSize:13}}>Heap is empty — insert values</div>
             ):(
-              <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{overflow:"visible"}}>
+              <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" style={{overflow:"visible"}}>
                 {heap.map((_,i)=>{
                   if(i===0)return null;
                   const par=Math.floor((i-1)/2),p=getPos(i),pp=getPos(par);

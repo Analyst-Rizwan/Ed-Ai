@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Select, useStepGuide } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, Log, Select, useStepGuide } from "../shared";
 
 type Cell = "empty" | "queen" | "conflict" | "safe" | "backtrack" | "placed";
 
@@ -73,7 +73,12 @@ export default function NQueensViz() {
       title:`Solving ${N}-Queens`,
       body:`For a ${N}×${N} board, we go row by row. In each row, try each column. If safe (no queen attacks from above), place and move to next row. If no column works, backtrack to the previous row and try the next column.`,
       tip:`Time: O(N!) in worst case. A ${N}×${N} board has ${N===4?"2":N===5?"10":N===6?"4":N===7?"40":"92"} solutions. Watch the colors: green=queen, yellow=checking, red=conflict, orange=backtrack.`
-    }, 2, 2);
+    }, 2, 3);
+    if(!guide.isSkipped()) await guide.showGuide({
+      title:"Complexity Summary",
+      body:"Time: O(N!) — we try all valid combinations, branching less and less as we place more queens. Space: O(N) to store the board state and recursion depth.",
+      tip:"N-Queens is the classic backtracking interview question. The 'isSafe' check determines if a column or diagonal is already attacked."
+    }, 3, 3);
     const queens: number[] = [];
     let solCount = 0;
     const vizBoard = makeBoard(N);
@@ -164,7 +169,7 @@ export default function NQueensViz() {
   };
 
   const isLight = (r: number, c: number) => (r + c) % 2 === 0;
-  const cellSize = N <= 5 ? 56 : N <= 6 ? 48 : N <= 7 ? 42 : 38;
+  const baseSize = N <= 5 ? 56 : N <= 6 ? 48 : N <= 7 ? 42 : 38;
 
   return (
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full h-full">
@@ -185,33 +190,25 @@ export default function NQueensViz() {
           <Btn onClick={reset} variant="ghost" disabled={running} style={{ flex: 1 }}>↺ Reset</Btn>
         </div>
         <div><SLabel>Speed</SLabel><div style={{ marginTop: 6 }}><SpeedRow speed={speed} setSpeed={setSpeed} /></div></div>
-        <InfoBox>
-          <strong style={{ color: T.text }}>N-Queens (Backtracking)</strong><br /><br />
-          Place N queens on an N×N board so no two attack each other. Try all placements, backtrack on conflicts.
-          <div style={{ marginTop: 8, borderTop: `1px solid ${T.border}`, paddingTop: 8 }}>
-            <CRow op="Time" val="O(N!)" color={T.red} />
-            <CRow op="Space" val="O(N)" color={T.yellow} />
-            <CRow op="Strategy" val="Backtracking" color={T.teal} />
-          </div>
-          <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
-            {[
-              { c: T.accent, l: "Queen placed" },
-              { c: T.green, l: "Solution found" },
-              { c: T.yellow, l: "Checking" },
-              { c: T.red, l: "Conflict" },
-              { c: T.orange, l: "Backtrack" },
-            ].map(({ c, l }) => (
-              <div key={l} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: T.muted }}>
-                <div style={{ width: 10, height: 10, borderRadius: 3, background: c }} />
-                {l}
-              </div>
-            ))}
-          </div>
-        </InfoBox>
+        <div style={{ marginTop: 12, padding: "12px", background: T.surface2, borderRadius: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+          <SLabel>Legend</SLabel>
+          {[
+            { c: T.accent, l: "Queen placed" },
+            { c: T.green, l: "Solution found" },
+            { c: T.yellow, l: "Checking" },
+            { c: T.red, l: "Conflict" },
+            { c: T.orange, l: "Backtrack" },
+          ].map(({ c, l }) => (
+            <div key={l} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: T.muted }}>
+              <div style={{ width: 10, height: 10, borderRadius: 3, background: c }} />
+              {l}
+            </div>
+          ))}
+        </div>
         <SLabel>Log</SLabel><Log entries={log} />
       </Side>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
         {/* Stats bar */}
         <div style={{ padding: "8px 20px", borderBottom: `1px solid ${T.border}`, background: T.surface, display: "flex", gap: 20, flexWrap: "wrap" }}>
           <span style={{ fontFamily: "'Space Mono',monospace", fontSize: 11, color: T.accent }}>
@@ -226,8 +223,17 @@ export default function NQueensViz() {
         </div>
 
         {/* Board */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, overflow: "auto", position: "relative" }}>
-          <guide.Overlay/>
+        <div style={{
+          flex: 1,
+          overflow: "hidden",
+          position: "relative",
+          minHeight: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 12,
+        }}>
+          <guide.Overlay />
           {board.length === 0 ? (
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 48, opacity: 0.2, marginBottom: 12 }}>♛</div>
@@ -237,38 +243,58 @@ export default function NQueensViz() {
               </div>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {board.map((row, r) => (
-                <div key={r} style={{ display: "flex", gap: 2 }}>
-                  {row.map((cell, c) => {
-                    const style = cellColor(cell);
-                    const light = isLight(r, c);
-                    return (
-                      <div key={c} style={{
-                        width: cellSize, height: cellSize,
-                        borderRadius: 6,
-                        background: style.bg !== "transparent"
-                          ? style.bg
-                          : light ? `${T.surface3}` : T.surface2,
-                        border: style.border !== "transparent"
-                          ? `2px solid ${style.border}`
-                          : `1px solid ${T.border}`,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: cellSize * 0.5,
-                        transition: "all .15s",
-                        boxShadow: (cell === "queen" || cell === "placed" || cell === "conflict" || cell === "backtrack")
-                          ? `0 0 10px ${style.border}66`
-                          : "none",
-                      }}>
-                        {(cell === "queen" || cell === "placed") && "♛"}
-                        {cell === "conflict" && "♛"}
-                        {cell === "backtrack" && "↩"}
-                        {cell === ("check" as any) && "·"}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
+            // Outer square: constrained to the smaller of available width or height
+            <div style={{
+              width: "min(100%, 100% * 1)",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}>
+              <div style={{
+                // This is the key: use aspectRatio + maxHeight to keep it square and fully visible
+                aspectRatio: "1 / 1",
+                maxHeight: "100%",
+                maxWidth: "100%",
+                width: "auto",
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}>
+                {board.map((row, r) => (
+                  <div key={r} style={{ display: "flex", gap: 2, flex: 1, minHeight: 0 }}>
+                    {row.map((cell, c) => {
+                      const style = cellColor(cell);
+                      const light = isLight(r, c);
+                      return (
+                        <div key={c} style={{
+                          flex: 1,
+                          minWidth: 0,
+                          borderRadius: 6,
+                          background: style.bg !== "transparent"
+                            ? style.bg
+                            : light ? `${T.surface3}` : T.surface2,
+                          border: style.border !== "transparent"
+                            ? `2px solid ${style.border}`
+                            : `1px solid ${T.border}`,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: `calc(min(${baseSize * 0.5}px, 35vmin / ${N}))`,
+                          transition: "all .15s",
+                          boxShadow: (cell === "queen" || cell === "placed" || cell === "conflict" || cell === "backtrack")
+                            ? `0 0 10px ${style.border}66`
+                            : "none",
+                        }}>
+                          {(cell === "queen" || cell === "placed") && "♛"}
+                          {cell === "conflict" && "♛"}
+                          {cell === "backtrack" && "↩"}
+                          {cell === ("check" as any) && "·"}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

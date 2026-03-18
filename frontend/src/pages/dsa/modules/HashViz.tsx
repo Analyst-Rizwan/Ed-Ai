@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, InfoBox, CRow, Log, Input, Badge, Select, useStepGuide } from "../shared";
+import { Btn, Side, SLabel, Log, Input, Badge, Select, useStepGuide } from "../shared";
 
 export default function HashViz(){
   const SIZE=11;
@@ -118,16 +118,6 @@ export default function HashViz(){
         <Btn onClick={search} variant="ghost" full>🔍 Search</Btn>
         <Btn onClick={runDemo} variant="yellow" full>⚡ Learn Hashing</Btn>
         <Btn onClick={reset} variant="ghost" full>↺ Reset</Btn>
-        <InfoBox>
-          <strong style={{color:T.text}}>{mode==="linear"?"Linear Probing":"Chaining"}</strong><br/><br/>
-          hash(k) = k mod {SIZE}<br/><br/>
-          {mode==="linear"?"On collision: try next slot (+1). Can cause clustering.":"On collision: store in linked list at same bucket."}
-          <div style={{marginTop:8,borderTop:`1px solid ${T.border}`,paddingTop:8}}>
-            <CRow op="Insert (avg)" val="O(1)" color={T.green}/>
-            <CRow op="Search (avg)" val="O(1)" color={T.green}/>
-            <CRow op="Worst case" val="O(n)" color={T.red}/>
-          </div>
-        </InfoBox>
         <SLabel>Log</SLabel><Log entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>
@@ -137,9 +127,9 @@ export default function HashViz(){
             {table.map((bucket,i)=>{
               const isHL=highlighted.includes(i),isEmpty=bucket.length===0;
               return(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:10}}>
-                  <div style={{width:36,height:36,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Space Mono',monospace",fontSize:12,fontWeight:700,flexShrink:0,background:isHL?T.yellowSoft:T.surface3,color:isHL?T.yellow:T.muted,border:`1px solid ${isHL?T.yellow:T.surface3}`,transition:"all .2s",boxShadow:isHL?`0 0 12px ${T.yellow}66`:"none"}}>{i}</div>
-                  <div style={{flex:1,minHeight:36,borderRadius:10,border:`1px solid ${isHL?T.yellow:isEmpty?T.surface3:T.border2}`,background:isHL?T.yellowSoft:isEmpty?T.surface3+"44":T.surface2,display:"flex",alignItems:"center",gap:6,padding:"0 10px",transition:"all .2s",boxShadow:isHL?`0 0 8px ${T.yellow}44`:"none"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,minHeight:40}}>
+                  <div style={{width:40,height:40,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Space Mono',monospace",fontSize:12,fontWeight:700,flexShrink:0,background:isHL?T.yellowSoft:T.surface3,color:isHL?T.yellow:T.muted,border:`1px solid ${isHL?T.yellow:T.surface3}`,transition:"all .2s",boxShadow:isHL?`0 0 12px ${T.yellow}66`:"none"}}>{i}</div>
+                  <div style={{flex:1,minHeight:40,borderRadius:10,border:`1px solid ${isHL?T.yellow:isEmpty?T.surface3:T.border2}`,background:isHL?T.yellowSoft:isEmpty?T.surface3+"44":T.surface2,display:"flex",alignItems:"center",gap:6,padding:"0 10px",transition:"all .2s",boxShadow:isHL?`0 0 8px ${T.yellow}44`:"none"}}>
                     {isEmpty?(
                       <span style={{color:T.surface3,fontSize:12,fontFamily:"'Space Mono',monospace"}}>empty</span>
                     ):(

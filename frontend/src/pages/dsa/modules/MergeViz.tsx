@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, InfoBox, CRow, Log, Badge, useStepGuide } from "../shared";
+import { Btn, Side, SLabel, Log, Badge, useStepGuide } from "../shared";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function MergeViz(){
@@ -53,27 +53,22 @@ export default function MergeViz(){
           if(!guide.isSkipped()) await guide.showGuide({
             title:"Two-Pointer Merge",
             body:"Compare elements at both pointers. Take the smaller one, advance that pointer. Repeat until one array is exhausted, then append the remaining elements.",
-            tip:"This is why Merge Sort is STABLE — equal elements maintain their relative order. It always takes O(n) extra space for the merged output."
-          }, 2, 2);
+          }, 2, 3);
+          if(!guide.isSkipped()) await guide.showGuide({
+            title:"Merge Complexity",
+            body:"Time: O(n + m) — we scan both arrays exactly once. Space: O(n + m) — requires a new array to hold the merged result.",
+            tip:"Merging is stable. When elements are equal, always pick from the Left array first to preserve original relative order."
+          }, 3, 3);
           setLeftInput("3 8 14 21 35");setRightInput("1 6 10 18 28 42");setTimeout(buildSteps,50);
         }} variant="yellow" full>⚡ Learn Merge</Btn>
-        <InfoBox>
-          <strong style={{color:T.text}}>Merge (Two Sorted Arrays)</strong><br/><br/>
-          Core of Merge Sort. Two pointers walk both arrays, always picking the smaller element.
-          <div style={{marginTop:10,borderTop:`1px solid ${T.border}`,paddingTop:10}}>
-            <CRow op="Time" val="O(n+m)" color={T.green}/>
-            <CRow op="Space" val="O(n+m)" color={T.orange}/>
-            <CRow op="Stable" val="Yes ✓" color={T.teal}/>
-          </div>
-        </InfoBox>
         <SLabel>Log</SLabel><Log entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-          <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:24,position:"relative"}}>
+          <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"16px 12px",position:"relative",overflowY:"auto",overflowX:"hidden"}}>
             <guide.Overlay/>
           {step?(
             <>
-              <div style={{display:"flex",gap:40}}>
+              <div style={{display:"flex",gap:20,flexWrap:"wrap",justifyContent:"center"}}>
                 {[{label:"Left",arr:step.L,ptr:step.li,color:T.accent},{label:"Right",arr:step.R,ptr:step.ri,color:T.green}].map(({label,arr,ptr,color})=>(
                   <div key={label} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
                     <div style={{fontSize:11,fontWeight:600,color}}>{label}</div>
@@ -129,7 +124,7 @@ export default function MergeViz(){
             <div style={{color:T.muted,fontSize:13}}>Set arrays above and click Build</div>
           )}
         </div>
-        <div style={{padding:"10px 20px",borderTop:`1px solid ${T.border}`,background:T.surface,display:"flex",alignItems:"center",gap:12}}>
+        <div style={{padding:"10px 12px",borderTop:`1px solid ${T.border}`,background:T.surface,display:"flex",alignItems:"center",gap:8,flexShrink:0,minHeight:48}}>
           <div style={{flex:1,fontSize:12,color:T.muted2}}>{step?.desc||"–"}</div>
           <Btn onClick={()=>setStepIdx(i=>Math.max(0,i-1))} disabled={stepIdx<=0||!step}>← Back</Btn>
           <span style={{fontSize:11,color:T.muted,fontFamily:"'Space Mono',monospace"}}>{step?`${stepIdx+1}/${steps.length}`:"-"}</span>

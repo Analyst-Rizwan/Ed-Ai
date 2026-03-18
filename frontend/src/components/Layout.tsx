@@ -26,7 +26,7 @@ const Layout = () => {
       }}>
         <Outlet />
         {/* Spacer so content is never hidden behind the fixed bottom nav */}
-        {isMobile && <div style={{ minHeight: 80, flexShrink: 0 }} />}
+        {isMobile && <div style={{ minHeight: "calc(var(--bottom-nav-h, 80px) + 8px)", flexShrink: 0 }} />}
       </main>
 
       {isMobile && <BottomNav onOpenAITutor={() => setAiTutorOpen(true)} />}

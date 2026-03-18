@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, InfoBox, CRow, Log, Input, useStepGuide } from "../shared";
+import { Btn, Side, SLabel, Log, Input, useStepGuide } from "../shared";
 
 export default function LinkedListViz(){
   const [nodes,setNodes]=useState<{val:number,id:number}[]>([]);
@@ -133,14 +133,6 @@ export default function LinkedListViz(){
         <Btn onClick={search} variant="ghost" full>🔍 Search</Btn>
         <Btn onClick={runDemo} variant="yellow" full>⚡ Learn Linked List</Btn>
         <Btn onClick={()=>{setNodes([]);addLog("reset","info")}} variant="ghost" full>↺ Reset</Btn>
-        <InfoBox>
-          <strong style={{color:T.text}}>Singly Linked List</strong><br/><br/>
-          Each node points to the next. No random access — must traverse.
-          <div style={{marginTop:8,borderTop:`1px solid ${T.border}`,paddingTop:8}}>
-            <CRow op="Insert Head" val="O(1)" color={T.green}/><CRow op="Insert Tail" val="O(n)" color={T.yellow}/>
-            <CRow op="Delete Head" val="O(1)" color={T.green}/><CRow op="Search" val="O(n)" color={T.yellow}/>
-          </div>
-        </InfoBox>
         <SLabel>Log</SLabel><Log entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>

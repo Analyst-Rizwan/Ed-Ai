@@ -15,7 +15,7 @@ const NotificationCenter = () => {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-40">
+    <div className="fixed top-4 right-4 z-[60]">
       <Button
         size="icon"
         variant="outline"

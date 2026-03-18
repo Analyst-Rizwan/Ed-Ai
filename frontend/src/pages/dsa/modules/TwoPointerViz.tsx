@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Input, Select, useStepGuide } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, Log, Input, Select, useStepGuide } from "../shared";
 
 export default function TwoPointerViz(){
   const [mode,setMode]=useState("twosum");
@@ -74,7 +74,12 @@ export default function TwoPointerViz(){
               title:"Why It Works",
               body:"Since the array is sorted, moving left pointer right always increases the sum, and moving right pointer left always decreases it. We never need to check pairs we skip.",
               tip:"Interview classic! If asked 'find two numbers that sum to X in a sorted array' — always think Two Pointers."
-            }, 2, 2);
+            }, 2, 3);
+            if(!guide.isSkipped()) await guide.showGuide({
+              title:"Two Pointers Complexity",
+              body:"Time: O(n) — each pointer moves towards the center and they never cross back. We scan the array at most once. Space: O(1) — we only store two indices.",
+              tip:"Compared to O(n²) nested loops, this is a massive optimization."
+            }, 3, 3);
             setArrInput("1 3 5 7 9 11 14 17 20");setTargetInput("18");setTimeout(build,50);
           } else {
             await guide.showGuide({
@@ -86,18 +91,15 @@ export default function TwoPointerViz(){
               title:"Fixed vs Variable Window",
               body:"Fixed window: window size k stays constant (max sum of k elements). Variable window: window size changes based on conditions (smallest subarray with sum ≥ target).",
               tip:"Pattern recognition: 'subarray of size k' = fixed window. 'Smallest/longest subarray with condition' = variable window."
-            }, 2, 2);
+            }, 2, 3);
+            if(!guide.isSkipped()) await guide.showGuide({
+              title:"Sliding Window Complexity",
+              body:"Time: O(n) — both the left and right bounds of the window only move FORWARD. Every element enters and leaves the window at most once. Space: O(1) extra space.",
+              tip:"Reduces redundant work from overlapping subarrays! Instead of re-summing the whole window, just do: old_sum - exiting_element + entering_element."
+            }, 3, 3);
             setArrInput("2 1 5 1 3 2 6 4");setWindowK("3");setTimeout(build,50);
           }
         }} variant="yellow" full>⚡ Learn {mode==="twosum"?"Two Pointer":"Sliding Window"}</Btn>
-        <InfoBox>
-          {mode==="twosum"&&<><strong style={{color:T.text}}>Two Pointers</strong><br/><br/>Works on sorted arrays. Start from both ends, move inward. O(n) vs O(n²) brute force.</>}
-          {mode==="sliding"&&<><strong style={{color:T.text}}>Sliding Window</strong><br/><br/>Maintain a fixed window, slide right. Add new, remove oldest. O(n) instead of O(nk).</>}
-          <div style={{marginTop:8,borderTop:`1px solid ${T.border}`,paddingTop:8}}>
-            <CRow op="Time" val="O(n)" color={T.green}/>
-            <CRow op="Space" val="O(1)" color={T.green}/>
-          </div>
-        </InfoBox>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>
         <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:24,position:"relative",overflowX:"auto"}}>

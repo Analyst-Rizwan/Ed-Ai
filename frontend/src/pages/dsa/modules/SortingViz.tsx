@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Select, useStepGuide } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, Log, Select, useStepGuide } from "../shared";
 import { motion } from "framer-motion";
 
 function genArr(n=16){return Array.from({length:n},(_,i)=>({id:`id-${Date.now()}-${i}`,val:Math.floor(Math.random()*90+8),state:"idle"}));}
@@ -44,13 +44,13 @@ export default function SortingViz(){
       title:"Sorting Algorithms Overview",
       body:"Sorting algorithms arrange elements in order. They differ in time complexity, space usage, stability (preserving order of equal elements), and adaptiveness (performance on nearly-sorted input).",
       tip:"In interviews, know when to use each: Merge Sort for stability guarantees, Quick Sort for average-case speed, Insertion Sort for small/nearly-sorted data."
-    }, 1, 3);
+    }, 1, 4);
 
     if(!guide.isSkipped()) await guide.showGuide({
       title:`How ${algoNames[algo]} Works`,
       body:desc.body,
       tip:desc.tip
-    }, 2, 3);
+    }, 2, 4);
 
     const examples:Record<string,number[]>={
       bubble:[72,14,55,27,88,43,61,9,36,79,24,52],
@@ -68,7 +68,24 @@ export default function SortingViz(){
       title:"Example Array Loaded!",
       body:`A pre-set array is loaded for ${algoNames[algo]}. Press ▶ Run to watch the algorithm sort it step-by-step. Observe the compare (yellow), swap (orange), and sorted (green) highlights.`,
       tip:"Watch the comparison and swap counters at the bottom — they show the real cost of the algorithm."
-    }, 3, 3);
+    }, 3, 4);
+    if(!guide.isSkipped()) await guide.showGuide({
+      title:"Complexity: "+algoNames[algo],
+      body:{
+        bubble:"Time: O(n²) avg/worst, O(n) best (already sorted). Space: O(1) in-place. Stable sort — equal elements keep their relative order.",
+        selection:"Time: O(n²) always — always scans the rest of the array regardless of input. Space: O(1). Unstable sort.",
+        insertion:"Time: O(n²) avg/worst, O(n) best (nearly sorted). Space: O(1). Stable. Excellent for small or nearly-sorted arrays.",
+        merge:"Time: O(n log n) always. Space: O(n) — needs auxiliary array. Stable. Preferred when stability matters.",
+        quick:"Time: O(n log n) avg, O(n²) worst (bad pivot). Space: O(log n) stack. Unstable. Fastest in practice due to cache efficiency.",
+      }[algo]||"O(n²)",
+      tip:{
+        bubble:"Never use bubble sort in production. Its O(n²) is always beaten by insertion sort for practical inputs.",
+        selection:"Selection sort has O(n) swaps — useful when writes are expensive (flash memory). Otherwise, avoid it.",
+        insertion:"Java uses insertion sort for arrays < 47 elements (in Arrays.sort). It's fast on nearly-sorted data!",
+        merge:"JavaScript's Array.sort() in V8 uses Timsort — a hybrid of merge sort and insertion sort.",
+        quick:"Quick sort is fastest in practice due to CPU cache locality and small constant factors vs merge sort.",
+      }[algo]||""
+    }, 4, 4);
 
     setLabel(`⚡ Example loaded — press ▶ Run to sort`);
     setRunning(false);
@@ -210,16 +227,6 @@ export default function SortingViz(){
         </div>
         <Btn onClick={runExample} variant="yellow" disabled={running} full>⚡ Learn Sorting</Btn>
         <div><SLabel>Speed</SLabel><div style={{marginTop:6}}><SpeedRow speed={speed} setSpeed={setSpeed}/></div></div>
-        <InfoBox>
-          <strong style={{color:T.text}}>{algo.charAt(0).toUpperCase()+algo.slice(1)} Sort</strong><br/><br/>
-          {info.note}
-          <div style={{marginTop:10,borderTop:`1px solid ${T.border}`,paddingTop:10}}>
-            <CRow op="Best" val={info.best} color={T.green}/>
-            <CRow op="Average" val={info.avg} color={T.yellow}/>
-            <CRow op="Worst" val={info.worst} color={T.red}/>
-            <CRow op="Space" val={info.space} color={T.teal}/>
-          </div>
-        </InfoBox>
         <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
           {Object.entries(stateColor).map(([s,c])=>(
             <div key={s} style={{display:"flex",alignItems:"center",gap:4,fontSize:10,color:T.muted}}>
@@ -229,17 +236,17 @@ export default function SortingViz(){
         </div>
         <SLabel>Log</SLabel><Log entries={log}/>
       </Side>
-      <div style={{flex:1,display:"flex",flexDirection:"column"}}>
-        <div style={{flex:1,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"20px 24px 0",gap:3,overflowX:"auto",position:"relative"}}>
+      <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0,overflow:"hidden"}}>
+        <div style={{flex:1,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"20px 12px 28px",gap:2,overflowX:"auto",position:"relative"}}>
           <guide.Overlay/>
           {bars.map((bar)=>{
             const col=stateColor[bar.state]||T.blue;
-            const h=Math.max(6,Math.floor((bar.val/maxVal)*260));
+            const h=Math.max(6,Math.floor((bar.val/maxVal)*240));
             return(
               <motion.div layout transition={{type:"spring",stiffness:300,damping:25}} key={bar.id} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
                 <div style={{fontSize:9,color:col,fontFamily:"'Space Mono',monospace",opacity:bar.state!=="idle"?1:0.4}}>{bar.val}</div>
                 <motion.div layout style={{
-                  width:Math.max(16,Math.floor(620/bars.length)-3),height:h,
+                  width:"clamp(12px, calc((100% - 48px) / " + bars.length + "), 40px)",height:h,
                   borderRadius:"5px 5px 0 0",
                   background:`linear-gradient(to top, ${col}cc, ${col}88)`,
                   border:`1px solid ${col}66`,
@@ -249,13 +256,12 @@ export default function SortingViz(){
               </motion.div>
             );
           })}
-        </div>
-        <div style={{padding:"10px 20px",borderTop:`1px solid ${T.border}`,background:T.surface,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <div style={{fontSize:12,color:T.muted2}} dangerouslySetInnerHTML={{__html:label}}/>
-          <div style={{display:"flex",gap:16,fontFamily:"'Space Mono',monospace",fontSize:11}}>
-            <span style={{color:T.yellow}}>⚖ {stats.comps} compares</span>
-            <span style={{color:T.orange}}>↕ {stats.swaps} swaps</span>
-            <span style={{color:T.muted}}>n={bars.length}</span>
+          {/* ── Overlaid stat bar (reference design style) ── */}
+          <div className="dsa-stat-overlay">
+            <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:T.muted2}} dangerouslySetInnerHTML={{__html:label}}/>
+            <span style={{color:T.accent,flexShrink:0}}>⚖ {stats.comps}</span>
+            <span style={{color:T.yellow,flexShrink:0}}>↕ {stats.swaps}</span>
+            <span style={{color:T.muted,flexShrink:0}}>n={bars.length}</span>
           </div>
         </div>
       </div>

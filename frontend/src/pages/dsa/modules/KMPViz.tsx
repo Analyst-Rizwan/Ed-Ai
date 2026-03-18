@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Input, Badge, useStepGuide } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, Log, Input, Badge, useStepGuide } from "../shared";
 
 type CharState = "idle" | "match" | "mismatch" | "active" | "skip" | "found";
 
@@ -57,12 +57,17 @@ export default function KMPViz() {
       title:"KMP String Search",
       body:"KMP (Knuth-Morris-Pratt) finds pattern occurrences in text in O(n+m) time. It precomputes a failure/LPS table from the pattern to avoid redundant comparisons on mismatch.",
       tip:"Brute force string search is O(nm). KMP never goes backward in the text — on mismatch, it uses the LPS table to skip to the right position in the pattern."
-    }, 1, 2);
+    }, 1, 3);
     if(!guide.isSkipped()) await guide.showGuide({
       title:"LPS (Longest Proper Prefix which is also Suffix)",
       body:`LPS table for pattern '${ex.pattern}': for each position i, lps[i] = length of the longest proper prefix of pattern[0..i] that is also a suffix. On mismatch at position j, jump pattern to lps[j-1] instead of restarting.`,
       tip:"This is what makes KMP O(n+m) — the LPS table is built in O(m) time, and the search never revisits text characters."
-    }, 2, 2);
+    }, 2, 3);
+    if(!guide.isSkipped()) await guide.showGuide({
+      title:"KMP Complexity",
+      body:"Time: O(n + m) where n = text length, m = pattern length. Space: O(m) for the LPS table. Compare this to naive string search: O(n·m) in the worst case.",
+      tip:"KMP is optimal for string searching. Best used when the pattern has repeating structures. For random text/pattern, Boyer-Moore is often faster in practice."
+    }, 3, 3);
     setLabel(`Loaded: \"${ex.label}\" — press ▶ Run`);
   };
 
@@ -212,28 +217,6 @@ export default function KMPViz() {
           <Btn onClick={reset} variant="ghost" disabled={running} style={{ flex: 1 }}>↺ Reset</Btn>
         </div>
         <div><SLabel>Speed</SLabel><div style={{ marginTop: 6 }}><SpeedRow speed={speed} setSpeed={setSpeed} /></div></div>
-        <InfoBox>
-          <strong style={{ color: T.text }}>KMP String Search</strong><br /><br />
-          Build a failure/LPS table from the pattern. During search, on mismatch, skip using LPS — no redundant re-comparisons.
-          <div style={{ marginTop: 8, borderTop: `1px solid ${T.border}`, paddingTop: 8 }}>
-            <CRow op="Preprocess" val="O(m)" color={T.teal} />
-            <CRow op="Search" val="O(n)" color={T.green} />
-            <CRow op="Total" val="O(n + m)" color={T.green} />
-            <CRow op="Space" val="O(m)" color={T.yellow} />
-          </div>
-          <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
-            {[
-              { c: T.yellow, l: "Active comparison" },
-              { c: T.green, l: "Match / Found" },
-              { c: T.red, l: "Mismatch" },
-              { c: T.muted, l: "Skipped" },
-            ].map(({ c, l }) => (
-              <div key={l} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: T.muted }}>
-                <div style={{ width: 10, height: 10, borderRadius: 3, background: c }} />{l}
-              </div>
-            ))}
-          </div>
-        </InfoBox>
         <SLabel>Log</SLabel><Log entries={log} />
       </Side>
 
@@ -266,7 +249,7 @@ export default function KMPViz() {
               <div style={{ fontSize: 11, color: T.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10 }}>
                 LPS (Failure) Table
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <div className="dsa-scroll-row" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {/* Pattern chars */}
                 <div style={{ display: "flex", gap: 3 }}>
                   <div style={{ width: 52, fontSize: 10, color: T.muted, display: "flex", alignItems: "center" }}>Pattern</div>
@@ -298,7 +281,7 @@ export default function KMPViz() {
               <div style={{ fontSize: 11, color: T.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10 }}>
                 Text
               </div>
-              <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+              <div className="dsa-scroll-row" style={{ display: "flex", gap: 3, flexWrap: "nowrap" }}>
                 {text.toUpperCase().split("").map((c, i) => {
                   const s = textStates[i] || "idle";
                   const style = charColor(s);
@@ -319,7 +302,7 @@ export default function KMPViz() {
               <div style={{ fontSize: 11, color: T.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10 }}>
                 Pattern
               </div>
-              <div style={{ display: "flex", gap: 3 }}>
+              <div className="dsa-scroll-row" style={{ display: "flex", gap: 3 }}>
                 {pattern.toUpperCase().split("").map((c, i) => {
                   const s = patStates[i] || "idle";
                   const style = charColor(s);

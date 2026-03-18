@@ -19,8 +19,29 @@ export const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:${T.bg};color:${T.text};font-family:'DM Sans',sans-serif}
+  html,body{overflow-x:hidden;max-width:100vw}
   ::-webkit-scrollbar{width:4px;height:4px}
   ::-webkit-scrollbar-thumb{background:${T.surface3};border-radius:99px}
+  .dsa-scroll-row{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;max-width:100%}
+  .dsa-scroll-row::-webkit-scrollbar{display:none}
+  /* ── Mobile pill tabs ── */
+  .dsa-tab-pill{flex-shrink:0;font-size:11px;color:${T.muted};padding:4px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;border:none;background:none;font-family:'DM Sans',sans-serif;transition:all .15s}
+  .dsa-tab-pill.active{color:${T.accent};background:${T.accentSoft};font-weight:600}
+  /* ── Mobile controls overlay ── */
+  .dsa-mobile-controls{background:${T.bg};border-bottom:1px solid ${T.border};padding:10px 14px 8px;flex-shrink:0}
+  .dsa-mobile-controls .ctrl-row{display:flex;gap:6px;margin-bottom:6px}
+  .dsa-mobile-controls .ctrl-btn{flex:1;padding:7px 8px;border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-weight:600;border:none;transition:all .15s}
+  .dsa-mobile-controls .ctrl-btn-run{background:${T.accent};color:#fff}
+  .dsa-mobile-controls .ctrl-btn-new{background:${T.surface2};color:${T.muted2};border:1px solid ${T.border2} !important}
+  .dsa-mobile-controls .ctrl-btn-learn{width:100%;background:${T.yellowSoft};color:${T.yellow};border:1px solid ${T.yellow}33 !important;margin-bottom:6px}
+  /* ── Stat bar overlay ── */
+  .dsa-stat-overlay{position:absolute;bottom:0;left:0;right:0;background:rgba(13,15,26,0.88);padding:5px 12px;font-size:10px;color:${T.muted};display:flex;align-items:center;gap:10px;font-family:'Space Mono',monospace;z-index:5}
+  /* ── Collapsible extra controls ── */
+  .dsa-extra{overflow:hidden;transition:max-height .25s ease;max-height:0}
+  .dsa-extra.open{max-height:200px}
+  .dsa-toggle-btn{display:flex;align-items:center;justify-content:center;gap:4px;width:100%;padding:4px;font-size:10px;color:${T.muted};background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:2px}
+  .dsa-toggle-btn svg{transition:transform .2s}
+  .dsa-toggle-btn.open svg{transform:rotate(180deg)}
   @keyframes popIn{0%{opacity:0;transform:scale(0.4)}70%{transform:scale(1.14)}100%{opacity:1;transform:scale(1)}}
   @keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}

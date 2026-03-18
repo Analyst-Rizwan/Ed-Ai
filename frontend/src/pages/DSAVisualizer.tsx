@@ -36,38 +36,26 @@ export default function DSAVisualizer(){
   const [active,setActive] = useState("sort");
 
   return(
-    <div className="flex flex-col h-[calc(100vh-0px)] sm:h-screen w-full overflow-hidden rounded-xl" style={{background:T.bg,color:T.text,fontFamily:"'DM Sans',sans-serif",margin:"-24px -24px 0",width:"calc(100% + 48px)"}}>
+    <div className="flex flex-col h-[calc(100dvh-72px)] sm:h-screen w-full overflow-hidden" style={{background:T.bg,color:T.text,fontFamily:"'DM Sans',sans-serif",margin:"-16px -16px 0",width:"calc(100% + 32px)",maxWidth:"100vw",overflowX:"hidden"}}>
       <style>{CSS}</style>
 
-      {/* ── Top Bar ── */}
-      <div style={{padding:"11px 22px",borderBottom:`1px solid ${T.border}`,background:T.surface,display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <span style={{fontFamily:"'Space Mono',monospace",fontSize:15,fontWeight:700,color:T.yellow}}>⚡ EduAI</span>
-          <span className="hidden sm:inline" style={{color:T.surface3}}>/</span>
-          <span className="hidden sm:inline" style={{fontSize:13,color:T.muted2}}>Advanced DSA Visualizer</span>
-        </div>
-        <div className="hidden md:block" style={{fontSize:11,color:T.muted2,background:T.surface2,padding:"4px 12px",borderRadius:100,border:`1px solid ${T.border}`}}>
-          14 Visualizers · Sorting · Graph · DP · Trees · Backtracking · KMP
-        </div>
-      </div>
 
-      {/* ── Tab Strip ── */}
-      <div style={{display:"flex",borderBottom:`1px solid ${T.border}`,background:T.surface,paddingLeft:12,overflowX:"auto",flexShrink:0}}>
-        {TABS.map(tab=>(
-          <button key={tab.id} onClick={()=>setActive(tab.id)} style={{
-            padding:"8px 12px",fontSize:12,fontWeight:500,cursor:"pointer",
-            fontFamily:"'DM Sans',sans-serif",background:"none",
-            borderTop:"none",borderLeft:"none",borderRight:"none",
-            borderBottom:active===tab.id?`2px solid ${T.accent}`:"2px solid transparent",
-            marginBottom:-1,color:active===tab.id?T.accent:T.muted,
-            display:"flex",alignItems:"center",gap:7,whiteSpace:"nowrap",transition:"all .15s",
-          }}>
-            {tab.label}
-            <span className="hidden xs:inline" style={{fontSize:9,fontFamily:"'Space Mono',monospace",fontWeight:700,background:active===tab.id?T.accentSoft:T.surface2,color:active===tab.id?T.accent:T.muted,padding:"1px 6px",borderRadius:100,border:`1px solid ${active===tab.id?T.accent+"44":T.border2}`}}>
-              {tab.badge}
-            </span>
-          </button>
-        ))}
+
+      {/* ── Tab Strip (Pill style) ── */}
+      <div style={{position:"relative",flexShrink:0,background:T.bg,borderBottom:`1px solid ${T.border}`}}>
+        {/* Fade hint on right */}
+        <div style={{position:"absolute",top:0,right:0,bottom:0,width:32,zIndex:1,background:`linear-gradient(to left, ${T.bg} 0%, transparent 100%)`,pointerEvents:"none"}}/>
+        <div className="dsa-scroll-row" style={{display:"flex",alignItems:"center",padding:"6px 10px",gap:2}}>
+          {TABS.map(tab=>(
+            <button key={tab.id} onClick={()=>setActive(tab.id)}
+              className={`dsa-tab-pill${active===tab.id?" active":""}`}>
+              {tab.label}
+              <span className="hidden sm:inline" style={{fontSize:9,fontFamily:"'Space Mono',monospace",fontWeight:700,background:active===tab.id?T.accent+"22":"transparent",color:active===tab.id?T.accent:T.muted,padding:"1px 5px",borderRadius:100,marginLeft:4}}>
+                {tab.badge}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── Active Module ── */}

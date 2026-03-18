@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Badge, Select, useStepGuide } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, Log, Badge, Select, useStepGuide } from "../shared";
 
 const GRAPH_PRESET = {
   nodes: [
@@ -88,7 +88,12 @@ export default function GraphViz() {
       title: "Ready to Run!",
       body: `Example set: find path from A → G using ${algo.toUpperCase()}. Press ▶ Run to watch the algorithm explore the graph step-by-step. Green = visited, Yellow = active, Orange = checking.`,
       tip: "Watch the log panel to see each decision the algorithm makes. Try different algorithms on the same graph to compare!"
-    }, 3, 3);
+    }, 3, 4);
+    if (!guide.isSkipped()) await guide.showGuide({
+      title: "Time & Space Complexity",
+      body: "BFS & DFS: Time O(V+E), Space O(V). Dijkstra: Time O((V+E)log V) with priority queue, Space O(V).",
+      tip: "BFS finds shortest paths on unweighted graphs. Dijkstra handles weighted graphs (no negative edges)."
+    }, 4, 4);
     setLabel(`⚡ Example: A→G loaded — press ▶ Run`);
   };
 
@@ -328,11 +333,6 @@ export default function GraphViz() {
         {algo === "bfs" && queue.length > 0 && (
           <div><SLabel>Queue</SLabel><div style={{ display: "flex", gap: 4, marginTop: 6, flexWrap: "wrap" }}>{queue.map((n, i) => <Badge key={i} color={T.yellow}>{n}</Badge>)}</div></div>
         )}
-        <InfoBox>
-          {algo === "bfs" && <><strong style={{ color: T.text }}>BFS</strong> — explores level by level using a queue. Finds shortest path (unweighted).<div style={{ marginTop: 8, borderTop: `1px solid ${T.border}`, paddingTop: 8 }}><CRow op="Time" val="O(V+E)" color={T.green} /><CRow op="Space" val="O(V)" color={T.orange} /><CRow op="Shortest path" val="✓ (unweighted)" color={T.teal} /></div></>}
-          {algo === "dfs" && <><strong style={{ color: T.text }}>DFS</strong> — goes deep before backtracking using recursion/stack.<div style={{ marginTop: 8, borderTop: `1px solid ${T.border}`, paddingTop: 8 }}><CRow op="Time" val="O(V+E)" color={T.green} /><CRow op="Space" val="O(V)" color={T.orange} /><CRow op="Shortest path" val="✗ No" color={T.red} /></div></>}
-          {algo === "dijkstra" && <><strong style={{ color: T.text }}>Dijkstra</strong> — greedy shortest path with priority queue. Edges must be ≥ 0.<div style={{ marginTop: 8, borderTop: `1px solid ${T.border}`, paddingTop: 8 }}><CRow op="Time" val="O((V+E)log V)" color={T.yellow} /><CRow op="Negative edges" val="✗ No" color={T.red} /><CRow op="Shortest path" val="✓ (weighted)" color={T.green} /></div></>}
-        </InfoBox>
         <SLabel>Log</SLabel><Log entries={log} />
       </Side>
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>

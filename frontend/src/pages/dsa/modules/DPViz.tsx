@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, InfoBox, CRow, Log, Input, Select, Badge, useStepGuide } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, Log, Input, Select, Badge, useStepGuide } from "../shared";
 
 export default function DPViz(){
   const [dpType,setDpType]=useState("fib");
@@ -101,11 +101,7 @@ export default function DPViz(){
           else if(dpType==="lcs"){setS1("AGGTAB");setS2("GXTXAYB");setTimeout(build,50);}
           else{setWeights("1 3 4 5");setValues("1 4 5 7");setCapacity("7");setTimeout(build,50);}
         }} variant="yellow" full>⚡ Learn DP</Btn>
-        <InfoBox>
-          {dpType==="fib"&&<><strong style={{color:T.text}}>Fibonacci DP</strong><br/><br/>Naive recursion = O(2ⁿ). DP memoizes → O(n) time, O(n) space.</>}
-          {dpType==="lcs"&&<><strong style={{color:T.text}}>LCS</strong> — Longest Common Subsequence<br/><br/>2D table. dp[i][j] = LCS length of first i chars of s1 and j chars of s2.<div style={{marginTop:8,borderTop:`1px solid ${T.border}`,paddingTop:8}}><CRow op="Time" val="O(mn)" color={T.yellow}/><CRow op="Space" val="O(mn)" color={T.orange}/></div></>}
-          {dpType==="knapsack"&&<><strong style={{color:T.text}}>0/1 Knapsack</strong><br/><br/>Each item: take or skip. dp[i][w] = max value using first i items with capacity w.<div style={{marginTop:8,borderTop:`1px solid ${T.border}`,paddingTop:8}}><CRow op="Time" val="O(nW)" color={T.yellow}/><CRow op="Space" val="O(nW)" color={T.orange}/></div></>}
-        </InfoBox>
+
         <SLabel>Log</SLabel><Log entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>

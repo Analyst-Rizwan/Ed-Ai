@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { T } from "../theme";
-import { Btn, Side, SLabel, InfoBox, CRow, Log, Input, useStepGuide } from "../shared";
+import { useState, useRef } from "react";
+import { T, sleep } from "../theme";
+import { Btn, Side, SLabel, Log, Input, useStepGuide } from "../shared";
 
 export default function StackViz(){
   const [stack,setStack]=useState<number[]>([]);
@@ -127,14 +127,6 @@ export default function StackViz(){
         <Btn onClick={peek} variant="teal" disabled={!stack.length} full>👁 Peek</Btn>
         <Btn onClick={runDemo} variant="yellow" full>⚡ Learn Stack</Btn>
         <Btn onClick={()=>{setStack([]);addLog("reset","info")}} variant="ghost" full>↺ Reset</Btn>
-        <InfoBox>
-          <strong style={{color:T.text}}>Stack (LIFO)</strong><br/><br/>
-          Last In, First Out. Think call stack, undo history, bracket matching.
-          <div style={{marginTop:8,borderTop:`1px solid ${T.border}`,paddingTop:8}}>
-            <CRow op="Push" val="O(1)" color={T.green}/><CRow op="Pop" val="O(1)" color={T.green}/>
-            <CRow op="Peek" val="O(1)" color={T.green}/><CRow op="Search" val="O(n)" color={T.yellow}/>
-          </div>
-        </InfoBox>
         <SLabel>Log</SLabel><Log entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>

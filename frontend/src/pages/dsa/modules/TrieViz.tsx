@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, InfoBox, CRow, Log, Input, Badge, useStepGuide } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, Log, Input, Badge, useStepGuide } from "../shared";
 
 type TN = { children: Record<string, TN>; end: boolean; id: number };
 let _id = 0;
@@ -204,7 +204,12 @@ export default function TrieViz() {
       title: "Trie Use Cases",
       body: "Insert: walk/create nodes for each character. Search: walk the path — if it exists and is marked as word end. Autocomplete: find the prefix node, then collect all words in the subtree.",
       tip: "Used in: autocomplete, spell checkers, IP routing tables, word games (Boggle). Interview pattern: 'find all words with prefix X'."
-    }, 2, 2);
+    }, 2, 3);
+    if (!guide.isSkipped()) await guide.showGuide({
+      title: "Trie Complexity",
+      body: "Time: O(m) for Insert and Search, where m is the length of the word — it ONLY depends on the word length, NOT the number of words in the tree! Space: O(A * n) where A=alphabet size, n=total nodes.",
+      tip: "Tries are incredibly fast for string lookups, but can use a lot of memory compared to a hash map if strings don't share many common prefixes."
+    }, 3, 3);
     ["apple", "app", "banana", "band", "bat", "car", "card"].forEach(w => tiInsert(trie, w));
     setVer(v => v + 1); clearHL();
     addLog("Loaded 7 example words", "info");
@@ -265,21 +270,13 @@ export default function TrieViz() {
             </div>
           ))}
         </div>
-        <InfoBox>
-          <strong style={{ color: T.text }}>Trie (Prefix Tree)</strong><br /><br />
-          Each edge is a character. Shared prefixes share nodes.
-          <div style={{ marginTop: 8, borderTop: `1px solid ${T.border}`, paddingTop: 8 }}>
-            <CRow op="Insert" val="O(m)" color={T.green} /><CRow op="Search" val="O(m)" color={T.green} />
-            <CRow op="Autocomplete" val="O(m+k)" color={T.yellow} /><CRow op="Space" val="O(ALPHABET·n)" color={T.orange} />
-          </div>
-        </InfoBox>
         <SLabel>Log</SLabel><Log entries={log} />
       </Side>
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <div style={{ flex: 1, display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "auto", padding: 24, position: "relative" }}>
           <guide.Overlay />
           {nodes.length <= 1 ? <div style={{ color: T.muted, fontSize: 13, paddingTop: 60 }}>Trie is empty — insert words or click ⚡ Learn Trie</div> : (
-            <svg width="600" height="420" viewBox="0 0 600 420" style={{ overflow: "visible" }} key={ver}>
+            <svg width="100%" height="100%" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid meet" style={{ overflow: "visible" }} key={ver}>
               <defs>
                 {nodes.map((n, i) => {
                   const s = getNodeStyle(n);

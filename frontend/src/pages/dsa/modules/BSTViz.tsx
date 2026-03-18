@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { T } from "../theme";
-import { Btn, Side, SLabel, InfoBox, CRow, Log, Input, useStepGuide } from "../shared";
+import { useState, useRef } from "react";
+import { T, sleep } from "../theme";
+import { Btn, Side, SLabel, SpeedRow, Log, Input, useStepGuide } from "../shared";
 
 type N={val:number,left:N|null,right:N|null};
 function ins(root:N|null,v:number):N{if(!root)return{val:v,left:null,right:null};if(v<root.val)root.left=ins(root.left,v);else if(v>root.val)root.right=ins(root.right,v);return root;}
@@ -38,7 +38,12 @@ export default function BSTViz(){
       title:"Example BST Loaded!",
       body:"A balanced BST with values [50,30,70,20,40,60,80] is loaded. Root=50. Try: Insert a value, Search for 40, or Delete 30 to see the BST restructure.",
       tip:"Notice the tree is balanced (3 levels). If we inserted [20,30,40,50,60,70,80] in order, it would be a skewed line — essentially a linked list!"
-    }, 3, 3);
+    }, 3, 4);
+    if(!guide.isSkipped()) await guide.showGuide({
+      title:"Complexity Summary",
+      body:"Average Case: Insert, Search, and Delete are all O(log n) because we cut the search space in half each step.",
+      tip:"Worst Case (Skewed): O(n) — if inserted in sorted order, the tree becomes a linked list! Self-balancing trees (AVL/Red-Black) fix this to guarantee O(log n)."
+    }, 4, 4);
   };
 
   const nodes:{val:number,x:number,y:number,px?:number,py?:number}[]=[];
@@ -53,21 +58,13 @@ export default function BSTViz(){
         <Btn onClick={remove} variant="red" full>⊖ Delete</Btn>
         <Btn onClick={loadExample} variant="yellow" full>⚡ Learn BST</Btn>
         <Btn onClick={()=>{setRoot(null);addLog("reset","info")}} variant="ghost" full>↺ Reset</Btn>
-        <InfoBox>
-          <strong style={{color:T.text}}>Binary Search Tree</strong><br/><br/>
-          Left subtree &lt; root &lt; right subtree. In-order traversal gives sorted order.
-          <div style={{marginTop:8,borderTop:`1px solid ${T.border}`,paddingTop:8}}>
-            <CRow op="Insert (avg)" val="O(log n)" color={T.green}/><CRow op="Search (avg)" val="O(log n)" color={T.green}/>
-            <CRow op="Delete (avg)" val="O(log n)" color={T.green}/><CRow op="Worst (skewed)" val="O(n)" color={T.red}/>
-          </div>
-        </InfoBox>
         <SLabel>Log</SLabel><Log entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>
         <div style={{flex:1,display:"flex",alignItems:"flex-start",justifyContent:"center",overflow:"auto",position:"relative"}}>
           <guide.Overlay/>
           {!root?<div style={{color:T.muted,fontSize:13,paddingTop:60}}>BST is empty — insert values</div>:(
-            <svg width="600" height="360" viewBox="0 0 600 360" style={{overflow:"visible"}}>
+            <svg width="100%" height="100%" viewBox="0 0 600 360" preserveAspectRatio="xMidYMid meet" style={{overflow:"visible"}}>
               {nodes.map((n,i)=>n.px!==undefined&&n.py!==undefined?<line key={`e${i}`} x1={n.px} y1={n.py} x2={n.x} y2={n.y} stroke={T.surface3} strokeWidth={1.5}/>:null)}
               {nodes.map((n,i)=>{
                 const isHL=n.val===highlighted;const col=isHL?T.yellow:T.blue;

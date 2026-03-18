@@ -1,0 +1,861 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans, system-ui); }
+
+  .phone-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem 0;
+  }
+
+  .phone {
+    width: 340px;
+    height: 680px;
+    background: #0D0F1A;
+    border-radius: 36px;
+    border: 2px solid #2a2d3e;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 0 6px #1a1d2e;
+  }
+
+  .status-bar {
+    height: 28px;
+    background: #0D0F1A;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    font-size: 11px;
+    color: #888;
+    flex-shrink: 0;
+  }
+
+  .top-bar {
+    height: 44px;
+    background: #0D0F1A;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 8px;
+    border-bottom: 1px solid #1e2130;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-size: 13px;
+    font-weight: 600;
+    color: #F59E0B;
+    letter-spacing: 0.5px;
+  }
+
+  .logo span { color: #fff; }
+
+  .tab-bar {
+    height: 38px;
+    background: #0D0F1A;
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0 14px;
+    gap: 4px;
+    border-bottom: 1px solid #1e2130;
+    flex-shrink: 0;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+
+  .tab {
+    flex-shrink: 0;
+    font-size: 11px;
+    color: #666;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .tab.active {
+    color: #7C3AED;
+    background: rgba(124,58,237,0.12);
+    font-weight: 500;
+  }
+
+  .controls-panel {
+    padding: 12px 14px 8px;
+    background: #0D0F1A;
+    flex-shrink: 0;
+  }
+
+  .label {
+    font-size: 9px;
+    color: #555;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .algo-select {
+    width: 100%;
+    background: #151824;
+    border: 1px solid #2a2d3e;
+    border-radius: 8px;
+    color: #7C3AED;
+    font-size: 12px;
+    padding: 7px 10px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .btn-run {
+    flex: 1;
+    background: #7C3AED;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .btn-new {
+    flex: 1;
+    background: #151824;
+    color: #aaa;
+    border: 1px solid #2a2d3e;
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .btn-learn {
+    width: 100%;
+    background: #3a2e08;
+    color: #F59E0B;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 8px;
+  }
+
+  .viz-container {
+    flex: 1;
+    background: #060810;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .viz-tap-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .viz-tap-hint.show { opacity: 1; }
+
+  .tap-icon {
+    width: 36px;
+    height: 36px;
+    border: 2px solid rgba(124,58,237,0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tap-text {
+    font-size: 10px;
+    color: rgba(124,58,237,0.8);
+    letter-spacing: 0.5px;
+  }
+
+  .expand-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    background: rgba(124,58,237,0.25);
+    border: 1px solid rgba(124,58,237,0.4);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+  }
+
+  .stat-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(13,15,26,0.9);
+    padding: 5px 12px;
+    font-size: 10px;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .stat-bar .compares { color: #7C3AED; }
+  .stat-bar .swaps { color: #F59E0B; }
+
+  .bottom-nav {
+    height: 52px;
+    background: #0D0F1A;
+    border-top: 1px solid #1e2130;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .nav-icon {
+    width: 18px;
+    height: 18px;
+    opacity: 0.4;
+  }
+
+  .nav-item.active .nav-icon { opacity: 1; }
+
+  .nav-label {
+    font-size: 9px;
+    color: #555;
+  }
+
+  .nav-item.active .nav-label { color: #7C3AED; }
+
+  .phone-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  /* ---- FULLSCREEN LAYOUT MODE ---- */
+  .fullscreen-overlay {
+    position: absolute;
+    inset: 0;
+    background: #060810;
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+    border-radius: 34px;
+    overflow: hidden;
+  }
+
+  .fullscreen-overlay.active { display: flex; }
+
+  .fs-viz {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fs-canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  .fs-status {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(6,8,16,0.85);
+    padding: 6px 16px;
+    font-size: 10px;
+    color: #555;
+    display: flex;
+    gap: 12px;
+  }
+
+  /* ---- FAB + RADIAL WHEEL ---- */
+  .fab-root {
+    position: absolute;
+    bottom: 20px;
+    right: 16px;
+    z-index: 100;
+  }
+
+  .fab-btn {
+    width: 48px;
+    height: 48px;
+    background: #7C3AED;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    position: relative;
+    z-index: 2;
+    transition: transform 0.2s;
+    box-shadow: none;
+  }
+
+  .fab-btn.open { transform: rotate(45deg); background: #5b21b6; }
+
+  .wheel-items {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+
+  .wheel-item {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    opacity: 0;
+    transform: scale(0.4);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    cursor: pointer;
+  }
+
+  .wheel-item.visible {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: all;
+  }
+
+  .wheel-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+
+  .wheel-circle:active { transform: scale(0.9); }
+
+  .wheel-label {
+    font-size: 8px;
+    color: #aaa;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .wc-speed-slow { background: #1e2130; color: #888; }
+  .wc-speed-normal { background: #1e3040; color: #60a0d0; }
+  .wc-speed-fast { background: #2a1e40; color: #a080e0; }
+  .wc-pause { background: #1e3020; color: #60c060; }
+  .wc-reset { background: #302010; color: #F59E0B; }
+  .wc-exit { background: #301020; color: #e06080; }
+
+  .wc-active { border-color: #7C3AED !important; }
+
+  .speed-dot {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #7C3AED;
+    border: 1.5px solid #060810;
+    display: none;
+  }
+
+  .speed-dot.show { display: block; }
+
+  .wheel-backdrop {
+    position: absolute;
+    inset: 0;
+    border-radius: 34px;
+    background: rgba(6,8,16,0.5);
+    z-index: 90;
+    display: none;
+    cursor: default;
+  }
+  .wheel-backdrop.active { display: block; }
+
+  /* bars in normal mode */
+  .bar { transition: height 0.3s, background 0.2s; }
+</style>
+
+<div class="phone-wrap">
+  <div class="phone" id="phone">
+    <div class="phone-content" id="normalView">
+      <div class="status-bar">
+        <span>01:49</span>
+        <span>74%</span>
+      </div>
+
+      <div class="top-bar">
+        <span style="font-size:14px;">⚡</span>
+        <span class="logo">Edu<span>AI</span></span>
+        <div style="margin-left:auto; width:20px; height:20px; border-radius:50%; background:#1e2130; display:flex; align-items:center; justify-content:center; position:relative;">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1a4 4 0 0 1 4 4c0 2-1 3-1 4H3c0-1-1-2-1-4a4 4 0 0 1 4-4z" stroke="#888" stroke-width="1.2"/><path d="M4.5 9.5a1.5 1.5 0 0 0 3 0" stroke="#888" stroke-width="1.2"/></svg>
+          <div style="position:absolute;top:-1px;right:-1px;width:6px;height:6px;border-radius:50%;background:#e85555;border:1px solid #0D0F1A;"></div>
+        </div>
+      </div>
+
+      <div class="tab-bar" id="tabBar">
+        <div class="tab active">📊 Sorting</div>
+        <div class="tab">↔ Merge Arrays</div>
+        <div class="tab">✳ Graph</div>
+        <div class="tab">▲ Heap</div>
+        <div class="tab">⬛ Dynamic</div>
+        <div class="tab">🔑 Hashing</div>
+      </div>
+
+      <div class="controls-panel">
+        <div class="label">Algorithm</div>
+        <div class="algo-select">
+          <span>Bubble Sort</span>
+          <span style="color:#555;font-size:10px;">▼</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn-run" id="runBtn">▶ Run</button>
+          <button class="btn-new" id="newBtn">↺ New</button>
+        </div>
+        <button class="btn-learn">⚡ Learn Sorting</button>
+      </div>
+
+      <div class="viz-container" id="vizContainer">
+        <canvas id="vizCanvas"></canvas>
+
+        <div class="expand-btn" id="expandBtn" title="Expand to fullscreen">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+            <path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <div class="stat-bar">
+          <span>Pick algorithm and press Run</span>
+          <span class="compares" id="statCompares">↕ 0 compares</span>
+          <span class="swaps" id="statSwaps">: 0 swaps</span>
+          <span style="margin-left:auto;">n=16</span>
+        </div>
+
+        <div class="viz-tap-hint" id="tapHint">
+          <div class="tap-icon">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <rect x="2" y="2" width="12" height="12" rx="2" stroke="rgba(124,58,237,0.8)" stroke-width="1.5"/>
+              <path d="M5 8h6M8 5v6" stroke="rgba(124,58,237,0.8)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="tap-text">Tap to expand</span>
+        </div>
+      </div>
+
+      <div class="bottom-nav">
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><path d="M3 17V9l7-6 7 6v8H12v-4H8v4H3z" stroke="#888" stroke-width="1.4"/></svg>
+          <span class="nav-label">Roadmaps</span>
+        </div>
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><path d="M5 6h10M5 10h10M5 14h6" stroke="#888" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <span class="nav-label">Practice</span>
+        </div>
+        <div class="nav-item active">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><path d="M4 14l4-8 3 5 2-3 3 6" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="nav-label">Code Viz</span>
+        </div>
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="12" rx="2" stroke="#888" stroke-width="1.4"/><path d="M7 4V2M13 4V2M3 8h14" stroke="#888" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <span class="nav-label">Jobs</span>
+        </div>
+        <div class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="#888" stroke-width="1.4"/><path d="M4 17c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#888" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <span class="nav-label">Portfolio</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FULLSCREEN LAYOUT MODE -->
+    <div class="fullscreen-overlay" id="fullscreenOverlay">
+      <div class="fs-viz" id="fsViz">
+        <canvas id="fsCanvas"></canvas>
+        <div class="fs-status" id="fsStatus">
+          <span id="fsCompares" style="color:#7C3AED;">↕ 0 compares</span>
+          <span id="fsSwaps" style="color:#F59E0B;">: 0 swaps</span>
+          <span style="margin-left:auto; color:#444;">n=16</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- WHEEL BACKDROP -->
+    <div class="wheel-backdrop" id="wheelBackdrop"></div>
+
+    <!-- FAB -->
+    <div class="fab-root" id="fabRoot">
+      <div class="wheel-items" id="wheelItems"></div>
+      <button class="fab-btn" id="fabBtn">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="2.5" fill="white"/>
+          <circle cx="3.5" cy="10" r="2" fill="white" opacity="0.7"/>
+          <circle cx="16.5" cy="10" r="2" fill="white" opacity="0.7"/>
+        </svg>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const state = {
+  isFullscreen: false,
+  isWheelOpen: false,
+  isRunning: false,
+  isPaused: false,
+  speed: 'normal',
+  bars: [],
+  animFrame: null,
+  compares: 0,
+  swaps: 0,
+  animInterval: null,
+  sortSteps: [],
+  stepIndex: 0,
+};
+
+const N = 16;
+const SPEED_MS = { slow: 300, normal: 100, fast: 20 };
+
+function genBars() {
+  state.bars = Array.from({length: N}, () => Math.floor(Math.random() * 80) + 10);
+  state.compares = 0;
+  state.swaps = 0;
+  state.sortSteps = [];
+  state.stepIndex = 0;
+}
+
+function buildBubbleSortSteps(arr) {
+  const a = [...arr], steps = [];
+  for (let i = 0; i < a.length; i++) {
+    for (let j = 0; j < a.length - i - 1; j++) {
+      steps.push({ type: 'compare', i: j, j: j+1, arr: [...a] });
+      if (a[j] > a[j+1]) {
+        [a[j], a[j+1]] = [a[j+1], a[j]];
+        steps.push({ type: 'swap', i: j, j: j+1, arr: [...a] });
+      }
+    }
+  }
+  steps.push({ type: 'done', arr: [...a] });
+  return steps;
+}
+
+function drawBars(canvas, bars, highlightI, highlightJ, type) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const bw = W / bars.length;
+  const maxV = 100;
+  bars.forEach((v, i) => {
+    const bh = (v / maxV) * (H - 20);
+    const x = i * bw + 1;
+    const y = H - bh;
+    if (i === highlightI || i === highlightJ) {
+      ctx.fillStyle = type === 'swap' ? '#cd7b3a' : '#7C3AED';
+    } else {
+      ctx.fillStyle = '#2a3060';
+    }
+    ctx.beginPath();
+    ctx.roundRect(x, y, bw - 2, bh, 3);
+    ctx.fill();
+    if (bw > 14) {
+      ctx.fillStyle = '#888';
+      ctx.font = '9px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(v, x + (bw-2)/2, y - 3);
+    }
+  });
+}
+
+function resizeCanvases() {
+  const vc = document.getElementById('vizContainer');
+  const nc = document.getElementById('vizCanvas');
+  nc.width = vc.clientWidth;
+  nc.height = vc.clientHeight - 24;
+
+  const fs = document.getElementById('fsViz');
+  const fc = document.getElementById('fsCanvas');
+  fc.width = fs.clientWidth;
+  fc.height = fs.clientHeight - 24;
+}
+
+function renderNormal(bars, hi, hj, type) {
+  drawBars(document.getElementById('vizCanvas'), bars, hi, hj, type);
+}
+
+function renderFS(bars, hi, hj, type) {
+  drawBars(document.getElementById('fsCanvas'), bars, hi, hj, type);
+}
+
+function renderBoth(bars, hi, hj, type) {
+  renderNormal(bars, hi, hj, type);
+  renderFS(bars, hi, hj, type);
+}
+
+function updateStats(c, s) {
+  document.getElementById('statCompares').textContent = `↕ ${c} compares`;
+  document.getElementById('statSwaps').textContent = `: ${s} swaps`;
+  document.getElementById('fsCompares').textContent = `↕ ${c} compares`;
+  document.getElementById('fsSwaps').textContent = `: ${s} swaps`;
+}
+
+function stopAnim() {
+  if (state.animInterval) { clearInterval(state.animInterval); state.animInterval = null; }
+  state.isRunning = false;
+  state.isPaused = false;
+}
+
+function runSort() {
+  stopAnim();
+  state.sortSteps = buildBubbleSortSteps(state.bars);
+  state.stepIndex = 0;
+  state.compares = 0;
+  state.swaps = 0;
+  state.isRunning = true;
+  state.isPaused = false;
+  tick();
+}
+
+function tick() {
+  if (!state.isRunning || state.isPaused) return;
+  if (state.stepIndex >= state.sortSteps.length) { state.isRunning = false; return; }
+  const step = state.sortSteps[state.stepIndex++];
+  if (step.type === 'compare') state.compares++;
+  if (step.type === 'swap') state.swaps++;
+  renderBoth(step.arr, step.i, step.j, step.type);
+  updateStats(state.compares, state.swaps);
+  const ms = SPEED_MS[state.speed];
+  if (state.isRunning) state.animInterval = setTimeout(tick, ms);
+}
+
+// FAB WHEEL SETUP
+const wheelDefs = [
+  { id: 'exit',   label: 'Exit', cls: 'wc-exit',         angle: 270, radius: 68,
+    icon: `<path d="M6 3H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3M9 7h6M12 4l3 3-3 3" stroke="#e06080" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>` },
+  { id: 'reset',  label: 'New',  cls: 'wc-reset',        angle: 225, radius: 76,
+    icon: `<path d="M4 7a6 6 0 1 1 1 4.5M4 7V3M4 7H8" stroke="#F59E0B" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>` },
+  { id: 'pause',  label: 'Pause', cls: 'wc-pause',       angle: 180, radius: 76,
+    icon: `<rect x="4" y="3" width="3" height="10" rx="1" fill="#60c060"/><rect x="9" y="3" width="3" height="10" rx="1" fill="#60c060"/>` },
+  { id: 'fast',   label: 'Fast', cls: 'wc-speed-fast',   angle: 140, radius: 72,
+    icon: `<path d="M4 8h8M9 4l4 4-4 4" stroke="#a080e0" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 8h1" stroke="#a080e0" stroke-width="1.4" stroke-linecap="round"/>` },
+  { id: 'normal', label: 'Normal', cls: 'wc-speed-normal', angle: 105, radius: 68,
+    icon: `<path d="M3 8h10M10 5l3 3-3 3" stroke="#60a0d0" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>` },
+  { id: 'slow',   label: 'Slow', cls: 'wc-speed-slow',   angle: 75,  radius: 72,
+    icon: `<path d="M3 8h8M8 5l3 3-3 3" stroke="#888" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>` },
+];
+
+function buildWheel() {
+  const container = document.getElementById('wheelItems');
+  container.innerHTML = '';
+  wheelDefs.forEach(def => {
+    const el = document.createElement('div');
+    el.className = 'wheel-item';
+    el.dataset.id = def.id;
+    const rad = (def.angle * Math.PI) / 180;
+    const x = -Math.cos(rad) * def.radius - 20;
+    const y = -Math.sin(rad) * def.radius - 20;
+    el.style.left = x + 'px';
+    el.style.bottom = (24 + (-y - 40)) + 'px';
+    el.innerHTML = `
+      <div class="wheel-circle ${def.cls}" id="wc-${def.id}">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">${def.icon}</svg>
+      </div>
+      <span class="wheel-label">${def.label}</span>
+    `;
+    el.style.left = '';
+    el.style.right = '';
+    el.style.bottom = '';
+    el.style.position = 'absolute';
+    const rx = Math.cos(rad) * def.radius;
+    const ry = Math.sin(rad) * def.radius;
+    el.style.right = (rx - 4) + 'px';
+    el.style.bottom = (ry + 24) + 'px';
+    container.appendChild(el);
+  });
+}
+
+function openWheel() {
+  state.isWheelOpen = true;
+  document.getElementById('fabBtn').classList.add('open');
+  document.getElementById('wheelBackdrop').classList.add('active');
+  document.querySelectorAll('.wheel-item').forEach((el, i) => {
+    setTimeout(() => el.classList.add('visible'), i * 30);
+  });
+}
+
+function closeWheel() {
+  state.isWheelOpen = false;
+  document.getElementById('fabBtn').classList.remove('open');
+  document.getElementById('wheelBackdrop').classList.remove('active');
+  document.querySelectorAll('.wheel-item').forEach(el => el.classList.remove('visible'));
+}
+
+function enterFullscreen() {
+  state.isFullscreen = true;
+  document.getElementById('fullscreenOverlay').classList.add('active');
+  setTimeout(() => { resizeCanvases(); renderBoth(state.bars, -1, -1, ''); }, 50);
+}
+
+function exitFullscreen() {
+  state.isFullscreen = false;
+  document.getElementById('fullscreenOverlay').classList.remove('active');
+  setTimeout(() => { resizeCanvases(); renderNormal(state.bars, -1, -1, ''); }, 50);
+}
+
+function updatePauseBtn() {
+  const el = document.getElementById('wc-pause');
+  if (!el) return;
+  const svg = el.querySelector('svg');
+  if (state.isPaused) {
+    svg.innerHTML = `<path d="M5 3l8 5-8 5V3z" fill="#60c060"/>`;
+    el.parentElement.querySelector('.wheel-label').textContent = 'Resume';
+  } else {
+    svg.innerHTML = `<rect x="4" y="3" width="3" height="10" rx="1" fill="#60c060"/><rect x="9" y="3" width="3" height="10" rx="1" fill="#60c060"/>`;
+    el.parentElement.querySelector('.wheel-label').textContent = 'Pause';
+  }
+}
+
+function setSpeed(s) {
+  state.speed = s;
+  ['slow','normal','fast'].forEach(sp => {
+    const c = document.getElementById(`wc-${sp}`);
+    if (c) c.classList.toggle('wc-active', sp === s);
+  });
+}
+
+// EVENT WIRING
+document.getElementById('fabBtn').addEventListener('click', () => {
+  state.isWheelOpen ? closeWheel() : openWheel();
+});
+
+document.getElementById('wheelBackdrop').addEventListener('click', closeWheel);
+
+document.getElementById('wheelItems').addEventListener('click', e => {
+  const item = e.target.closest('.wheel-item');
+  if (!item) return;
+  const id = item.dataset.id;
+
+  if (id === 'exit') {
+    closeWheel();
+    exitFullscreen();
+    stopAnim();
+  } else if (id === 'reset') {
+    genBars();
+    renderBoth(state.bars, -1, -1, '');
+    updateStats(0, 0);
+    stopAnim();
+    closeWheel();
+  } else if (id === 'pause') {
+    if (state.isRunning) {
+      state.isPaused = !state.isPaused;
+      if (!state.isPaused) tick();
+      updatePauseBtn();
+    }
+    closeWheel();
+  } else if (['slow','normal','fast'].includes(id)) {
+    setSpeed(id);
+    closeWheel();
+  }
+});
+
+document.getElementById('expandBtn').addEventListener('click', enterFullscreen);
+document.getElementById('vizContainer').addEventListener('click', e => {
+  if (e.target === document.getElementById('expandBtn') || document.getElementById('expandBtn').contains(e.target)) return;
+  const hint = document.getElementById('tapHint');
+  hint.classList.add('show');
+  setTimeout(() => hint.classList.remove('show'), 1200);
+  enterFullscreen();
+});
+
+document.getElementById('runBtn').addEventListener('click', () => {
+  if (state.bars.length === 0) genBars();
+  runSort();
+  enterFullscreen();
+});
+
+document.getElementById('newBtn').addEventListener('click', () => {
+  genBars();
+  renderBoth(state.bars, -1, -1, '');
+  updateStats(0, 0);
+  stopAnim();
+});
+
+// TABS
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+  });
+});
+
+// INIT
+genBars();
+buildWheel();
+setSpeed('normal');
+
+setTimeout(() => {
+  resizeCanvases();
+  renderNormal(state.bars, -1, -1, '');
+}, 100);
+
+window.addEventListener('resize', () => {
+  resizeCanvases();
+  renderBoth(state.bars, -1, -1, '');
+});
+</script>
