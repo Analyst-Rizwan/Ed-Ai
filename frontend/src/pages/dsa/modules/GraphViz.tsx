@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
-import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, Log, Badge, Select, useStepGuide } from "../shared";
+import { T } from "../theme";
+import { Btn, Side, SLabel, SpeedRow, Log, Badge, Select, useStepGuide, useAnimation, Controls } from "../shared";
 
 const GRAPH_PRESET = {
   nodes: [
@@ -40,10 +40,9 @@ export default function GraphViz() {
   const [queue, setQueue] = useState<string[]>([]);
   const [dist, setDist] = useState<Record<string, number>>({});
   const [log, setLog] = useState<{ m: string; t: string }[]>([]);
-  const [running, setRunning] = useState(false);
+  const anim = useAnimation();
   const [speed, setSpeed] = useState(500);
   const [label, setLabel] = useState("Press Run to start");
-  const stopRef = useRef(false);
   const addLog = (m: string, t = "info") => setLog(l => [...l.slice(-24), { m, t }]);
   const guide = useStepGuide();
 
@@ -56,11 +55,11 @@ export default function GraphViz() {
   });
 
   const resetState = () => {
-    stopRef.current = true;
+    anim.reset();
     setVisited(new Set()); setChecking(null); setActiveNode(null);
     setEdgeState({}); setPathNodes(new Set());
     setQueue([]); setDist({});
-    setRunning(false); setLabel("Press Run to start");
+    setLabel("Press Run to start");
   };
 
   const runExample = async () => {
@@ -98,11 +97,11 @@ export default function GraphViz() {
   };
 
   // ── tick helper ──
-  const tick = (opts: {
+  const tick = async (opts: {
     vis?: Set<string>; cur?: string | null; chk?: string | null;
     es?: Record<string, string>; q?: string[]; msg: string;
     d?: Record<string, number>;
-  }) => new Promise<void>(res => {
+  }) => {
     const { vis, cur, chk, es, q, msg, d } = opts;
     if (vis) setVisited(new Set(vis));
     if (cur !== undefined) setActiveNode(cur);
@@ -111,9 +110,8 @@ export default function GraphViz() {
     if (q) setQueue([...q]);
     if (d && Object.keys(d).length) setDist({ ...d });
     setLabel(msg); addLog(msg, "info");
-    setTimeout(res, speed);
-    if (stopRef.current) throw new Error("stopped");
-  });
+    await anim.sleep(speed);
+  };
 
   // Flash the final path edges/nodes
   const flashPath = async (path: string[], es: Record<string, string>) => {
@@ -132,8 +130,8 @@ export default function GraphViz() {
 
   // ── algorithms ──
   const run = async () => {
-    if (running) return;
-    setRunning(true); stopRef.current = false;
+    if (anim.running) return;
+    anim.start();
     setVisited(new Set()); setChecking(null); setActiveNode(null);
     setEdgeState({}); setPathNodes(new Set());
     setQueue([]); setDist({});
@@ -174,7 +172,7 @@ export default function GraphViz() {
         let found = false;
 
         const dfs = async (node: string) => {
-          if (stopRef.current || found) throw new Error("stopped");
+          if (anim.stopRef.current || found) throw new Error("stopped");
           vis.add(node);
           await tick({ vis, cur: node, chk: null, es, q: [], msg: `DFS: enter ${node}` });
 
@@ -241,7 +239,7 @@ export default function GraphViz() {
         }
       }
     } catch (e: any) { if (e.message !== "stopped") throw e; }
-    setRunning(false); setActiveNode(null); setChecking(null);
+    anim.setRunning(false); setActiveNode(null); setChecking(null);
   };
 
   const nodePos = Object.fromEntries(GRAPH_PRESET.nodes.map(n => [n.id, { x: n.x, y: n.y }]));
@@ -281,7 +279,7 @@ export default function GraphViz() {
           <SLabel>Algorithm</SLabel>
           <div style={{ marginTop: 6 }}>
             <Select
-              value={algo} onChange={(v) => { if (!running) { setAlgo(v); resetState(); } }} disabled={running}
+              value={algo} onChange={(v) => { if (!anim.running) { setAlgo(v); resetState(); } }} disabled={anim.running}
               options={[
                 ["bfs", "BFS — Breadth First"],
                 ["dfs", "DFS — Depth First"],
@@ -296,7 +294,7 @@ export default function GraphViz() {
             {GRAPH_PRESET.nodes.map(n => {
               const active = n.id === start;
               return (
-                <button key={n.id} onClick={() => { if (!running) { setStart(n.id); resetState(); } }} style={{ width: 32, height: 32, borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: running ? "not-allowed" : "pointer", fontFamily: "'Space Mono',monospace", background: active ? T.accentSoft : T.surface2, border: `1px solid ${active ? T.accent : T.border2}`, color: active ? T.accent : T.muted2 }}>{n.id}</button>
+                <button key={n.id} onClick={() => { if (!anim.running) { setStart(n.id); resetState(); } }} style={{ width: 32, height: 32, borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: anim.running ? "not-allowed" : "pointer", fontFamily: "'Space Mono',monospace", background: active ? T.accentSoft : T.surface2, border: `1px solid ${active ? T.accent : T.border2}`, color: active ? T.accent : T.muted2 }}>{n.id}</button>
               );
             })}
           </div>
@@ -307,16 +305,13 @@ export default function GraphViz() {
             {GRAPH_PRESET.nodes.map(n => {
               const active = n.id === end;
               return (
-                <button key={n.id} onClick={() => { if (!running) { setEnd(n.id); resetState(); } }} style={{ width: 32, height: 32, borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: running ? "not-allowed" : "pointer", fontFamily: "'Space Mono',monospace", background: active ? T.redSoft : T.surface2, border: `1px solid ${active ? T.red : T.border2}`, color: active ? T.red : T.muted2 }}>{n.id}</button>
+                <button key={n.id} onClick={() => { if (!anim.running) { setEnd(n.id); resetState(); } }} style={{ width: 32, height: 32, borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: anim.running ? "not-allowed" : "pointer", fontFamily: "'Space Mono',monospace", background: active ? T.redSoft : T.surface2, border: `1px solid ${active ? T.red : T.border2}`, color: active ? T.red : T.muted2 }}>{n.id}</button>
               );
             })}
           </div>
         </div>
-        <div style={{ display: "flex", gap: 6 }}>
-          <Btn onClick={run} variant="primary" disabled={running} style={{ flex: 1 }}>▶ Run</Btn>
-          <Btn onClick={resetState} variant="ghost" disabled={running} style={{ flex: 1 }}>↺ Reset</Btn>
-        </div>
-        <Btn onClick={runExample} variant="yellow" disabled={running} full>⚡ Learn Graph</Btn>
+        <Controls anim={anim} run={run} reset={resetState} />
+        <Btn onClick={runExample} variant="yellow" disabled={anim.running} full>⚡ Learn Graph</Btn>
         <div><SLabel>Speed</SLabel><div style={{ marginTop: 6 }}><SpeedRow speed={speed} setSpeed={setSpeed} /></div></div>
         {algo === "dijkstra" && Object.keys(dist).length > 0 && (
           <div><SLabel>Distances from {start}</SLabel>

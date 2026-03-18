@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
-import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, Log, Input, Badge, useStepGuide } from "../shared";
+import { T } from "../theme";
+import { Btn, Side, SLabel, SpeedRow, Log, Input, Badge, useStepGuide, useAnimation, Controls } from "../shared";
 
 type CharState = "idle" | "match" | "mismatch" | "active" | "skip" | "found";
 
@@ -26,7 +26,7 @@ export default function KMPViz() {
   const [text, setText] = useState("AABABCAABABCAABABC");
   const [pattern, setPattern] = useState("ABABC");
   const [speed, setSpeed] = useState(400);
-  const [running, setRunning] = useState(false);
+  const anim = useAnimation();
   const [phase, setPhase] = useState<"idle" | "lps" | "search" | "done">("idle");
   const [lps, setLps] = useState<number[]>([]);
   const [lpsHL, setLpsHL] = useState<number>(-1);
@@ -35,20 +35,19 @@ export default function KMPViz() {
   const [matches, setMatches] = useState<number[]>([]);
   const [label, setLabel] = useState("Enter text & pattern, then press ▶ Run");
   const [log, setLog] = useState<{ m: string; t: string }[]>([]);
-  const stopRef = useRef(false);
   const addLog = (m: string, t = "info") => setLog(l => [...l.slice(-28), { m, t }]);
   const guide = useStepGuide();
 
   const reset = () => {
-    stopRef.current = true;
+    anim.reset();
     setPhase("idle"); setLps([]); setLpsHL(-1);
     setTextStates([]); setPatStates([]); setMatches([]);
     setLabel("Enter text & pattern, then press ▶ Run");
-    setRunning(false); setLog([]);
+    setLog([]);
   };
 
   const loadExample = async (ex: typeof EXAMPLES[0]) => {
-    if (running) return;
+    if (anim.running) return;
     reset();
     setText(ex.text);
     setPattern(ex.pattern);
@@ -77,8 +76,7 @@ export default function KMPViz() {
     const P_str = pattern.toUpperCase().replace(/\s/g, "");
     if (P_str.length > T_str.length) { setLabel("Pattern longer than text!"); return; }
 
-    stopRef.current = false;
-    setRunning(true);
+    anim.start();
     setMatches([]);
     setLog([]);
 
@@ -91,11 +89,11 @@ export default function KMPViz() {
     let len = 0, i = 1;
     setLpsHL(0);
     setLabel(`LPS[0] = 0 (always, by definition)`);
-    await sleep(speed);
-    if (stopRef.current) { setRunning(false); return; }
+    await anim.sleep(speed);
+    if (anim.stopRef.current) { anim.setRunning(false); return; }
 
     while (i < P_str.length) {
-      if (stopRef.current) { setRunning(false); return; }
+      if (anim.stopRef.current) { anim.setRunning(false); return; }
       setLpsHL(i);
       if (P_str[i] === P_str[len]) {
         lpsArr[i] = ++len;
@@ -114,7 +112,7 @@ export default function KMPViz() {
         addLog(`lps[${i}] = 0`, "info");
         i++;
       }
-      await sleep(speed);
+      await anim.sleep(speed);
     }
     setLpsHL(-1);
     addLog("LPS table complete — starting search", "ok");
@@ -130,15 +128,15 @@ export default function KMPViz() {
     setPatStates([...pStates]);
 
     while (tI < T_str.length) {
-      if (stopRef.current) { setRunning(false); return; }
+      if (anim.stopRef.current) { anim.setRunning(false); return; }
 
       // Highlight current comparison
       const ts2 = tStates.map((s, idx) => idx === tI ? "active" : s) as CharState[];
       const ps2 = pStates.map((s, idx) => idx === pI ? "active" : s) as CharState[];
       setTextStates(ts2); setPatStates(ps2);
       setLabel(`Compare text[${tI}]='${T_str[tI]}' vs pattern[${pI}]='${P_str[pI]}'`);
-      await sleep(speed);
-      if (stopRef.current) { setRunning(false); return; }
+      await anim.sleep(speed);
+      if (anim.stopRef.current) { anim.setRunning(false); return; }
 
       if (T_str[tI] === P_str[pI]) {
         tStates[tI] = "match"; pStates[pI] = "match";
@@ -155,7 +153,7 @@ export default function KMPViz() {
           setPatStates([...pStates]);
           setLabel(`🎉 Match found at index ${start}!`);
           addLog(`Match found at index ${start}`, "ok");
-          await sleep(speed * 2);
+          await anim.sleep(speed * 2);
           pStates.fill("idle");
           setPatStates([...pStates]);
           pI = lpsArr[pI - 1];
@@ -164,8 +162,8 @@ export default function KMPViz() {
         tStates[tI] = "mismatch"; pStates[pI] = "mismatch";
         setTextStates([...tStates]); setPatStates([...pStates]);
         addLog(`✗ Mismatch: '${T_str[tI]}'≠'${P_str[pI]}'`, "err");
-        await sleep(speed);
-        if (stopRef.current) { setRunning(false); return; }
+        await anim.sleep(speed);
+        if (anim.stopRef.current) { anim.setRunning(false); return; }
         if (pI > 0) {
           addLog(`Use lps[${pI - 1}]=${lpsArr[pI - 1]} → skip ${pI - lpsArr[pI - 1]} chars`, "warn");
           pI = lpsArr[pI - 1];
@@ -185,7 +183,8 @@ export default function KMPViz() {
       : `✗ Pattern not found in text`;
     setLabel(msg);
     addLog(msg, foundAt.length > 0 ? "ok" : "err");
-    setRunning(false);
+    addLog("KMP complete", "ok");
+    anim.setRunning(false);
   };
 
   const charColor = (s: CharState) => {
@@ -204,7 +203,7 @@ export default function KMPViz() {
           <SLabel>Quick Examples</SLabel>
           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6 }}>
             {EXAMPLES.map(ex => (
-              <Btn key={ex.label} onClick={() => loadExample(ex)} variant="ghost" disabled={running} full>
+              <Btn key={ex.label} onClick={() => loadExample(ex)} variant="ghost" disabled={anim.running} full>
                 ⚡ {ex.label}
               </Btn>
             ))}
@@ -212,10 +211,7 @@ export default function KMPViz() {
         </div>
         <div><SLabel>Text</SLabel><div style={{ marginTop: 6 }}><Input value={text} onChange={setText} placeholder="e.g. AABABCAABABC" mono /></div></div>
         <div><SLabel>Pattern</SLabel><div style={{ marginTop: 6 }}><Input value={pattern} onChange={setPattern} placeholder="e.g. ABABC" mono /></div></div>
-        <div style={{ display: "flex", gap: 6 }}>
-          <Btn onClick={run} variant="primary" disabled={running} style={{ flex: 1 }}>▶ Run</Btn>
-          <Btn onClick={reset} variant="ghost" disabled={running} style={{ flex: 1 }}>↺ Reset</Btn>
-        </div>
+        <Controls anim={anim} run={run} reset={reset} />
         <div><SLabel>Speed</SLabel><div style={{ marginTop: 6 }}><SpeedRow speed={speed} setSpeed={setSpeed} /></div></div>
         <SLabel>Log</SLabel><Log entries={log} />
       </Side>

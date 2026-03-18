@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
-import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, Log, Select, useStepGuide } from "../shared";
+import { T } from "../theme";
+import { Btn, Side, SLabel, SpeedRow, Log, Select, useStepGuide, useAnimation, Controls } from "../shared";
 import { motion } from "framer-motion";
 
 function genArr(n=16){return Array.from({length:n},(_,i)=>({id:`id-${Date.now()}-${i}`,val:Math.floor(Math.random()*90+8),state:"idle"}));}
@@ -8,28 +8,27 @@ function genArr(n=16){return Array.from({length:n},(_,i)=>({id:`id-${Date.now()}
 export default function SortingViz(){
   const [bars,setBars]=useState<{id:string,val:number,state:string}[]>(genArr());
   const [algo,setAlgo]=useState("bubble");
-  const [running,setRunning]=useState(false);
+  const anim = useAnimation();
   const [speed,setSpeed]=useState(400);
   const [log,setLog]=useState<{m:string,t:string}[]>([]);
   const [stats,setStats]=useState({comps:0,swaps:0});
   const [label,setLabel]=useState("Pick an algorithm and press Run");
-  const stopRef=useRef(false);
   const statsRef=useRef({comps:0,swaps:0});
 
   const addLog=(m:string,t="info")=>setLog(l=>[...l.slice(-30),{m,t}]);
   const guide = useStepGuide();
 
   const reset=()=>{
-    stopRef.current=true;
+    anim.reset();
     setBars(genArr());
     statsRef.current={comps:0,swaps:0};
     setStats({comps:0,swaps:0});
-    setLabel("Press ▶ Run to start");setRunning(false);
+    setLabel("Press ▶ Run to start");
   };
 
   const runExample=async()=>{
     guide.resetGuide();
-    stopRef.current=true;
+    anim.reset();
     const algoNames:Record<string,string>={bubble:"Bubble Sort",selection:"Selection Sort",insertion:"Insertion Sort",merge:"Merge Sort",quick:"Quick Sort"};
     const algoDescs:Record<string,{body:string,tip:string}>={ 
       bubble:{body:"Bubble Sort repeatedly compares adjacent elements and swaps them if they're in the wrong order. Each pass 'bubbles' the largest unsorted element to its final position.",tip:"Bubble Sort is O(n²) average/worst but O(n) best case (already sorted). It's adaptive and stable but rarely used in practice."},
@@ -88,7 +87,7 @@ export default function SortingViz(){
     }, 4, 4);
 
     setLabel(`⚡ Example loaded — press ▶ Run to sort`);
-    setRunning(false);
+    anim.setRunning(false);
   };
 
   const updateBars=(b:{id:string,val:number,state:string}[],label?:string,t="info")=>{
@@ -101,11 +100,11 @@ export default function SortingViz(){
   const swp=(b:any[],i:number,j:number)=>{statsRef.current.swaps++;[b[i],b[j]]=[b[j],b[i]];b[i].state="swap";b[j].state="swap";};
 
   const run=async()=>{
-    stopRef.current=false;statsRef.current={comps:0,swaps:0};setRunning(true);
+    anim.start();statsRef.current={comps:0,swaps:0};
     const b=bars.map(x=>({...x,state:"idle"}));
     const tick=async(b2:any[],msg:string,t="info")=>{
-      if(stopRef.current)throw new Error("stopped");
-      updateBars(b2,msg,t);await sleep(speed);
+      if(anim.stopRef.current)throw new Error("stopped");
+      updateBars(b2,msg,t);await anim.sleep(speed);
     };
     try{
       if(algo==="bubble")await bubbleSort(b,tick);
@@ -115,7 +114,7 @@ export default function SortingViz(){
       else if(algo==="quick")await quickSort(b,tick,0,b.length-1);
       b.forEach(x=>x.state="sorted");updateBars(b,"✓ Sorted!","ok");
     }catch(e:any){if(e.message!=="stopped")throw e;}
-    setRunning(false);
+    anim.setRunning(false);
   };
 
   async function bubbleSort(b:any[],tick:any){
@@ -210,7 +209,7 @@ export default function SortingViz(){
           <SLabel>Algorithm</SLabel>
           <div style={{marginTop:6}}>
             <Select
-              value={algo} onChange={(v)=>{if(!running)setAlgo(v)}} disabled={running}
+              value={algo} onChange={(v)=>{if(!anim.running)setAlgo(v)}} disabled={anim.running}
               options={[
                 ["bubble","Bubble Sort"],
                 ["selection","Selection Sort"],
@@ -221,11 +220,8 @@ export default function SortingViz(){
             />
           </div>
         </div>
-        <div style={{display:"flex",gap:6}}>
-          <Btn onClick={run} variant="primary" disabled={running} style={{flex:1}}>▶ Run</Btn>
-          <Btn onClick={reset} variant="ghost" disabled={running} style={{flex:1}}>↺ New</Btn>
-        </div>
-        <Btn onClick={runExample} variant="yellow" disabled={running} full>⚡ Learn Sorting</Btn>
+        <Controls anim={anim} run={run} reset={reset} />
+        <Btn onClick={runExample} variant="yellow" disabled={anim.running} full>⚡ Learn Sorting</Btn>
         <div><SLabel>Speed</SLabel><div style={{marginTop:6}}><SpeedRow speed={speed} setSpeed={setSpeed}/></div></div>
         <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
           {Object.entries(stateColor).map(([s,c])=>(

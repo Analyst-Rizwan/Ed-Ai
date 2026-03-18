@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
-import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, Log, Input, Badge, useStepGuide } from "../shared";
+import { T } from "../theme";
+import { Btn, Side, SLabel, SpeedRow, Log, Input, Badge, useStepGuide, useAnimation, Controls } from "../shared";
 
 type TN = { children: Record<string, TN>; end: boolean; id: number };
 let _id = 0;
@@ -65,7 +65,7 @@ export default function TrieViz() {
   const [ver, setVer] = useState(0);
   // Visual state: map from node id → color mode
   const [highlight, setHighlight] = useState<Record<number, "search" | "found" | "notfound" | "autocomplete" | "wordend">>({});
-  const runRef = useRef(false);
+  const anim = useAnimation();
   const addLog = (m: string, t = "info") => setLog(l => [...l.slice(-25), { m, t }]);
   const guide = useStepGuide();
 
@@ -80,117 +80,125 @@ export default function TrieViz() {
   };
 
   const searchAnimated = async () => {
-    if (!word.trim() || runRef.current) return;
+    if (!word.trim() || anim.running) return;
     const w = word.trim().toLowerCase(); setWord("");
-    runRef.current = true;
+    anim.start();
     clearHL();
     addLog(`search("${w}") — traversing...`, "info");
     setLabel(`<strong>search("${w}")</strong> — traversing character by character...`);
 
-    let n = trie;
-    const visited: number[] = [trie.id];
-    let found = true;
+    try {
+      let n = trie;
+      const visited: number[] = [trie.id];
+      let found = true;
 
-    for (let i = 0; i < w.length; i++) {
-      const c = w[i];
-      // Highlight path so far as "search"
-      const hl: Record<number, "search" | "found" | "notfound" | "autocomplete" | "wordend"> = {};
-      visited.forEach(id => hl[id] = "search");
-      setHighlight({ ...hl });
-      addLog(`checking '${c}' at depth ${i + 1}`, "info");
-      await sleep(500);
+      for (let i = 0; i < w.length; i++) {
+        const c = w[i];
+        // Highlight path so far as "search"
+        const hl: Record<number, "search" | "found" | "notfound" | "autocomplete" | "wordend"> = {};
+        visited.forEach(id => hl[id] = "search");
+        setHighlight({ ...hl });
+        addLog(`checking '${c}' at depth ${i + 1}`, "info");
+        await anim.sleep(500);
+        if (anim.stopRef.current) throw new Error("stopped");
 
-      if (!n.children[c]) {
-        found = false;
-        // Mark current node as notfound
-        const failHl: Record<number, "search" | "found" | "notfound" | "autocomplete" | "wordend"> = {};
-        visited.forEach(id => failHl[id] = "search");
-        failHl[n.id] = "notfound";
-        setHighlight({ ...failHl });
-        addLog(`'${c}' not found — word doesn't exist`, "err");
-        break;
+        if (!n.children[c]) {
+          found = false;
+          // Mark current node as notfound
+          const failHl: Record<number, "search" | "found" | "notfound" | "autocomplete" | "wordend"> = {};
+          visited.forEach(id => failHl[id] = "search");
+          failHl[n.id] = "notfound";
+          setHighlight({ ...failHl });
+          addLog(`'${c}' not found — word doesn't exist`, "err");
+          break;
+        }
+
+        n = n.children[c];
+        visited.push(n.id);
+        await anim.sleep(200);
+        if (anim.stopRef.current) throw new Error("stopped");
       }
 
-      n = n.children[c];
-      visited.push(n.id);
-      await sleep(200);
-    }
-
-    if (found) {
-      const isEnd = n.end;
-      const finalHl: Record<number, "search" | "found" | "notfound" | "autocomplete" | "wordend"> = {};
-      visited.forEach(id => finalHl[id] = isEnd ? "found" : "notfound");
-      if (isEnd) finalHl[n.id] = "wordend";
-      setHighlight({ ...finalHl });
-      if (isEnd) {
-        addLog(`search("${w}") → ✓ FOUND`, "ok");
-        setLabel(`<strong>search("${w}")</strong> → <span style="color:${T.green}">✓ found!</span> End-of-word node is highlighted green.`);
-      } else {
-        addLog(`search("${w}") → prefix exists but not a complete word`, "err");
-        setLabel(`<strong>search("${w}")</strong> → prefix exists but not a complete word (not marked as end).`);
+      if (found) {
+        const isEnd = n.end;
+        const finalHl: Record<number, "search" | "found" | "notfound" | "autocomplete" | "wordend"> = {};
+        visited.forEach(id => finalHl[id] = isEnd ? "found" : "notfound");
+        if (isEnd) finalHl[n.id] = "wordend";
+        setHighlight({ ...finalHl });
+        if (isEnd) {
+          addLog(`search("${w}") → ✓ FOUND`, "ok");
+          setLabel(`<strong>search("${w}")</strong> → <span style="color:${T.green}">✓ found!</span> End-of-word node is highlighted green.`);
+        } else {
+          addLog(`search("${w}") → prefix exists but not a complete word`, "err");
+          setLabel(`<strong>search("${w}")</strong> → prefix exists but not a complete word (not marked as end).`);
+        }
       }
-    }
 
-    setTimeout(clearHL, 2500);
-    runRef.current = false;
+      setTimeout(clearHL, 2500);
+    } catch (e: any) { if (e.message !== "stopped") throw e; }
+    anim.setRunning(false);
   };
 
   const autocompleteAnimated = async () => {
-    if (!word.trim() || runRef.current) return;
+    if (!word.trim() || anim.running) return;
     const w = word.trim().toLowerCase(); setWord("");
-    runRef.current = true;
+    anim.start();
     clearHL();
     addLog(`autocomplete("${w}") — finding prefix...`, "info");
     setLabel(`<strong>autocomplete("${w}")</strong> — walking prefix path...`);
 
-    // Animate prefix walk
-    let n = trie;
-    const prefixIds: number[] = [trie.id];
-    let prefixExists = true;
+    try {
+      // Animate prefix walk
+      let n = trie;
+      const prefixIds: number[] = [trie.id];
+      let prefixExists = true;
 
-    for (let i = 0; i < w.length; i++) {
-      const c = w[i];
-      const hl: Record<number, "search" | "found" | "notfound" | "autocomplete" | "wordend"> = {};
-      prefixIds.forEach(id => hl[id] = "search");
-      setHighlight({ ...hl });
-      await sleep(450);
+      for (let i = 0; i < w.length; i++) {
+        const c = w[i];
+        const hl: Record<number, "search" | "found" | "notfound" | "autocomplete" | "wordend"> = {};
+        prefixIds.forEach(id => hl[id] = "search");
+        setHighlight({ ...hl });
+        await anim.sleep(450);
+        if (anim.stopRef.current) throw new Error("stopped");
 
-      if (!n.children[c]) {
-        prefixExists = false;
-        const failHl: Record<number, "search" | "found" | "notfound" | "autocomplete" | "wordend"> = {};
-        prefixIds.forEach(id => failHl[id] = "notfound");
-        setHighlight({ ...failHl });
-        addLog(`prefix "${w}" not found`, "err");
-        setLabel(`<strong>autocomplete("${w}")</strong> → prefix not in trie`);
-        break;
+        if (!n.children[c]) {
+          prefixExists = false;
+          const failHl: Record<number, "search" | "found" | "notfound" | "autocomplete" | "wordend"> = {};
+          prefixIds.forEach(id => failHl[id] = "notfound");
+          setHighlight({ ...failHl });
+          addLog(`prefix "${w}" not found`, "err");
+          setLabel(`<strong>autocomplete("${w}")</strong> → prefix not in trie`);
+          break;
+        }
+        n = n.children[c];
+        prefixIds.push(n.id);
       }
-      n = n.children[c];
-      prefixIds.push(n.id);
-    }
 
-    if (prefixExists) {
-      await sleep(300);
-      // Now highlight all nodes in the subtree
-      const subtreeIds = tiAutoIds(trie, w);
-      const hl: Record<number, "search" | "found" | "notfound" | "autocomplete" | "wordend"> = {};
-      prefixIds.forEach(id => hl[id] = "found");
-      subtreeIds.forEach(id => { if (!prefixIds.includes(id)) hl[id] = "autocomplete"; });
-      // Mark end-of-word nodes in subtree specially
-      function markEnds(node: TN, inSubtree: boolean) {
-        if (inSubtree && node.end) hl[node.id] = "wordend";
-        for (const child of Object.values(node.children)) markEnds(child, inSubtree || subtreeIds.includes(child.id));
+      if (prefixExists) {
+        await anim.sleep(300);
+        if (anim.stopRef.current) throw new Error("stopped");
+        // Now highlight all nodes in the subtree
+        const subtreeIds = tiAutoIds(trie, w);
+        const hl: Record<number, "search" | "found" | "notfound" | "autocomplete" | "wordend"> = {};
+        prefixIds.forEach(id => hl[id] = "found");
+        subtreeIds.forEach(id => { if (!prefixIds.includes(id)) hl[id] = "autocomplete"; });
+        // Mark end-of-word nodes in subtree specially
+        function markEnds(node: TN, inSubtree: boolean) {
+          if (inSubtree && node.end) hl[node.id] = "wordend";
+          for (const child of Object.values(node.children)) markEnds(child, inSubtree || subtreeIds.includes(child.id));
+        }
+        markEnds(trie, false);
+        setHighlight({ ...hl });
+
+        const r = tiAuto(trie, w);
+        setResults(r);
+        addLog(`autocomplete("${w}") → [${r.join(", ")}]`, "ok");
+        setLabel(`<strong>autocomplete("${w}")</strong> → ${r.length} words found: <span style="color:${T.green}">${r.join(", ")}</span>`);
       }
-      markEnds(trie, false);
-      setHighlight({ ...hl });
 
-      const r = tiAuto(trie, w);
-      setResults(r);
-      addLog(`autocomplete("${w}") → [${r.join(", ")}]`, "ok");
-      setLabel(`<strong>autocomplete("${w}")</strong> → ${r.length} words found: <span style="color:${T.green}">${r.join(", ")}</span>`);
-    }
-
-    setTimeout(clearHL, 3500);
-    runRef.current = false;
+      setTimeout(clearHL, 3500);
+    } catch (e: any) { if (e.message !== "stopped") throw e; }
+    anim.setRunning(false);
   };
 
   const loadWords = async () => {
@@ -245,10 +253,16 @@ export default function TrieViz() {
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full h-full">
       <Side>
         <div><SLabel>Word / Prefix</SLabel><div style={{ marginTop: 6 }}><Input value={word} onChange={setWord} placeholder={`e.g. "app"`} onEnter={insert} mono /></div></div>
-        <Btn onClick={insert} variant="primary" full>⊕ Insert Word</Btn>
-        <Btn onClick={searchAnimated} variant="teal" full>🔍 Animated Search</Btn>
-        <Btn onClick={autocompleteAnimated} variant="blue" full>⌨ Animated Autocomplete</Btn>
-        <Btn onClick={loadWords} variant="yellow" full>⚡ Learn Trie</Btn>
+        {!anim.running ? (
+          <>
+            <Btn onClick={insert} variant="primary" full>⊕ Insert Word</Btn>
+            <Btn onClick={searchAnimated} variant="teal" full>🔍 Animated Search</Btn>
+            <Btn onClick={autocompleteAnimated} variant="blue" full>⌨ Animated Autocomplete</Btn>
+          </>
+        ) : (
+          <Controls anim={anim} run={() => {}} reset={() => { anim.reset(); clearHL(); }} />
+        )}
+        <Btn onClick={loadWords} variant="yellow" disabled={anim.running} full>⚡ Load Example Words</Btn>
         {results.length > 0 && (
           <div><SLabel>Autocomplete Results</SLabel>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>

@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
-import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, Log, Select, useStepGuide } from "../shared";
+import { T } from "../theme";
+import { Btn, Side, SLabel, SpeedRow, Log, Select, useStepGuide, useAnimation, Controls } from "../shared";
 
 type Cell = "empty" | "queen" | "conflict" | "safe" | "backtrack" | "placed";
 
@@ -28,13 +28,12 @@ function isSafe(board: number[], row: number, col: number): boolean {
 export default function NQueensViz() {
   const [n, setN] = useState("6");
   const [speed, setSpeed] = useState(300);
-  const [running, setRunning] = useState(false);
+  const anim = useAnimation();
   const [board, setBoard] = useState<Cell[][]>([]);
   const [label, setLabel] = useState("Press ▶ Run to start backtracking");
   const [log, setLog] = useState<{ m: string; t: string }[]>([]);
   const [solutions, setSolutions] = useState(0);
   const [stats, setStats] = useState({ placements: 0, backtracks: 0 });
-  const stopRef = useRef(false);
   const statsRef = useRef({ placements: 0, backtracks: 0 });
   const addLog = (m: string, t = "info") => setLog(l => [...l.slice(-28), { m, t }]);
   const guide = useStepGuide();
@@ -45,10 +44,9 @@ export default function NQueensViz() {
     Array.from({ length: size }, () => Array(size).fill("empty") as Cell[]);
 
   const reset = () => {
-    stopRef.current = true;
+    anim.reset();
     setBoard([]);
     setLabel("Press ▶ Run to start backtracking");
-    setRunning(false);
     setSolutions(0);
     setStats({ placements: 0, backtracks: 0 });
     statsRef.current = { placements: 0, backtracks: 0 };
@@ -57,10 +55,9 @@ export default function NQueensViz() {
 
   const run = async () => {
     guide.resetGuide();
-    stopRef.current = false;
+    anim.start();
     statsRef.current = { placements: 0, backtracks: 0 };
     setStats({ placements: 0, backtracks: 0 });
-    setRunning(true);
     setSolutions(0);
     setLog([]);
 
@@ -85,16 +82,16 @@ export default function NQueensViz() {
     setBoard(cloneBoard(vizBoard));
 
     const tick = async (b: Cell[][], msg: string, t = "info") => {
-      if (stopRef.current) throw new Error("stopped");
+      if (anim.stopRef.current) throw new Error("stopped");
       setBoard(cloneBoard(b));
       setLabel(msg);
       addLog(msg, t);
       setStats({ ...statsRef.current });
-      await sleep(speed);
+      await anim.sleep(speed);
     };
 
     const solve = async (row: number): Promise<void> => {
-      if (stopRef.current) throw new Error("stopped");
+      if (anim.stopRef.current) throw new Error("stopped");
       if (row === N) {
         solCount++;
         setSolutions(solCount);
@@ -102,12 +99,12 @@ export default function NQueensViz() {
         const b = cloneBoard(vizBoard);
         queens.forEach((c, r) => { b[r][c] = "placed"; });
         await tick(b, `🎉 Solution #${solCount} found!`, "ok");
-        await sleep(speed * 2);
+        await anim.sleep(speed * 2);
         return;
       }
 
       for (let col = 0; col < N; col++) {
-        if (stopRef.current) throw new Error("stopped");
+        if (anim.stopRef.current) throw new Error("stopped");
 
         // Show checking cell
         const b1 = cloneBoard(vizBoard);
@@ -123,7 +120,7 @@ export default function NQueensViz() {
           queens.forEach((c, r) => { b2[r][c] = "queen"; });
           await tick(b2, `✓ Place Queen at (${row + 1}, ${col + 1})`, "ok");
           await solve(row + 1);
-          if (stopRef.current) throw new Error("stopped");
+          if (anim.stopRef.current) throw new Error("stopped");
           // Backtrack
           statsRef.current.backtracks++;
           vizBoard[row][col] = "empty";
@@ -156,7 +153,7 @@ export default function NQueensViz() {
     } catch (e: any) {
       if (e.message !== "stopped") throw e;
     }
-    setRunning(false);
+    anim.setRunning(false);
   };
 
   const cellColor = (cell: Cell) => {
@@ -179,16 +176,13 @@ export default function NQueensViz() {
           <div style={{ marginTop: 6 }}>
             <Select
               value={n}
-              onChange={v => { if (!running) { setN(v); reset(); } }}
-              disabled={running}
+              onChange={v => { if (!anim.running) { setN(v); reset(); } }}
+              disabled={anim.running}
               options={[["4", "4×4 (2 solutions)"], ["5", "5×5 (10 solutions)"], ["6", "6×6 (4 solutions)"], ["7", "7×7 (40 solutions)"], ["8", "8×8 (92 solutions)"]]}
             />
           </div>
         </div>
-        <div style={{ display: "flex", gap: 6 }}>
-          <Btn onClick={run} variant="primary" disabled={running} style={{ flex: 1 }}>▶ Run</Btn>
-          <Btn onClick={reset} variant="ghost" disabled={running} style={{ flex: 1 }}>↺ Reset</Btn>
-        </div>
+        <Controls anim={anim} run={run} reset={reset} />
         <div><SLabel>Speed</SLabel><div style={{ marginTop: 6 }}><SpeedRow speed={speed} setSpeed={setSpeed} /></div></div>
         <div style={{ marginTop: 12, padding: "12px", background: T.surface2, borderRadius: 10, display: "flex", flexDirection: "column", gap: 6 }}>
           <SLabel>Legend</SLabel>

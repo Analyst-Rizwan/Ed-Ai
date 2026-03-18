@@ -239,3 +239,79 @@ export function useStepGuide() {
 
   return { showGuide, Overlay, resetGuide, isSkipped: () => skipRef.current };
 }
+
+/* ── Animation State Engine (Pausing / Resume) ── */
+export function useAnimation() {
+  const [running, setRunning] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const stopRef = useRef(false);
+  const pauseRef = useRef(false);
+  const pauseResolver = useRef<(() => void) | null>(null);
+
+  const start = () => {
+    stopRef.current = false;
+    pauseRef.current = false;
+    setRunning(true);
+    setPaused(false);
+  };
+
+  const pause = () => {
+    /* Need state for UI rendering but refs for the async loop closure */
+    pauseRef.current = true;
+    setPaused(true);
+  };
+
+  const resume = () => {
+    pauseRef.current = false;
+    setPaused(false);
+    if (pauseResolver.current) {
+      pauseResolver.current();
+      pauseResolver.current = null;
+    }
+  };
+
+  const reset = () => {
+    stopRef.current = true;
+    setRunning(false);
+    resume(); // Unblock any pending sleep calls so they can throw "stopped"
+  };
+
+  // Smart sleep function that indefinitely waits if paused
+  const sleep = async (ms: number) => {
+    if (stopRef.current) throw new Error("stopped");
+
+    if (pauseRef.current) {
+      await new Promise<void>(r => { pauseResolver.current = r; });
+      if (stopRef.current) throw new Error("stopped");
+    }
+
+    await new Promise(r => setTimeout(r, ms));
+
+    // Check again immediately after waking up
+    if (pauseRef.current) {
+      await new Promise<void>(r => { pauseResolver.current = r; });
+    }
+    
+    if (stopRef.current) throw new Error("stopped");
+  };
+
+  return { running, paused, start, pause, resume, reset, sleep, stopRef, setRunning };
+}
+
+/* ── Unified Animation Controls ── */
+export const Controls = ({ anim, run, reset }: { anim: ReturnType<typeof useAnimation>, run: () => void, reset: () => void }) => (
+  <div style={{ display: "flex", gap: 10 }}>
+    {!anim.running || anim.paused ? (
+      <Btn full variant="primary" onClick={anim.paused ? anim.resume : run}>
+        {anim.paused ? "▶ Resume" : "▶ Run"}
+      </Btn>
+    ) : (
+      <Btn full variant="orange" onClick={anim.pause}>
+        ⏸ Pause
+      </Btn>
+    )}
+    <Btn full onClick={reset} disabled={!anim.running && !anim.paused}>
+      ↺ Reset
+    </Btn>
+  </div>
+);

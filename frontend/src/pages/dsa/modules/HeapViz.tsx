@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
-import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, Log, Input, useStepGuide } from "../shared";
+import { T } from "../theme";
+import { Btn, Side, SLabel, SpeedRow, Log, Input, useStepGuide, useAnimation, Controls } from "../shared";
 
 export default function HeapViz(){
   const [heap,setHeap]=useState<number[]>([]);
@@ -8,20 +8,20 @@ export default function HeapViz(){
   const [highlighted,setHighlighted]=useState<number[]>([]);
   const [log,setLog]=useState<{m:string,t:string}[]>([]);
   const [label,setLabel]=useState("Insert values to build the heap");
-  const [running,setRunning]=useState(false);
+  const anim=useAnimation();
   const [speed,setSpeed]=useState(400);
-  const stopRef=useRef(false);
   const addLog=(m:string,t="info")=>setLog(l=>[...l.slice(-25),{m,t}]);
   const guide = useStepGuide();
 
   const hl=async(h:number[],idxs:number[],msg:string,t="info")=>{
-    if(stopRef.current)throw new Error("s");
-    setHeap([...h]);setHighlighted(idxs);setLabel(msg);addLog(msg,t);await sleep(speed);
+    if(anim.stopRef.current)throw new Error("s");
+    setHeap([...h]);setHighlighted(idxs);setLabel(msg);addLog(msg,t);await anim.sleep(speed);
   };
 
   const insert=async()=>{
+    if(anim.running)return;
     const v=parseInt(val)||Math.floor(Math.random()*90+5);
-    setVal("");stopRef.current=false;setRunning(true);
+    setVal("");anim.start();
     try{
       const h=[...heap,v];await hl(h,[h.length-1],`Insert ${v} at end [${h.length-1}]`);
       let i=h.length-1;
@@ -32,17 +32,18 @@ export default function HeapViz(){
       }
       setHeap([...h]);setHighlighted([]);addLog(`insert(${v}) done — size=${h.length}`,"ok");
     }catch(e){}
-    setRunning(false);
+    anim.setRunning(false);
   };
 
   const extractMin=async()=>{
     if(!heap.length){addLog("Heap is empty","err");return;}
-    stopRef.current=false;setRunning(true);
+    if(anim.running)return;
+    anim.start();
     try{
       const h=[...heap];const min=h[0];
       await hl(h,[0],`Extract min = ${min}`);
       h[0]=h[h.length-1];h.pop();
-      if(!h.length){setHeap([]);setHighlighted([]);setRunning(false);addLog(`extracted ${min}`,"ok");return;}
+      if(!h.length){setHeap([]);setHighlighted([]);anim.setRunning(false);addLog(`extracted ${min}`,"ok");return;}
       await hl(h,[0],`Move last element to root`);
       let i=0;
       while(true){
@@ -55,7 +56,7 @@ export default function HeapViz(){
       }
       setHeap([...h]);setHighlighted([]);addLog(`extracted min=${min}. New root=${h[0]}`,"ok");
     }catch(e){}
-    setRunning(false);
+    anim.setRunning(false);
   };
 
   const loadExample=async()=>{
@@ -97,10 +98,16 @@ export default function HeapViz(){
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden w-full h-full">
       <Side>
         <div><SLabel>Insert Value</SLabel><div style={{marginTop:6}}><Input value={val} onChange={setVal} placeholder="e.g. 14" onEnter={insert} mono/></div></div>
-        <Btn onClick={insert} variant="primary" disabled={running} full>⊕ Insert</Btn>
-        <Btn onClick={extractMin} variant="red" disabled={running||!heap.length} full>⊖ Extract Min</Btn>
-        <Btn onClick={loadExample} variant="yellow" disabled={running} full>⚡ Learn Heap</Btn>
-        <Btn onClick={()=>{setHeap([]);setHighlighted([]);addLog("reset","info")}} variant="ghost" disabled={running} full>↺ Reset</Btn>
+        {!anim.running ? (
+          <>
+            <Btn onClick={insert} variant="primary" full>⊕ Insert</Btn>
+            <Btn onClick={extractMin} variant="red" disabled={!heap.length} full>⊖ Extract Min</Btn>
+          </>
+        ) : (
+          <Controls anim={anim} run={() => {}} reset={() => { anim.reset(); setHighlighted([]); }} />
+        )}
+        <Btn onClick={loadExample} variant="yellow" disabled={anim.running} full>⚡ Load Example Heap</Btn>
+        <Btn onClick={()=>{setHeap([]);setHighlighted([]);addLog("reset","info");anim.reset();}} variant="ghost" disabled={anim.running} full>↺ Clear Tree</Btn>
         <div><SLabel>Speed</SLabel><div style={{marginTop:6}}><SpeedRow speed={speed} setSpeed={setSpeed}/></div></div>
 
         <SLabel>Log</SLabel><Log entries={log}/>
