@@ -53,6 +53,11 @@ const css = `
     border: 1px solid rgba(245,158,11,.4); pointer-events: none;
     z-index: 9998; transition: border-color .2s;
   }
+  /* Hide custom cursor on touch devices */
+  @media (hover: none) {
+    .lp { cursor: auto; }
+    .lp-cur, .lp-cur-ring { display: none !important; }
+  }
 
   /* ── NAV ── */
   .lp-nav {
@@ -172,6 +177,17 @@ const css = `
     position: relative; overflow: hidden;
     transition: transform .2s, box-shadow .2s;
     box-shadow: 0 4px 24px rgba(245,158,11,.3);
+  }
+  .lp-btn-gold::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.28) 50%, transparent 65%);
+    animation: lp-btn-sweep 3.5s ease-in-out infinite;
+    background-size: 200% 100%;
+  }
+  @keyframes lp-btn-sweep {
+    0%   { transform: translateX(-100%); }
+    40%  { transform: translateX(100%); }
+    100% { transform: translateX(100%); }
   }
   .lp-btn-gold:hover { transform: translateY(-2px); box-shadow: 0 8px 40px rgba(245,158,11,.45); }
   .lp-btn-ghost {
@@ -825,7 +841,7 @@ const LandingPage: React.FC = () => {
           <li><a href="#how">How it works</a></li>
           <li><a href="https://eduaiajk.in" target="_blank" rel="noreferrer">eduaiajk.in ↗</a></li>
         </ul>
-        <span className="lp-ft-copy">© 2025 EduAi · Coimbatore, India</span>
+        <span className="lp-ft-copy">© {new Date().getFullYear()} EduAi · Coimbatore, India</span>
       </footer>
     </div>
   );
