@@ -63,16 +63,9 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
         } else {
           // Refresh failed - forbid access
           setAccessToken(null);
-          // Force logout redirect
-          if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-            window.location.href = "/login?expired=1";
-          }
         }
       } catch (e) {
         setAccessToken(null);
-        if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-          window.location.href = "/login?expired=1";
-        }
       }
     }
   }
