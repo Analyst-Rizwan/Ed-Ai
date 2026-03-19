@@ -29,7 +29,8 @@ import { useAuth } from "./hooks/useAuth";
 
 const PublicHome = () => {
   const { user, isLoading } = useAuth();
-  if (isLoading) return null;
+  // Show the landing page immediately while auth initializes (avoids blank flash on logout)
+  if (isLoading) return <LandingPage />;
   if (user) return <Navigate to="/dashboard" replace />;
   return <LandingPage />;
 };
