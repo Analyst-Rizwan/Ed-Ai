@@ -1,17 +1,23 @@
 from datetime import timedelta, datetime, timezone
+import secrets
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Response, Request, status, Cookie
 from fastapi.security import OAuth2PasswordRequestForm
+from jose import jwt, JWTError
+from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
 from app.db.base import get_db
 from app.auth import service, schemas, dependencies
 from app.models.user import User
 from app.models.refresh_token import RefreshToken
+from app.models.otp_code import OTPCode
+from app.models.progress import UserProgress
 from app.core.config import settings
 from app.auth.utils import get_password_hash
 from app.schemas.user import UserCreate, UserOut, UserUpdate
 from app.core.rate_limit import limiter
+from app.services.email_service import send_otp_email
 
 router = APIRouter()
 
@@ -83,9 +89,6 @@ def refresh_token(
         raise HTTPException(status_code=401, detail="Refresh token missing")
     
     # 1. Validate Token JWT Structure
-    # (In dependencies.py or service.py, we could have a verify_token helper)
-    # For now, we decode here or use a helper
-    from jose import jwt, JWTError
     try:
         payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id: str = payload.get("sub")
@@ -240,7 +243,6 @@ def register_user(
     )
     
     # Initialize UserProgress
-    from app.models.progress import UserProgress
     user_progress = UserProgress(
         user=user,
         completed_roadmaps=[],
@@ -257,10 +259,6 @@ def register_user(
 # ===============================
 # 🔒 FORGOT PASSWORD (OTP)
 # ===============================
-import secrets
-from pydantic import BaseModel, EmailStr
-from app.models.otp_code import OTPCode
-from app.services.email_service import send_otp_email
 
 
 class ForgotPasswordRequest(BaseModel):

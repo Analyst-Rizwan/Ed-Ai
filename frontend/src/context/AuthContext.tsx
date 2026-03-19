@@ -48,13 +48,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const logout = async () => {
-        try {
-            await authApi.logout();
-        } catch (error) {
-            console.error("Logout failed:", error);
-        }
+        // 1. Clear client-side state immediately so UI reacts instantly
         setAccessToken(null);
         setUser(null);
+        // 2. Attempt backend logout (fire-and-forget — don't await/block on it)
+        authApi.logout().catch(() => { /* ignore errors — already logged out client-side */ });
+        // 3. Hard redirect to root so the app reinitializes cleanly
+        window.location.href = "/";
     };
 
     return (
