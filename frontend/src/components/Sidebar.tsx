@@ -6,7 +6,7 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { icon: "⊞", label: "Dashboard", path: "/" },
+  { icon: "⊞", label: "Dashboard", path: "/dashboard" },
   { icon: "🗺", label: "Roadmaps", path: "/roadmaps" },
   { icon: "</>", label: "Practice", path: "/practice" },
   { icon: "⚡", label: "Code Viz", path: "/dsa" },
@@ -57,7 +57,7 @@ const Sidebar = ({ onOpenAITutor }: SidebarProps) => {
         <NavLink
           key={item.path}
           to={item.path}
-          end={item.path === "/"}
+          end={item.path === "/dashboard"}
           style={{
             display: "flex",
             alignItems: "center",

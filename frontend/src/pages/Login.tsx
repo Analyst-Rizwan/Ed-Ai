@@ -31,7 +31,7 @@ const Login = () => {
             const data = await authApi.login(email, password);
             await login(data.access_token);
             toast.success("Logged in successfully");
-            navigate("/");
+            navigate("/dashboard");
         } catch (error: any) {
             toast.error(error.message || "Failed to login");
         } finally {

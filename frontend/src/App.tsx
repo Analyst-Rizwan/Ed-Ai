@@ -23,6 +23,16 @@ const Admin = lazy(() => import("./pages/Admin"));
 const Opportunities = lazy(() => import("./pages/Opportunities"));
 const PortfolioBuilder = lazy(() => import("./pages/PortfolioBuilder"));
 const DSAVisualizer = lazy(() => import("./pages/DSAVisualizer"));
+import LandingPage from "./pages/LandingPage";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "./hooks/useAuth";
+
+const PublicHome = () => {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return null;
+  if (user) return <Navigate to="/dashboard" replace />;
+  return <LandingPage />;
+};
 
 
 const queryClient = new QueryClient({
@@ -60,9 +70,10 @@ const App = () => {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/github/callback" element={<GitHubCallback />} />
 
+                <Route path="/" element={<PublicHome />} />
                 <Route element={<ProtectedRoute />}>
-                  <Route path="/" element={<Layout />}>
-                    <Route index element={<Dashboard />} />
+                  <Route element={<Layout />}>
+                    <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="roadmaps" element={<Roadmaps />} />
                     <Route path="practice" element={<Practice />} />
                     <Route path="dsa" element={<Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}><DSAVisualizer /></Suspense>} />

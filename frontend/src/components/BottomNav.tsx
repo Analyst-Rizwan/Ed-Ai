@@ -14,7 +14,7 @@ const BottomNav = ({ onOpenAITutor }: BottomNavProps) => {
   const location = useLocation();
 
   const navItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: Map, label: "Roadmaps", path: "/roadmaps" },
     { icon: Code, label: "Practice", path: "/practice" },
     { icon: Code, label: "Code Viz", path: "/dsa" },
@@ -74,14 +74,14 @@ const BottomNav = ({ onOpenAITutor }: BottomNavProps) => {
       >
         {navItems.map((item) => {
           const isActive =
-            item.path === "/"
-              ? location.pathname === "/"
+            item.path === "/dashboard"
+              ? location.pathname === "/dashboard"
               : location.pathname.startsWith(item.path);
           return (
             <NavLink
               key={item.path}
               to={item.path}
-              end={item.path === "/"}
+              end={item.path === "/dashboard"}
               data-active={isActive ? "true" : "false"}
               className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-muted-foreground transition-colors"
               activeClassName="text-primary"
