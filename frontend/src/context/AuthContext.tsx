@@ -28,22 +28,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initAuth = async () => {
         setIsLoading(true);
         try {
-            // Try to refresh token first (silent refresh)
-            // We can't direct call refresh endpoint easily without exposing it in api.ts
-            // But fetchWithAuth handles 401. So if we just call getCurrentUser, 
-            // it will fail 401 -> try refresh -> success -> return user.
-            // Or fail 401 -> try refresh -> fail -> return error.
-
-            // However, initial call has NO access token. 
-            // fetchWithAuth only refreshes if it gets 401.
-            // But if we have no access token, we might not even send Authorization header.
-            // The backend /auth/me requires auth. So it returns 401.
-            // Then fetchWithAuth triggers refresh.
-
-            await refreshUser();
-
-        } catch (error) {
-            // Allow silent failure (not logged in)
+            const userData = await authApi.getCurrentUser();
+            setUser(userData);
+        } catch {
+            // Not logged in — this is expected for guests
             setUser(null);
         } finally {
             setIsLoading(false);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eduai-v2';
+const CACHE_NAME = 'eduai-v3';
 const urlsToCache = [
   '/',
   '/index.html'
