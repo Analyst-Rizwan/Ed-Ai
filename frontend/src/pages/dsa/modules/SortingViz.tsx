@@ -232,33 +232,62 @@ export default function SortingViz(){
         </div>
         <SLabel>Log</SLabel><Log entries={log}/>
       </Side>
-      <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0,overflow:"hidden"}}>
-        <div style={{flex:1,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"20px 12px 28px",gap:2,overflowX:"auto",position:"relative"}}>
-          <guide.Overlay/>
-          {bars.map((bar)=>{
-            const col=stateColor[bar.state]||T.blue;
-            const h=Math.max(6,Math.floor((bar.val/maxVal)*240));
-            return(
-              <motion.div layout transition={{type:"spring",stiffness:300,damping:25}} key={bar.id} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                <div style={{fontSize:9,color:col,fontFamily:"'Space Mono',monospace",opacity:bar.state!=="idle"?1:0.4}}>{bar.val}</div>
-                <motion.div layout style={{
-                  width:"clamp(12px, calc((100% - 48px) / " + bars.length + "), 40px)",height:h,
-                  borderRadius:"5px 5px 0 0",
-                  background:`linear-gradient(to top, ${col}cc, ${col}88)`,
-                  border:`1px solid ${col}66`,
-                  boxShadow:bar.state!=="idle"?`0 0 10px ${col}88`:"none",
-                  transform:bar.state==="swap"||bar.state==="compare"?"translateY(-4px)":"none",
-                }}/>
+      <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0,overflow:"hidden",position:"relative"}}>
+        <guide.Overlay/>
+        <div style={{flex:1,display:"flex",alignItems:"flex-end",padding:"20px 12px 0",gap:3,minHeight:0,overflow:"hidden"}}>
+          {bars.map((bar) => {
+            const col = stateColor[bar.state] || T.blue;
+            const hPct = Math.max(4, Math.floor((bar.val / maxVal) * 100));
+            return (
+              <motion.div
+                layout
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                key={bar.id}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  gap: 3,
+                }}
+              >
+                <div style={{
+                  fontSize: 9,
+                  color: col,
+                  fontFamily: "'Space Mono',monospace",
+                  opacity: bar.state !== "idle" ? 1 : 0.5,
+                  lineHeight: 1,
+                }}>
+                  {bar.val}
+                </div>
+                <motion.div
+                  layout
+                  style={{
+                    width: "100%",
+                    height: `${hPct}%`,
+                    borderRadius: "4px 4px 0 0",
+                    background: `linear-gradient(to top, ${col}cc, ${col}88)`,
+                    border: `1px solid ${col}66`,
+                    boxShadow: bar.state !== "idle" ? `0 0 10px ${col}88` : "none",
+                    transform: bar.state === "swap" || bar.state === "compare"
+                      ? "translateY(-4px)" : "none",
+                    transition: "height 0.15s ease",
+                  }}
+                />
               </motion.div>
             );
           })}
-          {/* ── Overlaid stat bar (reference design style) ── */}
-          <div className="dsa-stat-overlay">
-            <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:T.muted2}} dangerouslySetInnerHTML={{__html:label}}/>
-            <span style={{color:T.accent,flexShrink:0}}>⚖ {stats.comps}</span>
-            <span style={{color:T.yellow,flexShrink:0}}>↕ {stats.swaps}</span>
-            <span style={{color:T.muted,flexShrink:0}}>n={bars.length}</span>
-          </div>
+        </div>
+
+        {/* ── Overlaid stat bar (reference design style) ── */}
+        <div className="dsa-stat-overlay">
+          <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:T.muted2}} dangerouslySetInnerHTML={{__html:label}}/>
+          <span style={{color:T.accent,flexShrink:0}}>⚖ {stats.comps}</span>
+          <span style={{color:T.yellow,flexShrink:0}}>↕ {stats.swaps}</span>
+          <span style={{color:T.muted,flexShrink:0}}>n={bars.length}</span>
         </div>
       </div>
     </div>
