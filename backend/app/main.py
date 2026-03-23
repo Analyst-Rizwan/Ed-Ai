@@ -4,7 +4,8 @@ from pathlib import Path
 import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
+from starlette.middleware.gzip import GZipMiddleware
+from starlette.types import ASGIApp, Receive, Scope, Send
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from slowapi import _rate_limit_exceeded_handler
@@ -19,6 +20,7 @@ from app.api import (
     routes_dashboard,
     routes_opportunities,
     routes_github,
+    routes_interview,
 )
 from app.core.config import settings
 from app.core.rate_limit import limiter
@@ -88,8 +90,29 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # ============================================================
 # GZIP COMPRESSION (compresses responses >= 1KB by ~70%)
+# SSE (text/event-stream) is excluded — GZip would buffer chunks
+# and defeat streaming entirely.
 # ============================================================
-app.add_middleware(GZipMiddleware, minimum_size=1000)
+class SelectiveGZipMiddleware:
+    """
+    Wrapper that applies GZip compression to all responses *except*
+    Server-Sent Event streams, which must not be buffered.
+    """
+    def __init__(self, app: ASGIApp, minimum_size: int = 1000) -> None:
+        self.app = app
+        self.gzip_app = GZipMiddleware(app, minimum_size=minimum_size)
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] == "http":
+            # Check Accept header to detect SSE requests early
+            headers = dict(scope.get("headers", []))
+            accept = headers.get(b"accept", b"").decode("utf-8", errors="ignore")
+            if "text/event-stream" in accept:
+                await self.app(scope, receive, send)
+                return
+        await self.gzip_app(scope, receive, send)
+
+app.add_middleware(SelectiveGZipMiddleware, minimum_size=1000)
 
 # ============================================================
 # REQUEST LOGGING MIDDLEWARE
@@ -132,6 +155,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 app.include_router(routes_auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(routes_ai.router, prefix="/api/ai", tags=["AI"])
+app.include_router(routes_interview.router, prefix="/api/interview", tags=["Interview"])
 app.include_router(routes_progress.router, prefix="/api/progress", tags=["Progress"])
 app.include_router(routes_roadmaps.router, prefix="/api/roadmaps", tags=["Roadmaps"])
 app.include_router(routes_problems.router, prefix="/api/problems", tags=["Problems"])

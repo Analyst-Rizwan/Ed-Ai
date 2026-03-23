@@ -213,7 +213,15 @@ async def chat_stream(
             logger.exception("stream_ai error: %s", e)
             yield f"data: {json.dumps({'type': 'error', 'message': 'AI streaming error'})}\n\n"
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",   # Disable nginx/Render proxy buffering
+            "Connection": "keep-alive",
+        },
+    )
 
 
 # ---------------------------
@@ -265,7 +273,15 @@ async def stream_response(
             logger.exception("stream_ai error: %s", e)
             yield "data: " + json.dumps({"error": "AI streaming error"}) + "\n\n"
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",   # Disable nginx/Render proxy buffering
+            "Connection": "keep-alive",
+        },
+    )
 
 
 # ---------------------------

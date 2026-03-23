@@ -225,8 +225,16 @@ async def _stream_gemini(
             stream=True,
         )
 
-        # response is an iterator of GenerateContentResponse chunks
-        for chunk in response:
+        # Iterate chunks without blocking the event loop.
+        # Each next() call is offloaded to a thread so asyncio can flush
+        # SSE events to the client immediately between chunks.
+        _sentinel = object()
+        while True:
+            chunk = await asyncio.to_thread(
+                lambda it=response: next(it, _sentinel)
+            )
+            if chunk is _sentinel:
+                break
             text = getattr(chunk, "text", None)
             if text:
                 yield {"type": "delta", "text": text}
@@ -237,3 +245,196 @@ async def _stream_gemini(
         logger.exception("Gemini streaming error: %s", e)
         yield {"type": "delta", "text": "AI streaming error. Try again."}
         yield {"type": "done"}
+
+
+# ============================================================
+#  INTERVIEW AI — uses a higher model for premium quality
+# ============================================================
+
+async def ask_ai_interview(
+    messages: list,
+    temperature: float = 0.7,
+    max_tokens: int = 800,
+) -> str:
+    """
+    Multi-turn AI call optimised for interview coaching.
+    Uses a higher-capability model than the general ask_ai helper.
+
+    messages: list of {"role": "system"|"user"|"assistant", "content": str}
+    Returns: str response
+    """
+    provider = (settings.AI_PROVIDER or "").lower().strip()
+
+    if provider == "openai":
+        return await _ask_openai_interview(messages, temperature, max_tokens)
+    elif provider == "gemini":
+        return await _ask_gemini_interview(messages, temperature, max_tokens)
+    else:
+        return "AI is not configured."
+
+
+async def _ask_openai_interview(
+    messages: list,
+    temperature: float,
+    max_tokens: int,
+) -> str:
+    from openai import AsyncOpenAI
+
+    if not settings.OPENAI_API_KEY:
+        logger.error("OPENAI_API_KEY missing.")
+        return "AI is not configured correctly (no API key)."
+
+    try:
+        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        resp = await client.chat.completions.create(
+            model=settings.INTERVIEW_OPENAI_MODEL,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        content = resp.choices[0].message.content
+        return content.strip() if isinstance(content, str) else str(content)
+    except Exception as e:
+        logger.exception("OpenAI interview error: %s", e)
+        return "AI error. Please try again."
+
+
+async def _ask_gemini_interview(
+    messages: list,
+    temperature: float,
+    max_tokens: int,
+) -> str:
+    import google.generativeai as genai
+
+    if not settings.GEMINI_API_KEY:
+        return "AI is not configured correctly (no API key)."
+
+    try:
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        model = genai.GenerativeModel(settings.INTERVIEW_GEMINI_MODEL)
+
+        # Build a flat prompt from the messages list
+        parts = []
+        for msg in messages:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            if role == "system":
+                parts.append(f"{content}\n")
+            elif role == "user":
+                parts.append(f"User: {content}")
+            elif role == "assistant":
+                parts.append(f"Assistant: {content}")
+        parts.append("Assistant:")
+        full_prompt = "\n".join(parts)
+
+        response = model.generate_content(
+            full_prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=temperature,
+                max_output_tokens=max_tokens,
+            ),
+        )
+
+        if hasattr(response, "text") and response.text:
+            return response.text.strip()
+        return "Gemini returned no usable response."
+
+    except Exception as e:
+        logger.exception("Gemini interview error: %s", e)
+        return "AI unavailable. Please try again."
+
+
+# ============================================================
+#  MOCK INTERVIEW AI — uses GPT-5 for the highest quality
+# ============================================================
+
+async def ask_ai_mock_interview(
+    messages: list,
+    temperature: float = 0.7,
+    max_tokens: int = 800,
+) -> str:
+    """
+    Multi-turn AI call exclusively for the Mock Interview tab.
+    Uses the highest-capability model (GPT-5 / Gemini 2.5 Pro).
+
+    messages: list of {"role": "system"|"user"|"assistant", "content": str}
+    Returns: str response
+    """
+    provider = (settings.AI_PROVIDER or "").lower().strip()
+
+    if provider == "openai":
+        return await _ask_openai_mock_interview(messages, temperature, max_tokens)
+    elif provider == "gemini":
+        return await _ask_gemini_mock_interview(messages, temperature, max_tokens)
+    else:
+        return "AI is not configured."
+
+
+async def _ask_openai_mock_interview(
+    messages: list,
+    temperature: float,
+    max_tokens: int,
+) -> str:
+    from openai import AsyncOpenAI
+
+    if not settings.OPENAI_API_KEY:
+        logger.error("OPENAI_API_KEY missing.")
+        return "AI is not configured correctly (no API key)."
+
+    try:
+        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        resp = await client.chat.completions.create(
+            model=settings.MOCK_INTERVIEW_OPENAI_MODEL,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        content = resp.choices[0].message.content
+        return content.strip() if isinstance(content, str) else str(content)
+    except Exception as e:
+        logger.exception("OpenAI mock interview (gpt-5) error: %s", e)
+        return "AI error. Please try again."
+
+
+async def _ask_gemini_mock_interview(
+    messages: list,
+    temperature: float,
+    max_tokens: int,
+) -> str:
+    import google.generativeai as genai
+
+    if not settings.GEMINI_API_KEY:
+        return "AI is not configured correctly (no API key)."
+
+    try:
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        model = genai.GenerativeModel(settings.MOCK_INTERVIEW_GEMINI_MODEL)
+
+        parts = []
+        for msg in messages:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            if role == "system":
+                parts.append(f"{content}\n")
+            elif role == "user":
+                parts.append(f"User: {content}")
+            elif role == "assistant":
+                parts.append(f"Assistant: {content}")
+        parts.append("Assistant:")
+        full_prompt = "\n".join(parts)
+
+        response = model.generate_content(
+            full_prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=temperature,
+                max_output_tokens=max_tokens,
+            ),
+        )
+
+        if hasattr(response, "text") and response.text:
+            return response.text.strip()
+        return "Gemini returned no usable response."
+
+    except Exception as e:
+        logger.exception("Gemini mock interview error: %s", e)
+        return "AI unavailable. Please try again."
