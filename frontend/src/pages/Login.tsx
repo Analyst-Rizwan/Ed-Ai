@@ -102,7 +102,7 @@ const Login = () => {
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <label htmlFor="password" style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>Password</label>
                             <Link to="/forgot-password" style={{ fontSize: 12, color: "var(--accent)", textDecoration: "none", fontWeight: 500 }}>
-                                Forgot password?
+                                Reset password?
                             </Link>
                         </div>
                         <input
