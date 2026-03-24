@@ -3,7 +3,7 @@ import { useState } from "react";
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
 import AITutorDrawer from "./AITutorDrawer";
-import NotificationCenter from "./NotificationCenter";
+
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const Layout = () => {
@@ -37,7 +37,7 @@ const Layout = () => {
       {isMobile && <BottomNav onOpenAITutor={() => setAiTutorOpen(true)} />}
 
       <AITutorDrawer open={aiTutorOpen} onOpenChange={setAiTutorOpen} />
-      <NotificationCenter />
+
 
       <style>{`
         main::-webkit-scrollbar { width: 5px; }

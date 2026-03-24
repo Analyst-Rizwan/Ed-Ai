@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { T, CSS } from "./dsa/theme";
 import SortingViz    from "./dsa/modules/SortingViz";
 import MergeViz      from "./dsa/modules/MergeViz";
@@ -32,8 +32,41 @@ const TABS = [
   {id:"kmp",      label:"🔍 KMP Search",   badge:"String Match"},
 ];
 
+const SCROLL_AMOUNT = 200;
+
 export default function DSAVisualizer(){
   const [active,setActive] = useState("sort");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollState = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 2);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    updateScrollState();
+    el.addEventListener("scroll", updateScrollState, { passive: true });
+    const ro = new ResizeObserver(updateScrollState);
+    ro.observe(el);
+    return () => { el.removeEventListener("scroll", updateScrollState); ro.disconnect(); };
+  }, [updateScrollState]);
+
+  const scroll = (dir: "left" | "right") => {
+    scrollRef.current?.scrollBy({ left: dir === "left" ? -SCROLL_AMOUNT : SCROLL_AMOUNT, behavior: "smooth" });
+  };
+
+  const arrowBtnStyle: React.CSSProperties = {
+    position:"absolute", top:0, bottom:0, width:32, zIndex:2,
+    display:"flex", alignItems:"center", justifyContent:"center",
+    border:"none", cursor:"pointer", color:T.text, fontSize:18, fontWeight:700,
+    background:"transparent",
+  };
 
   return(
     <div className="flex flex-col h-[calc(100dvh-72px)] sm:h-screen w-full overflow-hidden" style={{background:T.bg,color:T.text,fontFamily:"'DM Sans',sans-serif",margin:"-16px -16px 0",width:"calc(100% + 32px)",maxWidth:"100vw",overflowX:"hidden"}}>
@@ -43,9 +76,21 @@ export default function DSAVisualizer(){
 
       {/* ── Tab Strip (Pill style) ── */}
       <div style={{position:"relative",flexShrink:0,background:T.bg,borderBottom:`1px solid ${T.border}`}}>
-        {/* Fade hint on right */}
-        <div style={{position:"absolute",top:0,right:0,bottom:0,width:32,zIndex:1,background:`linear-gradient(to left, ${T.bg} 0%, transparent 100%)`,pointerEvents:"none"}}/>
-        <div className="dsa-scroll-row" style={{display:"flex",alignItems:"center",padding:"6px 10px",gap:2}}>
+        {/* Left arrow + fade */}
+        {canScrollLeft && (
+          <>
+            <div style={{position:"absolute",top:0,left:0,bottom:0,width:32,zIndex:1,background:`linear-gradient(to right, ${T.bg} 0%, transparent 100%)`,pointerEvents:"none"}}/>
+            <button onClick={()=>scroll("left")} style={{...arrowBtnStyle, left:0}} aria-label="Scroll tabs left">‹</button>
+          </>
+        )}
+        {/* Right arrow + fade */}
+        {canScrollRight && (
+          <>
+            <div style={{position:"absolute",top:0,right:0,bottom:0,width:32,zIndex:1,background:`linear-gradient(to left, ${T.bg} 0%, transparent 100%)`,pointerEvents:"none"}}/>
+            <button onClick={()=>scroll("right")} style={{...arrowBtnStyle, right:0}} aria-label="Scroll tabs right">›</button>
+          </>
+        )}
+        <div ref={scrollRef} className="dsa-scroll-row" style={{display:"flex",alignItems:"center",padding:"6px 10px",gap:2}}>
           {TABS.map(tab=>(
             <button key={tab.id} onClick={()=>setActive(tab.id)}
               className={`dsa-tab-pill${active===tab.id?" active":""}`}>
