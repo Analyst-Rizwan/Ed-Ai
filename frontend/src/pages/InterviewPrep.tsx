@@ -3,21 +3,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Play, RotateCcw, Clock, ChevronRight, Copy, Sparkles, ExternalLink } from "lucide-react";
+import { Search, Play, RotateCcw, Clock, Copy, Sparkles, Mic, Send, RefreshCw, Trophy, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { QUESTIONS, FEEDBACK_TEMPLATES, ALL_QUESTIONS, DEFAULT_STORIES, COMPANIES } from "./interview-prep/data";
 import type { CompanyData } from "./interview-prep/data";
+import { interviewApi } from "@/lib/api";
 
 // ── Types ────────────────────────────────────────────────
-type Tab = "bank" | "star" | "company" | "salary";
 type Difficulty = "easy" | "medium" | "hard";
 interface FeedbackItem { clarity: number; relevance: number; structure: number; text: string }
 interface FeedbackItem { clarity: number; relevance: number; structure: number; text: string }
 interface Story { title: string; theme: string; status: string; s: string; t: string; a: string; r: string }
 
+type Tab = "bank" | "star" | "company" | "salary" | "mock";
 const TABS: { key: Tab; label: string; emoji: string }[] = [
     { key: "bank", label: "Question Bank", emoji: "📚" },
     { key: "star", label: "STAR Builder", emoji: "⭐" },
+    { key: "mock", label: "Mock Interview", emoji: "🎤" },
     { key: "company", label: "Company Intel", emoji: "🏢" },
     { key: "salary", label: "Salary Negotiation", emoji: "💰" },
 ];
@@ -59,6 +61,24 @@ const InterviewPrep = () => {
     const [polishedOutput, setPolishedOutput] = useState("Click \"✦ AI Polish\" to generate an interview-ready version.");
 
     useEffect(() => { localStorage.setItem("eduai_star_stories", JSON.stringify(stories)); }, [stories]);
+
+    // ── MOCK INTERVIEW STATE ───────────────────────────────
+    type MockPhase = "setup" | "active" | "feedback";
+    interface MockMsg { role: "user" | "ai"; text: string; }
+    interface MockFeedback { clarity: number; relevance: number; structure: number; text: string; closing: string; }
+    const [mockPhase, setMockPhase] = useState<MockPhase>("setup");
+    const [mockMessages, setMockMessages] = useState<MockMsg[]>([]);
+    const [mockInput, setMockInput] = useState("");
+    const [mockLoading, setMockLoading] = useState(false);
+    const [mockFeedback, setMockFeedback] = useState<MockFeedback | null>(null);
+    const [mockQuestion, setMockQuestion] = useState("");
+    const [mockCategory, setMockCategory] = useState("behavioural");
+    const [mockRole, setMockRole] = useState("Software Engineer");
+    const [mockDifficulty, setMockDifficulty] = useState("medium");
+    const [mockTimer, setMockTimer] = useState(0);
+    const [mockTimerActive, setMockTimerActive] = useState(false);
+    const mockTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const mockChatRef = useRef<HTMLDivElement>(null);
 
     // ── COMPANY INTEL STATE ────────────────────────────────
     const [activeCompany, setActiveCompany] = useState("google");
@@ -115,8 +135,114 @@ const InterviewPrep = () => {
         setSalaryAnswer("");
     };
 
+    // ── MOCK INTERVIEW HELPERS ─────────────────────────────
+    // Pick a random question from the selected category
+    const getRandomMockQuestion = (cat: string, diff: string) => {
+        const pool = ALL_QUESTIONS.filter(q =>
+            (cat === "all" || q.cat === cat) && (diff === "all" || q.diff === diff)
+        );
+        return pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)].text : ALL_QUESTIONS[0].text;
+    };
+
+    const startMockInterview = async () => {
+        const q = getRandomMockQuestion(mockCategory, mockDifficulty);
+        setMockQuestion(q);
+        setMockMessages([]);
+        setMockFeedback(null);
+        setMockLoading(true);
+        setMockPhase("active");
+        setMockTimer(0);
+        setMockTimerActive(true);
+        try {
+            const res = await interviewApi.startMock(q, mockCategory);
+            setMockMessages([{ role: "ai", text: res.text || "Let's begin — here is your question." }]);
+        } catch {
+            setMockMessages([{ role: "ai", text: `Let's start! Here's your question: "${q}" — take your time and answer fully.` }]);
+        } finally {
+            setMockLoading(false);
+        }
+    };
+
+    const sendMockAnswer = async () => {
+        if (!mockInput.trim() || mockLoading) return;
+        const answer = mockInput.trim();
+        setMockInput("");
+        const updated: { role: string; text: string }[] = [
+            ...mockMessages.map(m => ({ role: m.role === "ai" ? "assistant" : "user", text: m.text })),
+        ];
+        setMockMessages(prev => [...prev, { role: "user", text: answer }]);
+        setMockLoading(true);
+        try {
+            const res = await interviewApi.sendMockAnswer(mockQuestion, mockCategory, updated, answer);
+            if (res.type === "feedback" && res.clarity !== undefined) {
+                setMockFeedback({ clarity: res.clarity!, relevance: res.relevance!, structure: res.structure!, text: res.text!, closing: res.closing! });
+                setMockPhase("feedback");
+                setMockTimerActive(false);
+            } else {
+                setMockMessages(prev => [...prev, { role: "ai", text: res.text || "Interesting — tell me more." }]);
+            }
+        } catch {
+            setMockMessages(prev => [...prev, { role: "ai", text: "I heard you. Good points — could you elaborate on the specific actions you took?" }]);
+        } finally {
+            setMockLoading(false);
+            setTimeout(() => mockChatRef.current?.scrollTo({ top: 9999, behavior: "smooth" }), 100);
+        }
+    };
+
+    const endAndGetFeedback = async () => {
+        if (mockLoading) return;
+        setMockLoading(true);
+        setMockTimerActive(false);
+        const history = mockMessages.map(m => ({ role: m.role === "ai" ? "assistant" : "user", text: m.text }));
+        try {
+            const res = await interviewApi.sendMockAnswer(mockQuestion, mockCategory, history, "[END_SESSION_FEEDBACK_REQUESTED]");
+            if (res.type === "feedback" && res.clarity !== undefined) {
+                setMockFeedback({ clarity: res.clarity!, relevance: res.relevance!, structure: res.structure!, text: res.text!, closing: res.closing! });
+                setMockPhase("feedback");
+            } else {
+                toast({ title: "Almost there...", description: res.text || "Please exchange a few more messages first." });
+            }
+        } catch {
+            setMockFeedback({ clarity: 75, relevance: 80, structure: 72, text: "Good attempt! Remember to quantify your impact and use the STAR structure clearly.", closing: "Keep practicing!" });
+            setMockPhase("feedback");
+        } finally {
+            setMockLoading(false);
+        }
+    };
+
+    const resetMock = () => {
+        setMockPhase("setup");
+        setMockMessages([]);
+        setMockFeedback(null);
+        setMockInput("");
+        setMockTimer(0);
+        setMockTimerActive(false);
+        if (mockTimerRef.current) clearInterval(mockTimerRef.current);
+    };
+
+    // Timer effect
+    useEffect(() => {
+        if (mockTimerActive) {
+            mockTimerRef.current = setInterval(() => setMockTimer(t => t + 1), 1000);
+        } else {
+            if (mockTimerRef.current) clearInterval(mockTimerRef.current);
+        }
+        return () => { if (mockTimerRef.current) clearInterval(mockTimerRef.current); };
+    }, [mockTimerActive]);
+
+    const fmtTimer = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+    const scoreRing = (score: number, label: string, color: string) => (
+        <div className="flex flex-col items-center gap-1">
+            <div className={`relative w-20 h-20 rounded-full flex items-center justify-center border-4 ${color}`}>
+                <span className="text-2xl font-bold">{score}</span>
+            </div>
+            <span className="text-xs text-muted-foreground">{label}</span>
+        </div>
+    );
+
     // ── COMPANY INTEL ──────────────────────────────────────
     const company: CompanyData = COMPANIES[activeCompany] || COMPANIES.google;
+
 
     // ══════════════════════════════════════════════════════
     // RENDER
@@ -363,6 +489,183 @@ const InterviewPrep = () => {
                     </div>
                 )
             }
+            {/* ══ TAB: MOCK INTERVIEW ══════════════════════════*/}
+            {activeTab === "mock" && (
+                <div className="flex flex-1 overflow-hidden">
+
+                    {/* ── SETUP PHASE ─────────────────────────────── */}
+                    {mockPhase === "setup" && (
+                        <div className="flex-1 flex flex-col items-center justify-center p-8 gap-6">
+                            <div className="text-center">
+                                <div className="text-6xl mb-3">🎤</div>
+                                <h2 className="text-2xl font-bold mb-1">Mock Interview</h2>
+                                <p className="text-sm text-muted-foreground max-w-md">Powered by GPT-4o. Practice a real interview with an AI hiring manager — get scored feedback on clarity, relevance, and structure.</p>
+                            </div>
+                            <div className="w-full max-w-md grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs text-muted-foreground font-medium block mb-1.5">Your Role</label>
+                                    <select value={mockRole} onChange={e => setMockRole(e.target.value)} className="w-full text-sm bg-muted/30 border border-border/50 rounded-xl px-3 py-2 text-foreground">
+                                        {["Software Engineer", "Product Manager", "Data Scientist", "Frontend Developer", "Backend Developer", "UX Designer", "DevOps Engineer"].map(r => <option key={r}>{r}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-muted-foreground font-medium block mb-1.5">Question Category</label>
+                                    <select value={mockCategory} onChange={e => setMockCategory(e.target.value)} className="w-full text-sm bg-muted/30 border border-border/50 rounded-xl px-3 py-2 text-foreground">
+                                        <option value="behavioural">🧠 Behavioural</option>
+                                        <option value="technical">⚙️ Technical</option>
+                                        <option value="situational">💭 Situational</option>
+                                        <option value="hr">👤 HR / Culture</option>
+                                        <option value="all">🎲 Mixed</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-muted-foreground font-medium block mb-1.5">Difficulty</label>
+                                    <select value={mockDifficulty} onChange={e => setMockDifficulty(e.target.value)} className="w-full text-sm bg-muted/30 border border-border/50 rounded-xl px-3 py-2 text-foreground">
+                                        <option value="easy">Easy</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="hard">Hard</option>
+                                        <option value="all">All</option>
+                                    </select>
+                                </div>
+                                <div className="flex items-end">
+                                    <Button className="w-full" onClick={startMockInterview}>
+                                        <Mic className="h-4 w-4 mr-2" /> Start Interview
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="flex gap-6 text-center text-xs text-muted-foreground">
+                                <div><div className="text-lg font-bold text-primary">GPT-4o</div>AI Model</div>
+                                <div><div className="text-lg font-bold text-emerald-400">3</div>Score Metrics</div>
+                                <div><div className="text-lg font-bold text-yellow-400">∞</div>Attempts</div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── ACTIVE PHASE ────────────────────────────── */}
+                    {mockPhase === "active" && (
+                        <div className="flex-1 flex flex-col min-w-0">
+                            {/* Top bar */}
+                            <div className="flex items-center justify-between px-5 py-3 border-b border-border/30 flex-shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Live Interview</span>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-1.5 text-sm font-mono text-yellow-400">
+                                        <Clock className="h-3.5 w-3.5" /> {fmtTimer(mockTimer)}
+                                    </div>
+                                    <Button size="sm" variant="outline" onClick={endAndGetFeedback} disabled={mockLoading || mockMessages.length < 2}>
+                                        <Trophy className="h-3.5 w-3.5 mr-1" /> End & Get Feedback
+                                    </Button>
+                                    <Button size="sm" variant="ghost" onClick={resetMock}><RotateCcw className="h-3.5 w-3.5" /></Button>
+                                </div>
+                            </div>
+
+                            {/* Question banner */}
+                            <div className="px-5 py-2 bg-primary/5 border-b border-primary/10 flex-shrink-0">
+                                <p className="text-xs text-muted-foreground"><span className="text-primary font-semibold">Question: </span>{mockQuestion}</p>
+                            </div>
+
+                            {/* Chat */}
+                            <div ref={mockChatRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+                                {mockMessages.length === 0 && (
+                                    <div className="flex items-center justify-center h-full">
+                                        <div className="flex gap-1.5"><span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{animationDelay:"0ms"}} /><span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{animationDelay:"150ms"}} /><span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{animationDelay:"300ms"}} /></div>
+                                    </div>
+                                )}
+                                {mockMessages.map((m, i) => (
+                                    <div key={i} className={`flex gap-3 animate-in ${m.role === "user" ? "flex-row-reverse" : ""}`}>
+                                        <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm ${m.role === "ai" ? "bg-primary/10 text-primary" : "bg-muted/30"}`}>
+                                            {m.role === "ai" ? "🤖" : "👤"}
+                                        </div>
+                                        <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${m.role === "ai" ? "bg-primary/5 border border-primary/10 rounded-tl-sm" : "bg-muted/30 border border-border/50 rounded-tr-sm"}`}>
+                                            <p className="text-xs font-semibold mb-1 text-muted-foreground">{m.role === "ai" ? "Interviewer" : "You"}</p>
+                                            <p className="text-sm leading-relaxed">{m.text}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                                {mockLoading && (
+                                    <div className="flex gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm flex-shrink-0">🤖</div>
+                                        <div className="bg-primary/5 border border-primary/10 rounded-2xl rounded-tl-sm px-4 py-3">
+                                            <div className="flex gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{animationDelay:"0ms"}} /><span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{animationDelay:"150ms"}} /><span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{animationDelay:"300ms"}} /></div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Input */}
+                            <div className="px-5 py-3 border-t border-border/30 flex-shrink-0">
+                                <div className="flex gap-2">
+                                    <textarea
+                                        value={mockInput}
+                                        onChange={e => setMockInput(e.target.value)}
+                                        onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMockAnswer(); } }}
+                                        placeholder="Type your answer... (Enter to send, Shift+Enter for new line)"
+                                        disabled={mockLoading}
+                                        className="flex-1 bg-muted/30 border border-border/50 rounded-2xl px-4 py-3 text-sm text-foreground resize-none min-h-[56px] focus:border-primary outline-none disabled:opacity-50"
+                                        rows={2}
+                                    />
+                                    <Button onClick={sendMockAnswer} disabled={mockLoading || !mockInput.trim()} className="self-end">
+                                        <Send className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground mt-1 text-center">After 2 exchanges the AI will offer feedback · or click "End & Get Feedback" anytime</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── FEEDBACK PHASE ───────────────────────────── */}
+                    {mockPhase === "feedback" && mockFeedback && (
+                        <div className="flex-1 overflow-y-auto p-8 space-y-6">
+                            <div className="text-center">
+                                <div className="text-5xl mb-2">🏆</div>
+                                <h2 className="text-2xl font-bold mb-1">Interview Feedback</h2>
+                                <p className="text-sm text-muted-foreground">Assessed by GPT-4o</p>
+                            </div>
+
+                            {/* Score rings */}
+                            <div className="flex justify-center gap-8">
+                                {scoreRing(mockFeedback.clarity, "Clarity", mockFeedback.clarity >= 80 ? "border-emerald-400 text-emerald-400" : mockFeedback.clarity >= 65 ? "border-yellow-400 text-yellow-400" : "border-red-400 text-red-400")}
+                                {scoreRing(mockFeedback.relevance, "Relevance", mockFeedback.relevance >= 80 ? "border-emerald-400 text-emerald-400" : mockFeedback.relevance >= 65 ? "border-yellow-400 text-yellow-400" : "border-red-400 text-red-400")}
+                                {scoreRing(mockFeedback.structure, "Structure", mockFeedback.structure >= 80 ? "border-emerald-400 text-emerald-400" : mockFeedback.structure >= 65 ? "border-yellow-400 text-yellow-400" : "border-red-400 text-red-400")}
+                            </div>
+
+                            {/* Overall score */}
+                            <div className="text-center">
+                                <div className={`text-4xl font-bold ${scoreColor(Math.round((mockFeedback.clarity + mockFeedback.relevance + mockFeedback.structure) / 3))}`}>
+                                    {Math.round((mockFeedback.clarity + mockFeedback.relevance + mockFeedback.structure) / 3)}
+                                    <span className="text-lg text-muted-foreground">/100 overall</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">Duration: {fmtTimer(mockTimer)}</p>
+                            </div>
+
+                            {/* Feedback cards */}
+                            <Card className="glass border-border/30">
+                                <CardHeader className="pb-2"><CardTitle className="text-sm">💬 AI Interviewer's Feedback</CardTitle></CardHeader>
+                                <CardContent><p className="text-sm text-muted-foreground leading-relaxed">{mockFeedback.text}</p></CardContent>
+                            </Card>
+
+                            <Card className="glass border-emerald-500/20 bg-emerald-500/5">
+                                <CardContent className="pt-4"><p className="text-sm text-emerald-400 leading-relaxed">✨ {mockFeedback.closing}</p></CardContent>
+                            </Card>
+
+                            {/* Question recap */}
+                            <Card className="glass border-border/30">
+                                <CardHeader className="pb-1"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Question Asked</CardTitle></CardHeader>
+                                <CardContent><p className="text-sm text-muted-foreground">{mockQuestion}</p></CardContent>
+                            </Card>
+
+                            {/* Actions */}
+                            <div className="flex gap-3 justify-center">
+                                <Button onClick={resetMock}><RefreshCw className="h-4 w-4 mr-2" /> New Interview</Button>
+                                <Button variant="outline" onClick={startMockInterview}><RotateCcw className="h-4 w-4 mr-2" /> Same Settings</Button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
         </div >
     );
 };

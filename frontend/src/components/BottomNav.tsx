@@ -1,6 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Map, Code, User, MessageSquare, Briefcase, FolderOpen } from "lucide-react";
+import { LayoutDashboard, Map, Code, User, MessageSquare, Briefcase, FolderOpen, Mic } from "lucide-react";
 import { useRef, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -19,6 +19,7 @@ const BottomNav = ({ onOpenAITutor }: BottomNavProps) => {
     { icon: Code, label: "Practice", path: "/practice" },
     { icon: Code, label: "Code Viz", path: "/dsa" },
     { icon: Briefcase, label: "Jobs", path: "/opportunities" },
+    { icon: Mic, label: "Interview", path: "/interview-prep" },
     { icon: FolderOpen, label: "Portfolio", path: "/portfolio" },
     { icon: User, label: "Profile", path: "/profile" },
   ];

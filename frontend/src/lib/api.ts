@@ -445,6 +445,76 @@ export const githubApi = {
 };
 
 // ============================================================
+// INTERVIEW TYPES & API
+// ============================================================
+export interface MockInterviewMessage {
+  role: "user" | "ai";
+  text: string;
+}
+
+export interface MockInterviewResponse {
+  type: "message" | "feedback";
+  text?: string;
+  clarity?: number;
+  relevance?: number;
+  structure?: number;
+  closing?: string;
+}
+
+export const interviewApi = {
+  /** First call to kick off an interview — AI asks the opening question */
+  startMock: async (question: string, category: string): Promise<MockInterviewResponse> => {
+    return fetchWithAuth("/interview/mock", {
+      method: "POST",
+      body: JSON.stringify({
+        question,
+        question_category: category,
+        history: [],
+        user_answer: "",
+      }),
+    });
+  },
+
+  /** Send candidate's answer; receive AI follow-up or final feedback */
+  sendMockAnswer: async (
+    question: string,
+    category: string,
+    history: { role: string; text: string }[],
+    user_answer: string
+  ): Promise<MockInterviewResponse> => {
+    return fetchWithAuth("/interview/mock", {
+      method: "POST",
+      body: JSON.stringify({ question, question_category: category, history, user_answer }),
+    });
+  },
+
+  /** Polish a STAR story with AI */
+  polishStar: async (story: {
+    title: string; situation: string; task: string; action: string; result: string;
+  }): Promise<{ polished: string }> => {
+    return fetchWithAuth("/interview/polish", {
+      method: "POST",
+      body: JSON.stringify(story),
+    });
+  },
+
+  /** Salary negotiation turn */
+  negotiate: async (payload: {
+    role_title: string;
+    experience_level: string;
+    their_offer?: string;
+    target_salary?: string;
+    history: { role: string; text: string }[];
+    user_response: string;
+  }): Promise<{ text: string; role: string }> => {
+    return fetchWithAuth("/interview/salary", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+};
+
+// ============================================================
 // EXPORT DEFAULT
 // ============================================================
 export default {
@@ -456,4 +526,5 @@ export default {
   dashboard: dashboardApi,
   opportunities: opportunitiesApi,
   github: githubApi,
-};
+  interview: interviewApi,
+};

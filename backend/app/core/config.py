@@ -31,10 +31,18 @@ class Settings(BaseSettings):
     # === OpenAI ===
     OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    # Higher model for STAR polish and salary negotiation
+    INTERVIEW_OPENAI_MODEL: str = os.getenv("INTERVIEW_OPENAI_MODEL", "gpt-4o")
+    # GPT-4o for the Mock Interview tab (highest available model)
+    MOCK_INTERVIEW_OPENAI_MODEL: str = os.getenv("MOCK_INTERVIEW_OPENAI_MODEL", "gpt-4o")
 
     # === Gemini ===
     GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY")
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    # Higher Gemini model for STAR polish and salary negotiation
+    INTERVIEW_GEMINI_MODEL: str = os.getenv("INTERVIEW_GEMINI_MODEL", "gemini-2.5-pro")
+    # Gemini counterpart for Mock Interview (if using Gemini provider)
+    MOCK_INTERVIEW_GEMINI_MODEL: str = os.getenv("MOCK_INTERVIEW_GEMINI_MODEL", "gemini-2.5-pro")
 
     # === System prompt ===
     AI_SYSTEM_PROMPT: str = os.getenv(
