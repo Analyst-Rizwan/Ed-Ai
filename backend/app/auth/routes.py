@@ -44,15 +44,21 @@ def login_access_token(
         data={"sub": str(user.id), "role": user.role}, expires_delta=access_token_expires
     )
     
-    # 2. Create Refresh Token
+    # 2. Revoke ALL existing refresh tokens for this user (silently invalidates stale cookies
+    #    in any browser — prevents auto-refresh from restoring a previous user's session)
+    db.query(RefreshToken).filter(
+        RefreshToken.user_id == user.id,
+        RefreshToken.revoked == False,
+    ).update({"revoked": True})
+
+    # 3. Create Refresh Token
     refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     refresh_token = service.create_refresh_token(
         data={"sub": str(user.id), "jti": str(datetime.now(timezone.utc).timestamp())}, 
         expires_delta=refresh_token_expires
     )
     
-    # 3. Store Refresh Token Hash in DB
-    # In a real production app, you might only allow N active refresh tokens per user
+    # 4. Store Refresh Token Hash in DB
     db_refresh_token = RefreshToken(
         user_id=user.id,
         token_hash=get_password_hash(refresh_token),
@@ -60,6 +66,7 @@ def login_access_token(
     )
     db.add(db_refresh_token)
     db.commit()
+
     
     # 4. Set Refresh Token HTTPOnly Cookie
     response.set_cookie(
