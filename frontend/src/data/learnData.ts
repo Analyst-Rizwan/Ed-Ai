@@ -13,7 +13,7 @@ export interface Section {
 }
 export interface Lesson {
   id: number;
-  subject: "ds" | "python" | "dbms" | "os" | "cn";
+  subject: "ds" | "python" | "dbms" | "os" | "cn" | "algo";
   title: string;
   duration: string;
   done: boolean;
@@ -300,6 +300,111 @@ SELECT * FROM A FULL OUTER JOIN B ON A.id = B.id;` },
       ]
     }
   },
+  // ── Algorithms ──────────────────────────────────────────────────────
+  {
+    id: 18, subject: "algo", title: "Sorting Algorithms", duration: "22 min", done: false,
+    desc: "Bubble, Selection, Insertion, Merge, Quick Sort",
+    content: {
+      intro: "Sorting is one of the most fundamental operations in CS. Choosing the right algorithm depends on input size, initial ordering, and memory constraints.",
+      sections: [
+        { type: "text", heading: "Comparison-Based Sorts", body: "All comparison sorts are Ω(n log n) in the worst case. <strong>Bubble Sort</strong>: O(n²), stable, adaptive. <strong>Selection Sort</strong>: O(n²), minimal swaps. <strong>Insertion Sort</strong>: O(n²) but O(n) on nearly-sorted data — used internally by Timsort." },
+        { type: "code", heading: "Merge Sort (Python)", body: `def merge_sort(arr):\n    if len(arr) <= 1: return arr\n    mid = len(arr) // 2\n    left  = merge_sort(arr[:mid])\n    right = merge_sort(arr[mid:])\n    return merge(left, right)\n\ndef merge(l, r):\n    result = []\n    i = j = 0\n    while i < len(l) and j < len(r):\n        if l[i] <= r[j]: result.append(l[i]); i += 1\n        else: result.append(r[j]); j += 1\n    return result + l[i:] + r[j:]` },
+        { type: "callout", style: "tip", heading: "Quick Sort in Practice", body: "Quick Sort averages O(n log n) and is the fastest in practice due to cache-locality. Worst case O(n²) happens on already-sorted input — randomised pivot selection fixes this." },
+        { type: "quiz", heading: "Quick Check", q: "Which sort is guaranteed O(n log n) in all cases?", opts: ["Quick Sort", "Bubble Sort", "Merge Sort", "Insertion Sort"], ans: 2 },
+      ]
+    }
+  },
+  {
+    id: 19, subject: "algo", title: "Searching Algorithms", duration: "14 min", done: false,
+    desc: "Linear search, binary search, and variants",
+    content: {
+      intro: "Searching is about finding a target in a collection. The key insight: if data is sorted, you can search exponentially faster.",
+      sections: [
+        { type: "text", heading: "Linear Search", body: "Scan every element: O(n). Works on unsorted data. Best for small arrays or single lookups on unsorted collections." },
+        { type: "code", heading: "Binary Search", body: `def binary_search(arr, target):\n    lo, hi = 0, len(arr) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == target: return mid\n        elif arr[mid] < target: lo = mid + 1\n        else: hi = mid - 1\n    return -1  # not found` },
+        { type: "callout", style: "info", heading: "Lower Bound / Upper Bound", body: "Variants of binary search: <code>bisect_left</code> finds the first position where target could be inserted; <code>bisect_right</code> finds the last. Essential for range queries." },
+        { type: "quiz", heading: "Quick Check", q: "Binary search requires the array to be:", opts: ["Linked", "Sorted", "Reversed", "Circular"], ans: 1 },
+      ]
+    }
+  },
+  {
+    id: 20, subject: "algo", title: "Recursion & Backtracking", duration: "20 min", done: false,
+    desc: "Base case, call stack, pruning, N-Queens",
+    content: {
+      intro: "Recursion solves problems by breaking them into smaller subproblems. Backtracking extends recursion: try a choice, recurse, undo if it fails.",
+      sections: [
+        { type: "text", heading: "Recursion Anatomy", body: "Every recursive function needs: (1) <strong>base case</strong> — stops recursion, (2) <strong>recursive case</strong> — calls itself with a smaller input, (3) <strong>progress</strong> — each call must move toward the base case." },
+        { type: "code", heading: "N-Queens Backtracking", body: `def solve_nqueens(n):\n    def is_safe(board, row, col):\n        for r in range(row):\n            if board[r] == col or \\\n               abs(board[r] - col) == abs(r - row):\n                return False\n        return True\n\n    def backtrack(board, row):\n        if row == n: results.append(board[:])\n        for col in range(n):\n            if is_safe(board, row, col):\n                board[row] = col\n                backtrack(board, row + 1)\n                board[row] = -1  # undo` },
+        { type: "callout", style: "warn", heading: "Stack Overflow", body: "Deep recursion (>1000 levels in Python) causes a stack overflow. Use iteration or increase <code>sys.setrecursionlimit()</code> if needed." },
+        { type: "quiz", heading: "Quick Check", q: "Backtracking is best described as:", opts: ["Greedy with rollback", "Brute-force with pruning", "Divide and conquer", "Dynamic programming"], ans: 1 },
+      ]
+    }
+  },
+  {
+    id: 21, subject: "algo", title: "Dynamic Programming", duration: "25 min", done: false,
+    desc: "Memoization, tabulation, Fibonacci, knapsack",
+    content: {
+      intro: "DP trades space for time by caching solutions to overlapping subproblems. If a problem has optimal substructure AND overlapping subproblems, DP applies.",
+      sections: [
+        { type: "text", heading: "Top-Down (Memoization)", body: "Write the recursion naturally, then cache results in a dictionary. If the subproblem was already solved, return the cached answer. Converts exponential tree into polynomial DAG." },
+        { type: "code", heading: "Fibonacci — Memo vs Tab", body: `# Top-down (memoization)\nfrom functools import lru_cache\n@lru_cache(maxsize=None)\ndef fib(n):\n    if n <= 1: return n\n    return fib(n-1) + fib(n-2)\n\n# Bottom-up (tabulation)\ndef fib_tab(n):\n    dp = [0, 1]\n    for i in range(2, n+1):\n        dp.append(dp[i-1] + dp[i-2])\n    return dp[n]` },
+        { type: "callout", style: "tip", heading: "0-1 Knapsack", body: "Classic DP: given items with weight and value, maximise value within weight limit. State: dp[i][w] = max value using items 0..i with capacity w." },
+        { type: "quiz", heading: "Quick Check", q: "DP requires which two properties?", opts: ["Greedy + sorting", "Optimal substructure + overlapping subproblems", "Divide and conquer + merging", "Heuristic + pruning"], ans: 1 },
+      ]
+    }
+  },
+  {
+    id: 22, subject: "algo", title: "Greedy Algorithms", duration: "16 min", done: false,
+    desc: "Activity selection, Huffman coding, when greedy works",
+    content: {
+      intro: "Greedy algorithms make the locally optimal choice at each step, hoping it leads to a globally optimal solution. They work when the greedy-choice property holds.",
+      sections: [
+        { type: "text", heading: "When Greedy Works", body: "Two conditions: (1) <strong>Greedy-choice property</strong>: a global optimum can be reached by local choices. (2) <strong>Optimal substructure</strong>: optimal solution contains optimal solutions to subproblems." },
+        { type: "code", heading: "Activity Selection", body: `def activity_selection(activities):\n    # Sort by finish time\n    activities.sort(key=lambda x: x[1])\n    selected = [activities[0]]\n    for act in activities[1:]:\n        if act[0] >= selected[-1][1]:\n            selected.append(act)\n    return selected` },
+        { type: "callout", style: "warn", heading: "Greedy ≠ Always Correct", body: "Greedy fails for 0-1 knapsack (need DP) and shortest path with negative edges (need Bellman-Ford). Always prove the greedy-choice property before using it." },
+        { type: "quiz", heading: "Quick Check", q: "Which algorithm uses a greedy approach?", opts: ["0-1 Knapsack", "Dijkstra's shortest path", "Floyd-Warshall", "Matrix chain multiplication"], ans: 1 },
+      ]
+    }
+  },
+  // ── More Python ──────────────────────────────────────────────────────
+  {
+    id: 23, subject: "python", title: "File I/O & Context Managers", duration: "11 min", done: false,
+    desc: "Reading, writing files, the with statement",
+    content: {
+      intro: "File operations are bread-and-butter Python. Context managers (with) ensure files are properly closed even if exceptions occur.",
+      sections: [
+        { type: "code", heading: "Reading & Writing", body: `# Reading\nwith open('data.txt', 'r') as f:\n    content = f.read()       # entire file\n    lines   = f.readlines()  # list of lines\n\n# Writing\nwith open('output.txt', 'w') as f:\n    f.write('Hello World\\n')\n\n# Append\nwith open('log.txt', 'a') as f:\n    f.write('New entry\\n')` },
+        { type: "callout", style: "tip", heading: "Custom Context Managers", body: "Create your own with <code>@contextmanager</code> from contextlib, or define <code>__enter__</code> and <code>__exit__</code> methods on a class." },
+        { type: "quiz", heading: "Quick Check", q: "What does the 'with' statement guarantee?", opts: ["File is encrypted", "File is closed after the block", "File is read-only", "File exists"], ans: 1 },
+      ]
+    }
+  },
+  {
+    id: 24, subject: "python", title: "Error Handling", duration: "10 min", done: false,
+    desc: "try/except, finally, custom exceptions, EAFP",
+    content: {
+      intro: "Python follows EAFP (Easier to Ask Forgiveness than Permission). Use try/except to handle errors gracefully instead of checking conditions upfront.",
+      sections: [
+        { type: "code", heading: "try / except / finally", body: `try:\n    result = 10 / 0\nexcept ZeroDivisionError as e:\n    print(f'Error: {e}')\nexcept (TypeError, ValueError):\n    print('Type or value error')\nelse:\n    print('No error occurred')\nfinally:\n    print('Always runs')` },
+        { type: "text", heading: "Custom Exceptions", body: "Subclass <code>Exception</code>: <code>class InsufficientFundsError(Exception): pass</code>. Raise with <code>raise InsufficientFundsError('Balance too low')</code>." },
+        { type: "quiz", heading: "Quick Check", q: "The 'finally' block runs:", opts: ["Only on error", "Only on success", "Always", "Only if 'else' runs"], ans: 2 },
+      ]
+    }
+  },
+  // ── More Networks ────────────────────────────────────────────────────
+  {
+    id: 25, subject: "cn", title: "DNS & Domain Name System", duration: "12 min", done: false,
+    desc: "Resolution process, record types, caching",
+    content: {
+      intro: "DNS translates human-readable domain names (google.com) into IP addresses. It's the phone book of the internet.",
+      sections: [
+        { type: "text", heading: "Resolution Process", body: "Browser cache → OS cache → Recursive resolver → Root nameserver → TLD nameserver (.com) → Authoritative nameserver → IP returned and cached at each level." },
+        { type: "code", heading: "Common DNS Records", body: `A      → maps domain to IPv4 address\nAAAA   → maps domain to IPv6 address\nCNAME  → alias for another domain\nMX     → mail server for the domain\nTXT    → arbitrary text (SPF, DKIM)\nNS     → nameserver for the domain` },
+        { type: "callout", style: "info", heading: "TTL (Time To Live)", body: "Each DNS record has a TTL (in seconds). Caches evict the record after TTL expires. Lower TTL = faster propagation but more DNS queries." },
+        { type: "quiz", heading: "Quick Check", q: "Which DNS record maps a domain to an IPv4 address?", opts: ["MX", "CNAME", "A", "NS"], ans: 2 },
+      ]
+    }
+  },
 ];
 
 export interface Concept {
@@ -321,6 +426,12 @@ export const CONCEPTS: Concept[] = [
   { id:12, cat:"dbms", icon:"◫", title:"Normal Forms", sub:"1NF→2NF→3NF→BCNF — eliminate redundancy progressively", tags:["Design"], color:"var(--purple)", done:false },
   { id:13, cat:"os", icon:"◎", title:"Deadlock", sub:"Mutual exclusion + hold & wait + no preemption + circular wait", tags:["Concurrency"], color:"var(--teal)", done:true },
   { id:14, cat:"os", icon:"◎", title:"Virtual Memory", sub:"Illusion of more RAM via paging to disk", tags:["Memory"], color:"var(--teal)", done:false },
+  { id:15, cat:"algo", icon:"◈", title:"Quicksort", sub:"Pivot-based partitioning, O(n log n) avg, O(n²) worst", tags:["Sorting","Divide & Conquer"], color:"var(--green)", done:false },
+  { id:16, cat:"algo", icon:"◈", title:"BFS vs DFS", sub:"BFS: level-order, shortest path. DFS: depth-first, cycle detection", tags:["Graphs","Traversal"], color:"var(--green)", done:false },
+  { id:17, cat:"algo", icon:"◈", title:"Recursion", sub:"Base case + recursive case. Call stack manages state automatically", tags:["Fundamentals"], color:"var(--green)", done:false },
+  { id:18, cat:"python", icon:"◆", title:"Decorator", sub:"@decorator wraps a function to add behaviour without modifying it", tags:["Functions"], color:"var(--orange)", done:true },
+  { id:19, cat:"cn", icon:"◌", title:"TCP Handshake", sub:"SYN → SYN-ACK → ACK establishes a reliable connection", tags:["Transport"], color:"var(--blue)", done:false },
+  { id:20, cat:"cn", icon:"◌", title:"DNS Resolution", sub:"Recursive lookup: cache → resolver → root → TLD → authoritative", tags:["Application"], color:"var(--blue)", done:false },
 ];
 
 export const FLASHCARDS = [
@@ -332,14 +443,18 @@ export const FLASHCARDS = [
   { term:"ACID", def:"Atomicity (all-or-nothing), Consistency (valid state), Isolation (independent transactions), Durability (persisted)." },
   { term:"TCP vs UDP", def:"TCP: reliable, ordered, connection-oriented. UDP: fast, no guarantees, connectionless. Use TCP for data integrity, UDP for speed." },
   { term:"Virtual Memory", def:"OS maps virtual addresses to physical RAM frames via a page table. Page faults load pages from disk on demand." },
+  { term:"Quicksort", def:"Pick a pivot, partition array so left < pivot < right, recurse. O(n log n) average, O(n²) worst. Fastest in practice." },
+  { term:"Recursion", def:"A function calls itself with a smaller input toward a base case. The call stack manages state. Can cause stack overflow if too deep." },
+  { term:"DNS", def:"Domain Name System translates domain names to IP addresses via recursive lookup through root, TLD, and authoritative nameservers." },
+  { term:"Context Manager", def:"Python's 'with' statement ensures resource cleanup (e.g. file.close()) even if exceptions occur. Uses __enter__/__exit__ protocol." },
 ];
 
 export const SUBJECT_COLORS: Record<string, string> = {
-  ds: "var(--yellow)", python: "var(--orange)", dbms: "var(--purple)", os: "var(--teal)", cn: "var(--blue)"
+  ds: "var(--yellow)", python: "var(--orange)", dbms: "var(--purple)", os: "var(--teal)", cn: "var(--blue)", algo: "var(--green)"
 };
 export const SUBJECT_ICONS: Record<string, string> = {
-  ds: "⬡", python: "◆", dbms: "◫", os: "◎", cn: "◌"
+  ds: "⬡", python: "◆", dbms: "◫", os: "◎", cn: "◌", algo: "◈"
 };
 export const SUBJECT_LABELS: Record<string, string> = {
-  ds: "Data Structures", python: "Python", dbms: "DBMS", os: "OS", cn: "Networks"
+  ds: "Data Structures", python: "Python", dbms: "DBMS", os: "OS", cn: "Networks", algo: "Algorithms"
 };

@@ -14,7 +14,6 @@ const navItems = [
     { icon: Map, label: "Roadmaps", path: "/roadmaps" },
     { icon: Code2, label: "Practice", path: "/practice" },
     { icon: BookOpen, label: "Learn", path: "/learn" },
-    { icon: Zap, label: "Code Viz", path: "/dsa" },
     { icon: Briefcase, label: "Opportunities", path: "/opportunities" },
     { icon: Mic, label: "Interview Prep", path: "/interview-prep" },
     { icon: Globe, label: "Portfolio", path: "/portfolio" },

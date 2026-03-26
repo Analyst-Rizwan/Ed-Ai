@@ -1,5 +1,5 @@
 // frontend/src/pages/Learn.tsx
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { streamMessageFromAI } from "@/lib/ai";
@@ -8,6 +8,39 @@ import {
   SUBJECT_COLORS, SUBJECT_ICONS, SUBJECT_LABELS,
   type Lesson,
 } from "@/data/learnData";
+
+// Lazy-loaded CodeViz modules
+const SortingViz    = lazy(() => import("./dsa/modules/SortingViz"));
+const MergeViz      = lazy(() => import("./dsa/modules/MergeViz"));
+const GraphViz      = lazy(() => import("./dsa/modules/GraphViz"));
+const HeapViz       = lazy(() => import("./dsa/modules/HeapViz"));
+const DPViz         = lazy(() => import("./dsa/modules/DPViz"));
+const HashViz       = lazy(() => import("./dsa/modules/HashViz"));
+const TwoPointerViz = lazy(() => import("./dsa/modules/TwoPointerViz"));
+const StackViz      = lazy(() => import("./dsa/modules/StackViz"));
+const QueueViz      = lazy(() => import("./dsa/modules/QueueViz"));
+const LinkedListViz = lazy(() => import("./dsa/modules/LinkedListViz"));
+const BSTViz        = lazy(() => import("./dsa/modules/BSTViz"));
+const TrieViz       = lazy(() => import("./dsa/modules/TrieViz"));
+const NQueensViz    = lazy(() => import("./dsa/modules/NQueensViz"));
+const KMPViz        = lazy(() => import("./dsa/modules/KMPViz"));
+
+const VIZ_MODULES = [
+  { id:"sort",    label:"📊 Sorting",        badge:"5 Algos",            Component: SortingViz },
+  { id:"merge",   label:"🔀 Merge Arrays",    badge:"2 Ptrs",             Component: MergeViz },
+  { id:"graph",   label:"🕸 Graph",           badge:"BFS·DFS·Dijkstra",   Component: GraphViz },
+  { id:"heap",    label:"⛰ Heap",            badge:"Min-Heap",           Component: HeapViz },
+  { id:"dp",      label:"🧮 Dynamic Prog.",   badge:"Fib·LCS·Knapsack",   Component: DPViz },
+  { id:"hash",    label:"🔑 Hashing",         badge:"Probe·Chain",        Component: HashViz },
+  { id:"twoptr",  label:"👆 Two Pointer",     badge:"Sliding Window",     Component: TwoPointerViz },
+  { id:"stack",   label:"📚 Stack",           badge:"LIFO",               Component: StackViz },
+  { id:"queue",   label:"🔄 Queue",           badge:"FIFO",               Component: QueueViz },
+  { id:"linked",  label:"🔗 Linked List",     badge:"Singly",             Component: LinkedListViz },
+  { id:"bst",     label:"🌲 BST",             badge:"Binary Search",      Component: BSTViz },
+  { id:"trie",    label:"🔤 Trie",            badge:"Prefix Tree",        Component: TrieViz },
+  { id:"nqueens", label:"♛ N-Queens",        badge:"Backtracking",       Component: NQueensViz },
+  { id:"kmp",     label:"🔍 KMP Search",      badge:"String Match",       Component: KMPViz },
+];
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 const S: Record<string, React.CSSProperties> = {
@@ -53,7 +86,7 @@ interface ChatMsg { id: string; role: "user"|"ai"; text: string; }
 // Main Component
 // ════════════════════════════════════════════════════════════════════════════
 const Learn: React.FC = () => {
-  const [tab, setTab] = useState<"lessons"|"concepts"|"notes"|"tutor">("lessons");
+  const [tab, setTab] = useState<"lessons"|"concepts"|"notes"|"tutor"|"visualize">("lessons");
 
   // ── Lessons state ──────────────────────────────────────────────────────
   const [lessons, setLessons] = useState<Lesson[]>(LESSONS.map(l => ({ ...l })));
@@ -85,6 +118,9 @@ const Learn: React.FC = () => {
   const [tutorSubject, setTutorSubject] = useState("Data Structures");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
+
+  // ── Visualize state ─────────────────────────────────────────────────
+  const [activeViz, setActiveViz] = useState("sort");
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior:"smooth" }); }, [chatMsgs, aiLoading]);
 
@@ -256,9 +292,9 @@ const Learn: React.FC = () => {
 
       {/* TABS */}
       <div style={S.tabRow}>
-        {(["lessons","concepts","notes","tutor"] as const).map(t => (
+        {(["lessons","concepts","visualize","notes","tutor"] as const).map(t => (
           <button key={t} style={pill(tab===t)} onClick={() => setTab(t)}>
-            {t==="lessons"?"📚 Lessons":t==="concepts"?"⬡ Concepts":t==="notes"?"✏ Notes":"✦ AI Tutor"}
+            {t==="lessons"?"📚 Lessons":t==="concepts"?"⬡ Concepts":t==="visualize"?"⚡ Visualize":t==="notes"?"✏ Notes":"✦ AI Tutor"}
           </button>
         ))}
       </div>
@@ -277,7 +313,7 @@ const Learn: React.FC = () => {
                   <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search lessons…" style={{ flex:1, background:"none", border:"none", outline:"none", color:"var(--text)", fontFamily:"'DM Sans',sans-serif", fontSize:13 }} />
                 </div>
                 <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-                  {["all","ds","python","dbms","os","cn"].map(s => (
+                  {["all","ds","algo","python","dbms","os","cn"].map(s => (
                     <button key={s} onClick={() => setSubject(s)} style={{ padding:"4px 10px", borderRadius:100, fontSize:11, fontWeight:500, cursor:"pointer", border:"1px solid var(--border2)", background:subject===s?"var(--accent-soft)":"var(--surface2)", color:subject===s?"var(--accent)":"var(--muted2)", transition:"all .15s" }}>
                       {s==="all"?"All":SUBJECT_LABELS[s]}
                     </button>
@@ -363,7 +399,7 @@ const Learn: React.FC = () => {
           <>
             <div style={{ width:220, minWidth:220, borderRight:"1px solid var(--border)", padding:14, display:"flex", flexDirection:"column", gap:4, overflowY:"auto" }}>
               <div style={{ fontSize:13, fontWeight:600, marginBottom:8 }}>Topics</div>
-              {[["all","All Concepts",48],["ds","⬡ Data Structures",14],["algo","◈ Algorithms",11],["python","◆ Python",9],["dbms","◫ DBMS",8],["os","◎ OS",6]].map(([cat, label, count]) => (
+              {[["all","All Concepts",CONCEPTS.length],["ds","⬡ Data Structures",CONCEPTS.filter(c=>c.cat==="ds").length],["algo","◈ Algorithms",CONCEPTS.filter(c=>c.cat==="algo").length],["python","◆ Python",CONCEPTS.filter(c=>c.cat==="python").length],["dbms","◫ DBMS",CONCEPTS.filter(c=>c.cat==="dbms").length],["os","◎ OS",CONCEPTS.filter(c=>c.cat==="os").length],["cn","◌ Networks",CONCEPTS.filter(c=>c.cat==="cn").length]].map(([cat, label, count]) => (
                 <div key={cat} onClick={() => setConceptCat(cat as string)} style={{ padding:"9px 12px", borderRadius:10, fontSize:13, fontWeight:500, cursor:"pointer", color:conceptCat===cat?"var(--accent)":"var(--muted)", background:conceptCat===cat?"var(--accent-soft)":"transparent", transition:"all .15s", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                   <span>{label}</span>
                   <span style={{ fontSize:10, fontFamily:"'Space Mono',monospace", background:"var(--surface2)", padding:"2px 6px", borderRadius:100 }}>{count}</span>
@@ -430,6 +466,42 @@ const Learn: React.FC = () => {
                   </div>
                 </div>
               )}
+            </div>
+          </>
+        )}
+
+        {/* ── 2b. VISUALIZE ── */}
+        {tab === "visualize" && (
+          <>
+            {/* Left: viz module list */}
+            <div style={{ width:230, minWidth:230, borderRight:"1px solid var(--border)", display:"flex", flexDirection:"column", overflow:"hidden" }}>
+              <div style={{ padding:"14px 12px 8px", flexShrink:0 }}>
+                <div style={{ fontSize:14, fontWeight:600, marginBottom:4 }}>⚡ Visualizations</div>
+                <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>Interactive DSA visualizers with guided demos</div>
+              </div>
+              <div style={{ flex:1, overflowY:"auto", padding:"0 8px 12px", display:"flex", flexDirection:"column", gap:3 }}>
+                {VIZ_MODULES.map(v => {
+                  const isActive = activeViz === v.id;
+                  return (
+                    <div key={v.id} onClick={() => setActiveViz(v.id)} style={{ padding:"10px 12px", borderRadius:12, background:isActive?"var(--accent-soft)":"var(--surface2)", border:`1px solid ${isActive?"rgba(124,92,252,.3)":"var(--border)"}`, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, transition:"all .15s" }}>
+                      <span style={{ fontSize:13, fontWeight:isActive?600:400 }}>{v.label}</span>
+                      <span style={{ fontSize:9, fontFamily:"'Space Mono',monospace", fontWeight:600, background:isActive?"rgba(124,92,252,.15)":"var(--surface3)", color:isActive?"var(--accent)":"var(--muted)", padding:"2px 7px", borderRadius:100 }}>{v.badge}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Center: active viz */}
+            <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+              <Suspense fallback={<div style={{ display:"flex", alignItems:"center", justifyContent:"center", flex:1, color:"var(--muted)" }}>Loading visualizer…</div>}>
+                {(() => {
+                  const mod = VIZ_MODULES.find(v => v.id === activeViz);
+                  if (!mod) return null;
+                  const Comp = mod.Component;
+                  return <Comp key={mod.id} />;
+                })()}
+              </Suspense>
             </div>
           </>
         )}
