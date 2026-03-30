@@ -69,12 +69,15 @@ def login_access_token(
 
     
     # 4. Set Refresh Token HTTPOnly Cookie
+    # In development (HTTP), secure=True + samesite="none" causes browsers to silently
+    # drop the cookie. Use lax/False for local dev so tokens are actually stored.
+    is_prod = settings.APP_ENV == "production"
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True, # Must be True for samesite="none"
-        samesite="none", # Allow cross-origin requests
+        secure=is_prod,                       # True in prod (HTTPS), False in dev (HTTP)
+        samesite="none" if is_prod else "lax", # none in prod, lax in dev
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     )
     
@@ -161,12 +164,13 @@ def refresh_token(
     db.add(new_db_refresh_token)
     db.commit()
     
+    is_prod = settings.APP_ENV == "production"
     response.set_cookie(
         key="refresh_token",
         value=new_refresh_token,
         httponly=True,
-        secure=True,
-        samesite="none",
+        secure=is_prod,
+        samesite="none" if is_prod else "lax",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     )
     
@@ -198,11 +202,12 @@ def logout(
                 break
         db.commit()
 
+    is_prod = settings.APP_ENV == "production"
     response.delete_cookie(
         "refresh_token",
         httponly=True,
-        secure=True,
-        samesite="none"
+        secure=is_prod,
+        samesite="none" if is_prod else "lax"
     )
     return {"message": "Logged out successfully"}
 

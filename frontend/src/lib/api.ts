@@ -515,6 +515,38 @@ export const interviewApi = {
 };
 
 // ============================================================
+// CODE EXECUTION TYPES & API (Judge0 proxy)
+// ============================================================
+export interface ExecuteRequest {
+  source_code: string;
+  language_id: number;
+  stdin?: string;
+}
+
+export interface ExecuteResponse {
+  stdout: string | null;
+  stderr: string | null;
+  compile_output: string | null;
+  status: { id: number; description: string };
+  time: string | null;
+  memory: number | null;
+  token: string | null;
+}
+
+export const codeApi = {
+  execute: async (data: ExecuteRequest): Promise<ExecuteResponse> => {
+    return fetchWithAuth("/code/execute", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  getLanguages: async (): Promise<{ id: number; name: string }[]> => {
+    return fetchWithAuth("/code/languages");
+  },
+};
+
+// ============================================================
 // EXPORT DEFAULT
 // ============================================================
 export default {
@@ -527,4 +559,5 @@ export default {
   opportunities: opportunitiesApi,
   github: githubApi,
   interview: interviewApi,
+  code: codeApi,
 };

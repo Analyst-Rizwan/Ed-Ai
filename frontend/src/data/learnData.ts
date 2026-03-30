@@ -13,11 +13,15 @@ export interface Section {
 }
 export interface Lesson {
   id: number;
-  subject: "ds" | "python" | "dbms" | "os" | "cn" | "algo";
+  subject: "ds" | "python" | "dbms" | "os" | "cn" | "algo" | "c" | "cpp" | "java" | "lld" | "hld";
   title: string;
   duration: string;
   done: boolean;
   desc: string;
+  // optional visualization config (used by new per-subject lesson files)
+  vizType?: "codeStep" | "memory" | "diagram" | "table" | "algo";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  vizConfig?: Record<string, any>;
   content: { intro: string; sections: Section[] };
 }
 
@@ -450,11 +454,14 @@ export const FLASHCARDS = [
 ];
 
 export const SUBJECT_COLORS: Record<string, string> = {
-  ds: "var(--yellow)", python: "var(--orange)", dbms: "var(--purple)", os: "var(--teal)", cn: "var(--blue)", algo: "var(--green)"
+  ds: "var(--yellow)", python: "var(--orange)", dbms: "var(--purple)", os: "var(--teal)", cn: "var(--blue)", algo: "var(--green)",
+  c: "var(--red)", cpp: "var(--pink,#ec4899)", java: "var(--amber,#f59e0b)", lld: "var(--cyan,#06b6d4)", hld: "var(--indigo,#6366f1)",
 };
 export const SUBJECT_ICONS: Record<string, string> = {
-  ds: "⬡", python: "◆", dbms: "◫", os: "◎", cn: "◌", algo: "◈"
+  ds: "⬡", python: "◆", dbms: "◫", os: "◎", cn: "◌", algo: "◈",
+  c: "©", cpp: "⊕", java: "☕", lld: "🔧", hld: "🏗",
 };
 export const SUBJECT_LABELS: Record<string, string> = {
-  ds: "Data Structures", python: "Python", dbms: "DBMS", os: "OS", cn: "Networks", algo: "Algorithms"
+  ds: "Data Structures", python: "Python", dbms: "DBMS", os: "OS", cn: "Networks", algo: "Algorithms",
+  c: "C Programming", cpp: "C++", java: "Java", lld: "Low Level Design", hld: "High Level Design",
 };

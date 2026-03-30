@@ -28,11 +28,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initAuth = async () => {
         setIsLoading(true);
         try {
+            // First attempt: use existing in-memory token (works if already logged in this tab)
             const userData = await authApi.getCurrentUser();
             setUser(userData);
         } catch {
-            // Not logged in — this is expected for guests
-            setUser(null);
+            // In-memory token missing (page refresh / new tab) → try cookie-based refresh
+            try {
+                const API_URL = import.meta.env.VITE_API_URL || "/api";
+                const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include", // sends the HttpOnly refresh_token cookie
+                });
+                if (refreshResponse.ok) {
+                    const data = await refreshResponse.json();
+                    // Restore the access token in memory
+                    setAccessToken(data.access_token);
+                    // Now fetch user profile with the fresh token
+                    const userData = await authApi.getCurrentUser();
+                    setUser(userData);
+                } else {
+                    // Refresh also failed — user is genuinely logged out
+                    setUser(null);
+                }
+            } catch {
+                setUser(null);
+            }
         } finally {
             setIsLoading(false);
         }

@@ -77,6 +77,10 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_ID: str | None = os.getenv("GITHUB_CLIENT_ID")
     GITHUB_CLIENT_SECRET: str | None = os.getenv("GITHUB_CLIENT_SECRET")
 
+    # === Judge0 (Code Execution) ===
+    JUDGE0_API_KEY: str | None = os.getenv("JUDGE0_API_KEY")
+    JUDGE0_API_HOST: str = os.getenv("JUDGE0_API_HOST", "judge0-ce.p.rapidapi.com")
+
     # Pydantic v2 settings config
     model_config = SettingsConfigDict(
         env_file=".env",

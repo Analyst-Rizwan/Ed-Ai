@@ -121,6 +121,51 @@ const Learn: React.FC = () => {
 
   // ── Visualize state ─────────────────────────────────────────────────
   const [activeViz, setActiveViz] = useState("sort");
+  const [vizSubject, setVizSubject] = useState<string>("codeviz");
+  const [subjectLessons, setSubjectLessons] = useState<Lesson[]>([]);
+  const [vizLessonIdx, setVizLessonIdx] = useState(0);
+  const [vizLoading, setVizLoading] = useState(false);
+
+  const VIZ_SUBJECTS = [
+    { id:"codeviz", label:"⚡", title:"Interactive" },
+    { id:"c",      label:"©",  title:"C" },
+    { id:"cpp",    label:"⊕",  title:"C++" },
+    { id:"java",   label:"☕",  title:"Java" },
+    { id:"python", label:"◆",  title:"Python" },
+    { id:"ds",     label:"⬡",  title:"D.S." },
+    { id:"algo",   label:"◈",  title:"Algo" },
+    { id:"dbms",   label:"◫",  title:"DBMS" },
+    { id:"lld",    label:"🔧",  title:"LLD" },
+    { id:"hld",    label:"🏗",  title:"HLD" },
+  ];
+
+  useEffect(() => {
+    if (vizSubject === "codeviz") { setSubjectLessons([]); return; }
+    setVizLoading(true);
+    setSubjectLessons([]);
+    setVizLessonIdx(0);
+    const loaders: Record<string, () => Promise<{default?: unknown}>> = {
+      c:      () => import("@/data/lessons/c"),
+      cpp:    () => import("@/data/lessons/cpp"),
+      java:   () => import("@/data/lessons/java"),
+      python: () => import("@/data/lessons/python"),
+      ds:     () => import("@/data/lessons/ds"),
+      algo:   () => import("@/data/lessons/algo"),
+      dbms:   () => import("@/data/lessons/dbms"),
+      lld:    () => import("@/data/lessons/lld"),
+      hld:    () => import("@/data/lessons/hld"),
+    };
+    const loader = loaders[vizSubject];
+    if (loader) {
+      loader().then((mod) => {
+        const exported = Object.values(mod as Record<string, unknown>).find(Array.isArray) as Lesson[] | undefined;
+        setSubjectLessons(exported ?? []);
+        setVizLoading(false);
+      }).catch(() => setVizLoading(false));
+    } else {
+      setVizLoading(false);
+    }
+  }, [vizSubject]);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior:"smooth" }); }, [chatMsgs, aiLoading]);
 
@@ -473,35 +518,86 @@ const Learn: React.FC = () => {
         {/* ── 2b. VISUALIZE ── */}
         {tab === "visualize" && (
           <>
-            {/* Left: viz module list */}
-            <div style={{ width:230, minWidth:230, borderRight:"1px solid var(--border)", display:"flex", flexDirection:"column", overflow:"hidden" }}>
-              <div style={{ padding:"14px 12px 8px", flexShrink:0 }}>
-                <div style={{ fontSize:14, fontWeight:600, marginBottom:4 }}>⚡ Visualizations</div>
-                <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>Interactive DSA visualizers with guided demos</div>
+            {/* Left: subject tabs + content */}
+            <div style={{ width:240, minWidth:240, borderRight:"1px solid var(--border)", display:"flex", flexDirection:"column", overflow:"hidden" }}>
+              {/* Subject pills */}
+              <div style={{ padding:"12px 10px 8px", flexShrink:0, borderBottom:"1px solid var(--border)" }}>
+                <div style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8 }}>Subject</div>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+                  {VIZ_SUBJECTS.map(s => {
+                    const isA = vizSubject === s.id;
+                    const col = s.id === "codeviz" ? "var(--accent)" : SUBJECT_COLORS[s.id] ?? "var(--muted)";
+                    return (
+                      <button key={s.id} onClick={() => setVizSubject(s.id)} style={{ padding:"5px 10px", borderRadius:100, fontSize:11, fontWeight:600, cursor:"pointer", border:`1px solid ${isA ? col : "var(--border2)"}`, background:isA ? `${col}22` : "var(--surface2)", color:isA ? col : "var(--muted2)", transition:"all .15s" }}>
+                        {s.label} {s.title}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <div style={{ flex:1, overflowY:"auto", padding:"0 8px 12px", display:"flex", flexDirection:"column", gap:3 }}>
-                {VIZ_MODULES.map(v => {
-                  const isActive = activeViz === v.id;
-                  return (
-                    <div key={v.id} onClick={() => setActiveViz(v.id)} style={{ padding:"10px 12px", borderRadius:12, background:isActive?"var(--accent-soft)":"var(--surface2)", border:`1px solid ${isActive?"rgba(124,92,252,.3)":"var(--border)"}`, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, transition:"all .15s" }}>
-                      <span style={{ fontSize:13, fontWeight:isActive?600:400 }}>{v.label}</span>
-                      <span style={{ fontSize:9, fontFamily:"'Space Mono',monospace", fontWeight:600, background:isActive?"rgba(124,92,252,.15)":"var(--surface3)", color:isActive?"var(--accent)":"var(--muted)", padding:"2px 7px", borderRadius:100 }}>{v.badge}</span>
-                    </div>
-                  );
-                })}
+              {/* Lesson/Module list */}
+              <div style={{ flex:1, overflowY:"auto", padding:"8px", display:"flex", flexDirection:"column", gap:3 }}>
+                {vizSubject === "codeviz" ? (
+                  VIZ_MODULES.map(v => {
+                    const isActive = activeViz === v.id;
+                    return (
+                      <div key={v.id} onClick={() => setActiveViz(v.id)} style={{ padding:"10px 12px", borderRadius:12, background:isActive?"var(--accent-soft)":"var(--surface2)", border:`1px solid ${isActive?"rgba(124,92,252,.3)":"var(--border)"}`, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, transition:"all .15s" }}>
+                        <span style={{ fontSize:13, fontWeight:isActive?600:400 }}>{v.label}</span>
+                        <span style={{ fontSize:9, fontFamily:"'Space Mono',monospace", fontWeight:600, background:isActive?"rgba(124,92,252,.15)":"var(--surface3)", color:isActive?"var(--accent)":"var(--muted)", padding:"2px 7px", borderRadius:100 }}>{v.badge}</span>
+                      </div>
+                    );
+                  })
+                ) : vizLoading ? (
+                  <div style={{ textAlign:"center", color:"var(--muted)", fontSize:12, paddingTop:24 }}>Loading lessons…</div>
+                ) : (
+                  subjectLessons.map((l, i) => {
+                    const col = SUBJECT_COLORS[l.subject] ?? "var(--muted)";
+                    const isA = vizLessonIdx === i;
+                    return (
+                      <div key={l.id} onClick={() => setVizLessonIdx(i)} style={{ padding:"10px 12px", borderRadius:12, background:isA?"var(--accent-soft)":"var(--surface2)", border:`1px solid ${isA?"rgba(124,92,252,.3)":"var(--border)"}`, cursor:"pointer", transition:"all .15s" }}>
+                        <div style={{ fontSize:12, fontWeight:isA?600:400, marginBottom:2 }}>{l.title}</div>
+                        <div style={{ fontSize:10, color:"var(--muted)", display:"flex", gap:6 }}>
+                          <span>{l.duration}</span>
+                          <span style={{ color:col }}>{l.subject.toUpperCase()}</span>
+                          {l.vizType && <span style={{ color:"var(--accent)" }}>⚡</span>}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                {!vizLoading && vizSubject !== "codeviz" && subjectLessons.length === 0 && (
+                  <div style={{ textAlign:"center", color:"var(--muted)", fontSize:12, paddingTop:24 }}>No lessons found</div>
+                )}
               </div>
             </div>
 
-            {/* Center: active viz */}
+            {/* Center: CodeViz OR Lesson content */}
             <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
-              <Suspense fallback={<div style={{ display:"flex", alignItems:"center", justifyContent:"center", flex:1, color:"var(--muted)" }}>Loading visualizer…</div>}>
-                {(() => {
-                  const mod = VIZ_MODULES.find(v => v.id === activeViz);
-                  if (!mod) return null;
-                  const Comp = mod.Component;
-                  return <Comp key={mod.id} />;
-                })()}
-              </Suspense>
+              {vizSubject === "codeviz" ? (
+                <Suspense fallback={<div style={{ display:"flex", alignItems:"center", justifyContent:"center", flex:1, color:"var(--muted)" }}>Loading visualizer…</div>}>
+                  {(() => {
+                    const mod = VIZ_MODULES.find(v => v.id === activeViz);
+                    if (!mod) return null;
+                    const Comp = mod.Component;
+                    return <Comp key={mod.id} />;
+                  })()}
+                </Suspense>
+              ) : subjectLessons[vizLessonIdx] ? (
+                <div style={{ flex:1, overflowY:"auto", padding:"24px 28px" }}>
+                  {renderLesson(subjectLessons[vizLessonIdx])}
+                  <div style={{ display:"flex", justifyContent:"space-between", marginTop:24, paddingTop:16, borderTop:"1px solid var(--border)" }}>
+                    <button style={ghostBtn} onClick={() => setVizLessonIdx(i => Math.max(0,i-1))} disabled={vizLessonIdx===0}>← Previous</button>
+                    <span style={{ fontSize:12, color:"var(--muted)" }}>Lesson {vizLessonIdx+1} of {subjectLessons.length}</span>
+                    <button style={primaryBtn} onClick={() => setVizLessonIdx(i => Math.min(subjectLessons.length-1,i+1))} disabled={vizLessonIdx===subjectLessons.length-1}>Next →</button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"center", flex:1, flexDirection:"column", gap:12, color:"var(--muted)" }}>
+                  <div style={{ fontSize:32 }}>{VIZ_SUBJECTS.find(s=>s.id===vizSubject)?.label}</div>
+                  <div style={{ fontSize:14, fontWeight:600 }}>{SUBJECT_LABELS[vizSubject] ?? vizSubject}</div>
+                  <div style={{ fontSize:12 }}>Select a lesson from the sidebar</div>
+                </div>
+              )}
             </div>
           </>
         )}

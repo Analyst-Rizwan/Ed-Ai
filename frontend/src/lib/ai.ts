@@ -139,6 +139,84 @@ export async function streamMessageFromAI(
 }
 
 /**
+ * Stream a chat response from the School AI (SSE), tailored for Class 9-10.
+ */
+export async function streamMessageFromSchoolAI(
+  message: string,
+  onToken: (text: string) => void,
+  onDone: (fullText: string, conversationId: number | null) => void,
+  opts?: { conversation_id?: number | null }
+): Promise<void> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const token = getAccessToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const body: Record<string, unknown> = { message };
+  if (opts?.conversation_id != null) body.conversation_id = opts.conversation_id;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/school/chat/stream`, {
+      method: "POST",
+      headers,
+      credentials: "include",
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok || !res.body) {
+      console.error("Streaming error:", res.status);
+      onDone("⚠️ AI server returned an error.", null);
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let conversationId: number | null = opts?.conversation_id ?? null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || ""; 
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const jsonStr = line.slice(6).trim();
+        if (!jsonStr) continue;
+
+        try {
+          const evt = JSON.parse(jsonStr);
+
+          if (evt.type === "conv") {
+            conversationId = evt.conversation_id;
+          } else if (evt.type === "delta") {
+            onToken(evt.text || "");
+          } else if (evt.type === "done") {
+            onDone(evt.full_text || "", conversationId);
+            return;
+          } else if (evt.type === "error") {
+            onDone("⚠️ " + (evt.message || "AI streaming error."), conversationId);
+            return;
+          }
+        } catch {
+          // Skip malformed JSON
+        }
+      }
+    }
+
+    onDone("", conversationId);
+  } catch (err) {
+    console.error("AI Stream Error:", err);
+    onDone("⚠️ Could not connect to AI server.", null);
+  }
+}
+
+/**
  * Legacy wrapper — returns just the reply string for backward compat.
  */
 export async function askAI(

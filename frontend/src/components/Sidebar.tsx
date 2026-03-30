@@ -2,7 +2,7 @@ import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import {
     LayoutDashboard, Map, Code2, Zap, Briefcase, Globe, UserCircle,
-    Sparkles, LogOut, Settings, Mic, BookOpen,
+    Sparkles, LogOut, Settings, Mic, BookOpen, Terminal,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -14,6 +14,7 @@ const navItems = [
     { icon: Map, label: "Roadmaps", path: "/roadmaps" },
     { icon: Code2, label: "Practice", path: "/practice" },
     { icon: BookOpen, label: "Learn", path: "/learn" },
+    { icon: Terminal, label: "Playground", path: "/playground" },
     { icon: Briefcase, label: "Opportunities", path: "/opportunities" },
     { icon: Mic, label: "Interview Prep", path: "/interview-prep" },
     { icon: Globe, label: "Portfolio", path: "/portfolio" },

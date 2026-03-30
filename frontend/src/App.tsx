@@ -25,6 +25,7 @@ const Opportunities = lazy(() => import("./pages/Opportunities"));
 const PortfolioBuilder = lazy(() => import("./pages/PortfolioBuilder"));
 const DSAVisualizer = lazy(() => import("./pages/DSAVisualizer"));
 const Learn = lazy(() => import("./pages/Learn"));
+const CodePlayground = lazy(() => import("./pages/CodePlayground"));
 import LandingPage from "./pages/LandingPage";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
@@ -75,6 +76,17 @@ const App = () => {
 
                 <Route path="/" element={<PublicHome />} />
                 <Route element={<ProtectedRoute />}>
+                  {/* ── Full-screen standalone routes (no Layout/sidebar) ── */}
+                  <Route
+                    path="playground"
+                    element={
+                      <Suspense fallback={<div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "var(--bg)" }}><div style={{ width: 32, height: 32, border: "2px solid var(--accent)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /></div>}>
+                        <CodePlayground />
+                      </Suspense>
+                    }
+                  />
+
+                  {/* ── Main layout routes (with sidebar) ── */}
                   <Route element={<Layout />}>
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="roadmaps" element={<Roadmaps />} />
@@ -87,6 +99,18 @@ const App = () => {
                     <Route path="interview-prep" element={<InterviewPrep />} />
                     <Route path="admin" element={<Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}><Admin /></Suspense>} />
                   </Route>
+                </Route>
+
+                {/* Fullscreen playground — no sidebar/layout */}
+                <Route element={<ProtectedRoute />}>
+                  <Route
+                    path="playground"
+                    element={
+                      <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg)' }}><div style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid var(--accent)', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} /></div>}>
+                        <CodePlayground />
+                      </Suspense>
+                    }
+                  />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />

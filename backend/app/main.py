@@ -21,6 +21,8 @@ from app.api import (
     routes_opportunities,
     routes_github,
     routes_interview,
+    routes_school,
+    routes_code,
 )
 from app.core.config import settings
 from app.core.rate_limit import limiter
@@ -163,6 +165,7 @@ app.include_router(routes_leetcode.router, prefix="/api/leetcode", tags=["LeetCo
 app.include_router(routes_dashboard.router, prefix="/api", tags=["Dashboard"])
 app.include_router(routes_opportunities.router, prefix="/api", tags=["Opportunities"])
 app.include_router(routes_github.router, prefix="/api/github", tags=["GitHub"])
+app.include_router(routes_code.router, prefix="/api/code", tags=["Code"])
 
 # ============================================================
 # HEALTH CHECKS
