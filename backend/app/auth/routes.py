@@ -78,7 +78,8 @@ def login_access_token(
         httponly=True,
         secure=is_prod,                       # True in prod (HTTPS), False in dev (HTTP)
         samesite="none" if is_prod else "lax", # none in prod, lax in dev
-        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        domain=settings.COOKIE_DOMAIN,        # None in dev, ".eduaiajk.in" in prod
     )
     
     return {
@@ -171,7 +172,8 @@ def refresh_token(
         httponly=True,
         secure=is_prod,
         samesite="none" if is_prod else "lax",
-        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        domain=settings.COOKIE_DOMAIN,
     )
     
     return {
@@ -207,7 +209,8 @@ def logout(
         "refresh_token",
         httponly=True,
         secure=is_prod,
-        samesite="none" if is_prod else "lax"
+        samesite="none" if is_prod else "lax",
+        domain=settings.COOKIE_DOMAIN,
     )
     return {"message": "Logged out successfully"}
 

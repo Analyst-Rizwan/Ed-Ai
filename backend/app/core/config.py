@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(
         os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7")
     )
+    # === Cookie domain (set to ".eduaiajk.in" in prod for cross-subdomain cookies) ===
+    COOKIE_DOMAIN: str | None = os.getenv("COOKIE_DOMAIN")  # None = browser default (localhost dev)
 
     # === AI provider selection ===
     AI_PROVIDER: str = os.getenv("AI_PROVIDER", "gemini")  # "gemini" or "openai"
