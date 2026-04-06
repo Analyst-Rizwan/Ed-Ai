@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,8 +12,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 import { User, authApi } from "@/lib/api";
-import { Loader2, Settings } from "lucide-react";
+import { AvatarUpload } from "./AvatarUpload";
+import { Loader2, Pencil, MapPin, Globe, Github, Linkedin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface EditProfileDialogProps {
@@ -34,7 +35,6 @@ export function EditProfileDialog({ user, onUpdate }: EditProfileDialogProps) {
         website_url: user.website_url || "",
         github_url: user.github_url || "",
         linkedin_url: user.linkedin_url || "",
-        avatar_url: user.avatar_url || "",
     });
 
     const handleChange = (
@@ -70,93 +70,110 @@ export function EditProfileDialog({ user, onUpdate }: EditProfileDialogProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                    <Settings className="h-4 w-4 mr-2" />
+                <Button variant="outline" size="sm" className="gap-1.5">
+                    <Pencil className="h-3.5 w-3.5" />
                     Edit Profile
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Edit Profile</DialogTitle>
                     <DialogDescription>
-                        Make changes to your profile here. Click save when you're done.
+                        Update your profile information. Click save when you're done.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                <form onSubmit={handleSubmit} className="space-y-5 py-4">
+                    {/* Avatar */}
+                    <div className="flex items-center gap-4">
+                        <AvatarUpload user={user} onUpdate={onUpdate} size="md" />
+                        <div>
+                            <p className="text-sm font-medium">Profile Picture</p>
+                            <p className="text-xs text-muted-foreground">
+                                Click to upload (optional)
+                            </p>
+                        </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Name */}
                     <div className="space-y-2">
                         <Label htmlFor="full_name">Full Name</Label>
                         <Input
-                            id="full_name"
-                            name="full_name"
-                            value={formData.full_name}
-                            onChange={handleChange}
+                            id="full_name" name="full_name"
+                            value={formData.full_name} onChange={handleChange}
                             placeholder="Your full name"
                         />
                     </div>
+
+                    {/* Bio with counter */}
                     <div className="space-y-2">
-                        <Label htmlFor="bio">Bio</Label>
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="bio">Bio</Label>
+                            <span className={`text-xs ${formData.bio.length > 450 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                {formData.bio.length}/500
+                            </span>
+                        </div>
                         <Textarea
-                            id="bio"
-                            name="bio"
-                            value={formData.bio}
-                            onChange={handleChange}
+                            id="bio" name="bio"
+                            value={formData.bio} onChange={handleChange}
                             placeholder="Tell us a little about yourself"
+                            maxLength={500} rows={3}
                         />
                     </div>
+
+                    {/* Location */}
                     <div className="space-y-2">
-                        <Label htmlFor="location">Location</Label>
+                        <Label htmlFor="location" className="flex items-center gap-1.5">
+                            <MapPin className="h-3.5 w-3.5" /> Location
+                        </Label>
                         <Input
-                            id="location"
-                            name="location"
-                            value={formData.location}
-                            onChange={handleChange}
+                            id="location" name="location"
+                            value={formData.location} onChange={handleChange}
                             placeholder="City, Country"
                         />
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="website_url">Website</Label>
-                        <Input
-                            id="website_url"
-                            name="website_url"
-                            value={formData.website_url}
-                            onChange={handleChange}
-                            placeholder="https://your-website.com"
-                        />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+
+                    <Separator />
+
+                    {/* URLs */}
+                    <div className="space-y-3">
                         <div className="space-y-2">
-                            <Label htmlFor="github_url">GitHub</Label>
+                            <Label htmlFor="website_url" className="flex items-center gap-1.5">
+                                <Globe className="h-3.5 w-3.5" /> Website
+                            </Label>
                             <Input
-                                id="github_url"
-                                name="github_url"
-                                value={formData.github_url}
-                                onChange={handleChange}
-                                placeholder="GitHub Username/URL"
+                                id="website_url" name="website_url"
+                                value={formData.website_url} onChange={handleChange}
+                                placeholder="https://your-website.com"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="linkedin_url">LinkedIn</Label>
-                            <Input
-                                id="linkedin_url"
-                                name="linkedin_url"
-                                value={formData.linkedin_url}
-                                onChange={handleChange}
-                                placeholder="LinkedIn Profile URL"
-                            />
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="github_url" className="flex items-center gap-1.5">
+                                    <Github className="h-3.5 w-3.5" /> GitHub
+                                </Label>
+                                <Input
+                                    id="github_url" name="github_url"
+                                    value={formData.github_url} onChange={handleChange}
+                                    placeholder="GitHub URL"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="linkedin_url" className="flex items-center gap-1.5">
+                                    <Linkedin className="h-3.5 w-3.5" /> LinkedIn
+                                </Label>
+                                <Input
+                                    id="linkedin_url" name="linkedin_url"
+                                    value={formData.linkedin_url} onChange={handleChange}
+                                    placeholder="LinkedIn URL"
+                                />
+                            </div>
                         </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="avatar_url">Avatar URL</Label>
-                        <Input
-                            id="avatar_url"
-                            name="avatar_url"
-                            value={formData.avatar_url}
-                            onChange={handleChange}
-                            placeholder="https://example.com/avatar.png"
-                        />
-                    </div>
+
                     <DialogFooter>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} className="w-full sm:w-auto">
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Save Changes
                         </Button>

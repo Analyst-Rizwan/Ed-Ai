@@ -89,6 +89,11 @@ class Settings(BaseSettings):
     # Default to free public Judge0 CE instance (no API key needed)
     JUDGE0_API_HOST: str = os.getenv("JUDGE0_API_HOST", "ce.judge0.com")
 
+    # === Supabase Storage ===
+    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
+    SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+    SUPABASE_STORAGE_BUCKET: str = os.getenv("SUPABASE_STORAGE_BUCKET", "avatars")
+
     # Pydantic v2 settings config
     model_config = SettingsConfigDict(
         env_file=".env",

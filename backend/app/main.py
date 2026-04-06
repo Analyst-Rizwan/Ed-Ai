@@ -23,6 +23,7 @@ from app.api import (
     routes_interview,
     routes_school,
     routes_code,
+    routes_profile,
 )
 from app.core.config import settings
 from app.core.rate_limit import limiter
@@ -166,6 +167,7 @@ app.include_router(routes_dashboard.router, prefix="/api", tags=["Dashboard"])
 app.include_router(routes_opportunities.router, prefix="/api", tags=["Opportunities"])
 app.include_router(routes_github.router, prefix="/api/github", tags=["GitHub"])
 app.include_router(routes_code.router, prefix="/api/code", tags=["Code"])
+app.include_router(routes_profile.router, prefix="/api", tags=["Profile"])
 
 # ============================================================
 # HEALTH CHECKS

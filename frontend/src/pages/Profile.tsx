@@ -1,36 +1,25 @@
 // src/pages/Profile.tsx
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Trophy,
-  Flame,
-  Target,
-  Share2,
-  TrendingUp,
-  Calendar,
-  Award,
-  MapPin,
-  Link as LinkIcon,
-  Github,
-  Linkedin,
-  Loader2,
-  Settings
+  Trophy, Flame, Target, TrendingUp, Calendar, Award,
+  MapPin, Link as LinkIcon, Github, Linkedin,
+  Loader2, BookOpen, BarChart3, Settings, Zap,
+  CheckCircle2,
 } from "lucide-react";
-import { authApi, User } from "@/lib/api";
-import { EditProfileDialog } from "@/components/profile/EditProfileDialog";
+import { authApi, profileApi, ProfileStats, User } from "@/lib/api";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
+import { SettingsTab } from "@/components/profile/SettingsTab";
 import { activities } from "@/lib/placeholder";
-import { useTheme } from "@/context/ThemeContext";
 
 const Profile = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [stats, setStats] = useState<ProfileStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const { theme, toggleTheme } = useTheme();
 
-  // Placeholder XP data until backend supports it
   const xpToNextLevel = 500;
   const xp = user?.xp || 0;
   const xpProgress = ((xp % xpToNextLevel) / xpToNextLevel) * 100;
@@ -42,8 +31,12 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
-      const userData = await authApi.getCurrentUser();
+      const [userData, statsData] = await Promise.all([
+        authApi.getCurrentUser(),
+        profileApi.getStats().catch(() => null),
+      ]);
       setUser(userData);
+      setStats(statsData);
     } catch (error) {
       console.error("Failed to fetch profile", error);
     } finally {
@@ -55,7 +48,6 @@ const Profile = () => {
     setUser(updatedUser);
   };
 
-
   const achievements = [
     { id: 1, title: "First Steps", description: "Solved your first problem", icon: Trophy, earned: true },
     { id: 2, title: "Week Warrior", description: "7-day streak milestone", icon: Flame, earned: true },
@@ -66,240 +58,269 @@ const Profile = () => {
   ];
 
   if (loading) {
-    return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   if (!user) {
-    return <div className="flex h-screen items-center justify-center">Failed to load profile.</div>;
+    return (
+      <div className="flex h-screen items-center justify-center text-muted-foreground">
+        Failed to load profile.
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6 animate-in">
-      {/* HEADER */}
-      <div className="flex flex-col gap-4">
-        <Card className="glass border-border/50">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row items-start gap-4">
-              <img
-                src={user.avatar_url || "/avatar.png"}
-                alt={user.full_name || user.username}
-                className="h-16 w-16 sm:h-24 sm:w-24 rounded-full ring-4 ring-primary/20 object-cover flex-shrink-0"
-              />
+    <div className="space-y-6 animate-in pb-10">
+      {/* ══════════ HERO HEADER ══════════ */}
+      <Card className="glass border-border/50 overflow-hidden relative">
+        {/* Gradient banner */}
+        <div className="h-28 sm:h-36 bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10 relative">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,hsl(var(--primary)/0.15),transparent_60%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,hsl(var(--accent)/0.1),transparent_60%)]" />
+        </div>
 
-              <div className="flex-1 min-w-0 space-y-3">
-                <div>
-                  <h1 className="text-xl sm:text-3xl font-heading font-bold break-words">{user.full_name || user.username}</h1>
-                  <p className="text-muted-foreground">{user.email}</p>
-                  {user.bio && <p className="text-sm mt-2 max-w-lg">{user.bio}</p>}
-
-                  <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-muted-foreground">
-                    {user.location && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        {user.location}
-                      </div>
-                    )}
-                    {user.website_url && (
-                      <a href={user.website_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors">
-                        <LinkIcon className="h-4 w-4" />
-                        Website
-                      </a>
-                    )}
-                    {user.github_url && (
-                      <a href={user.github_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors">
-                        <Github className="h-4 w-4" />
-                        GitHub
-                      </a>
-                    )}
-                    {user.linkedin_url && (
-                      <a href={user.linkedin_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors">
-                        <Linkedin className="h-4 w-4" />
-                        LinkedIn
-                      </a>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 mt-4">
-                    <Badge variant="secondary" className="text-sm">
-                      Level {level}
-                    </Badge>
-                    <Badge variant="outline" className="text-sm">
-                      {user.is_superuser ? "Admin" : "Member"}
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* XP PROGRESS */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Progress to Level {level + 1}</span>
-                    <span className="font-medium text-primary">{Math.round(xpProgress)}%</span>
-                  </div>
-
-                  <Progress value={xpProgress} className="h-2" />
-                </div>
-
-                {/* ACTIONS */}
-                <div className="flex gap-2 flex-wrap items-center">
-                  <EditProfileDialog user={user} onUpdate={handleUserUpdate} />
-                  <Button variant="outline" size="sm">
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Share
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
-                  </Button>
-
-                  {/* ── Dark / Light Mode Toggle ── */}
-                  <button
-                    onClick={toggleTheme}
-                    title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '6px 14px',
-                      borderRadius: 100,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      fontFamily: "'DM Sans', sans-serif",
-                      background: 'var(--surface2)',
-                      color: 'var(--text)',
-                      border: '1px solid var(--border2)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      boxShadow: 'var(--shadow-sm)',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; }}
-                  >
-                    {/* Toggle track */}
-                    <div style={{
-                      width: 36,
-                      height: 20,
-                      borderRadius: 99,
-                      background: theme === 'dark' ? 'var(--accent)' : 'var(--surface2)',
-                      border: '1px solid var(--border2)',
-                      position: 'relative',
-                      transition: 'background 0.25s ease',
-                    }}>
-                      <div style={{
-                        position: 'absolute',
-                        top: 2,
-                        left: theme === 'dark' ? 18 : 2,
-                        width: 14,
-                        height: 14,
-                        borderRadius: '50%',
-                        background: theme === 'dark' ? '#fff' : 'var(--accent)',
-                        transition: 'left 0.25s ease',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                      }} />
-                    </div>
-                    <span style={{ fontSize: 15 }}>{theme === 'dark' ? '🌙' : '☀️'}</span>
-                    <span>{theme === 'dark' ? 'Dark' : 'Light'}</span>
-                  </button>
-                </div>
+        <CardContent className="relative px-4 sm:px-6 pb-6">
+          {/* Avatar — overlapping the banner */}
+          <div className="-mt-14 sm:-mt-16 mb-4 flex flex-col sm:flex-row items-start gap-4">
+            <div className="relative">
+              <AvatarUpload user={user} onUpdate={handleUserUpdate} size="lg" />
+              {/* Level badge on avatar */}
+              <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full h-7 w-7 flex items-center justify-center shadow-md ring-2 ring-background">
+                {level}
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* STATS CARDS - side by side on mobile */}
-        <div className="grid grid-cols-2 gap-3 sm:hidden">
-          <Card className="glass border-border/50">
-            <CardContent className="p-4 text-center">
-              <Flame className="h-6 w-6 text-destructive mx-auto mb-1" />
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">Day Streak</p>
-            </CardContent>
-          </Card>
-          <Card className="glass border-border/50">
-            <CardContent className="p-4 text-center">
-              <Trophy className="h-6 w-6 text-primary mx-auto mb-1" />
-              <div className="text-2xl font-bold">{(xp).toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">Total XP</p>
-            </CardContent>
-          </Card>
-        </div>
+            <div className="flex-1 min-w-0 space-y-2 pt-1">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-heading font-bold break-words leading-tight">
+                  {user.full_name || user.username}
+                </h1>
+                <p className="text-muted-foreground text-sm">@{user.username}</p>
+                {user.bio && (
+                  <p className="text-sm mt-2 text-muted-foreground max-w-lg leading-relaxed">{user.bio}</p>
+                )}
+              </div>
 
-        {/* STATS CARDS - stacked on desktop */}
-        <div className="hidden sm:flex flex-col gap-4 w-full md:w-64">
-          <Card className="glass border-border/50">
-            <CardContent className="p-4 text-center">
-              <Flame className="h-8 w-8 text-destructive mx-auto mb-2" />
-              <div className="text-3xl font-bold">0</div>
-              <p className="text-sm text-muted-foreground">Day Streak</p>
-            </CardContent>
-          </Card>
-          <Card className="glass border-border/50">
-            <CardContent className="p-4 text-center">
-              <Trophy className="h-8 w-8 text-primary mx-auto mb-2" />
-              <div className="text-3xl font-bold">{(xp).toLocaleString()}</div>
-              <p className="text-sm text-muted-foreground">Total XP</p>
-            </CardContent>
-          </Card>
-        </div>
+              {/* Social links */}
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                {user.location && (
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" /> {user.location}
+                  </div>
+                )}
+                {user.website_url && (
+                  <a href={user.website_url} target="_blank" rel="noreferrer"
+                    className="flex items-center gap-1 hover:text-primary transition-colors">
+                    <LinkIcon className="h-3.5 w-3.5" /> Website
+                  </a>
+                )}
+                {user.github_url && (
+                  <a href={user.github_url} target="_blank" rel="noreferrer"
+                    className="flex items-center gap-1 hover:text-primary transition-colors">
+                    <Github className="h-3.5 w-3.5" /> GitHub
+                  </a>
+                )}
+                {user.linkedin_url && (
+                  <a href={user.linkedin_url} target="_blank" rel="noreferrer"
+                    className="flex items-center gap-1 hover:text-primary transition-colors">
+                    <Linkedin className="h-3.5 w-3.5" /> LinkedIn
+                  </a>
+                )}
+              </div>
+
+              {/* Badges */}
+              <div className="flex items-center gap-2">
+                <Badge className="bg-primary/10 text-primary border-primary/20 text-xs gap-1">
+                  <Zap className="h-3 w-3" /> Level {level}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {user.is_superuser ? "Admin" : "Member"}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          {/* XP Progress */}
+          <div className="space-y-1.5 mt-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground text-xs">Progress to Level {level + 1}</span>
+              <span className="text-xs font-medium text-primary">{xp % xpToNextLevel} / {xpToNextLevel} XP</span>
+            </div>
+            <div className="relative">
+              <Progress value={xpProgress} className="h-2" />
+              <div
+                className="absolute top-0 left-0 h-2 rounded-full bg-primary/20 blur-sm transition-all duration-500"
+                style={{ width: `${xpProgress}%` }}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ══════════ STATS GRID ══════════ */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          {
+            icon: Target, label: "Solved",
+            value: stats?.solved ?? 0, color: "text-primary",
+            bg: "bg-primary/10",
+          },
+          {
+            icon: Flame, label: "Streak",
+            value: 0, suffix: " days", color: "text-destructive",
+            bg: "bg-destructive/10",
+          },
+          {
+            icon: Trophy, label: "Total XP",
+            value: xp, color: "text-primary",
+            bg: "bg-primary/10",
+          },
+          {
+            icon: BarChart3, label: "Completion",
+            value: stats?.completion_percentage ?? 0, suffix: "%", color: "text-success",
+            bg: "bg-success/10",
+          },
+        ].map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={i} className="glass border-border/50 hover:shadow-md transition-shadow">
+              <CardContent className="p-4 flex flex-col items-center text-center gap-1">
+                <div className={`rounded-full p-2 ${stat.bg} mb-1`}>
+                  <Icon className={`h-5 w-5 ${stat.color}`} />
+                </div>
+                <div className="text-2xl font-bold">
+                  {typeof stat.value === "number" ? stat.value.toLocaleString() : stat.value}
+                  {stat.suffix && <span className="text-sm font-normal text-muted-foreground">{stat.suffix}</span>}
+                </div>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      {/* TABS */}
-      <Tabs defaultValue="activity" className="space-y-6">
+      {/* ══════════ TABS ══════════ */}
+      <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="glass border border-border/50 w-full flex">
-          <TabsTrigger value="activity" className="flex-1 text-xs sm:text-sm">Activity</TabsTrigger>
-          <TabsTrigger value="achievements" className="flex-1 text-xs sm:text-sm">Achievements</TabsTrigger>
-          <TabsTrigger value="stats" className="flex-1 text-xs sm:text-sm">Statistics</TabsTrigger>
-          <TabsTrigger value="sync" className="flex-1 text-xs sm:text-sm">Sync</TabsTrigger>
+          <TabsTrigger value="overview" className="flex-1 text-xs sm:text-sm gap-1.5">
+            <BookOpen className="h-3.5 w-3.5 hidden sm:block" /> Overview
+          </TabsTrigger>
+          <TabsTrigger value="achievements" className="flex-1 text-xs sm:text-sm gap-1.5">
+            <Trophy className="h-3.5 w-3.5 hidden sm:block" /> Achievements
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex-1 text-xs sm:text-sm gap-1.5">
+            <Settings className="h-3.5 w-3.5 hidden sm:block" /> Settings
+          </TabsTrigger>
         </TabsList>
 
-        {/* ACTIVITY TAB */}
-        <TabsContent value="activity" className="space-y-4">
+        {/* ── OVERVIEW TAB ── */}
+        <TabsContent value="overview" className="space-y-4">
           <Card className="glass border-border/50">
             <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
+              <CardTitle className="text-base">Recent Activity</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {activities.map((activity: any, index: number) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-4 p-4 rounded-lg bg-muted/50"
-                >
-                  <div className="flex-shrink-0 rounded-full bg-primary/10 p-2">
-                    <Target className="h-4 w-4 text-primary" />
-                  </div>
+            <CardContent className="space-y-3">
+              {activities.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No activity yet. Start learning to see your progress here!
+                </p>
+              ) : (
+                activities.map((activity: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 border border-border/30 hover:bg-muted/50 transition-colors"
+                    style={{ animationDelay: `${index * 80}ms` }}
+                  >
+                    <div className={`flex-shrink-0 rounded-full p-2 ${
+                      activity.type === "problem_solved" ? "bg-primary/10" :
+                      activity.type === "streak_milestone" ? "bg-destructive/10" :
+                      activity.type === "level_up" ? "bg-success/10" :
+                      "bg-info/10"
+                    }`}>
+                      <Target className={`h-4 w-4 ${
+                        activity.type === "problem_solved" ? "text-primary" :
+                        activity.type === "streak_milestone" ? "text-destructive" :
+                        activity.type === "level_up" ? "text-success" :
+                        "text-info"
+                      }`} />
+                    </div>
 
-                  <div className="flex-1 space-y-1">
-                    <h4 className="font-medium text-sm">{activity.title}</h4>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-sm">{activity.title}</h4>
+                      <p className="text-xs text-muted-foreground">{activity.time || activity.description}</p>
+                    </div>
+
+                    {activity.xpGained && (
+                      <Badge variant="secondary" className="text-xs shrink-0">
+                        +{activity.xpGained} XP
+                      </Badge>
+                    )}
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </CardContent>
           </Card>
+
+          {/* Quick Stats */}
+          {stats && (
+            <Card className="glass border-border/50">
+              <CardHeader>
+                <CardTitle className="text-base">Problem Solving</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Problems Solved</span>
+                    <span className="font-medium">{stats.solved} / {stats.total_problems}</span>
+                  </div>
+                  <Progress value={stats.completion_percentage} className="h-2" />
+                  <p className="text-xs text-muted-foreground text-center">
+                    {stats.completion_percentage}% complete
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
-        {/* ACHIEVEMENTS TAB */}
+        {/* ── ACHIEVEMENTS TAB ── */}
         <TabsContent value="achievements">
           <Card className="glass border-border/50">
             <CardHeader>
-              <CardTitle>Achievements</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Achievements</CardTitle>
+                <Badge variant="secondary" className="text-xs">
+                  {achievements.filter(a => a.earned).length} / {achievements.length}
+                </Badge>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {achievements.map((a) => {
                   const Icon = a.icon;
                   return (
                     <div
                       key={a.id}
-                      className={`p-4 rounded-lg border transition-all ${a.earned ? "bg-primary/5 border-primary/20 hover:bg-primary/10" : "bg-muted/30 border-border/50 opacity-60"
-                        }`}
+                      className={`p-4 rounded-xl border transition-all duration-200 ${
+                        a.earned
+                          ? "bg-primary/5 border-primary/20 hover:bg-primary/10 hover:shadow-sm"
+                          : "bg-muted/20 border-border/30 opacity-50"
+                      }`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className={`rounded-full p-2 ${a.earned ? "bg-primary/10" : "bg-muted"}`}>
+                        <div className={`rounded-full p-2.5 ${a.earned ? "bg-primary/10" : "bg-muted/50"}`}>
                           <Icon className={`h-5 w-5 ${a.earned ? "text-primary" : "text-muted-foreground"}`} />
                         </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-sm">{a.title}</h4>
-                          <p className="text-xs text-muted-foreground mt-1">{a.description}</p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium text-sm">{a.title}</h4>
+                            {a.earned && <CheckCircle2 className="h-3.5 w-3.5 text-success flex-shrink-0" />}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">{a.description}</p>
                         </div>
                       </div>
                     </div>
@@ -310,14 +331,9 @@ const Profile = () => {
           </Card>
         </TabsContent>
 
-        {/* STATS TAB */}
-        <TabsContent value="stats">
-          <p className="text-muted-foreground text-sm">Coming soon…</p>
-        </TabsContent>
-
-        {/* SYNC TAB */}
-        <TabsContent value="sync">
-          <p className="text-muted-foreground text-sm">Integration with LeetCode, GitHub, HackerRank coming soon.</p>
+        {/* ── SETTINGS TAB ── */}
+        <TabsContent value="settings">
+          <SettingsTab user={user} onUpdate={handleUserUpdate} />
         </TabsContent>
       </Tabs>
     </div>

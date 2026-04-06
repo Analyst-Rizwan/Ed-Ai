@@ -1,0 +1,336 @@
+# Opportunities Page Overhaul — Implementation Plan
+
+Overhaul the job scraper backend and frontend Opportunities page to support a wider array of job sources with more reliable scraping methods, and modernize the UI for a premium experience.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Playwright Removal**: The plan proposes **replacing** the Playwright-based Naukri and Indeed scrapers with lighter httpx-based alternatives. Naukri and Indeed have heavy anti-bot protection, so the httpx versions may return fewer results. Do you want to keep Playwright as a fallback option, or fully remove it?
+
+> [!IMPORTANT]
+> **API Keys**: Two existing scrapers (Adzuna, Reed) use API keys. The new **JSearch (RapidAPI)** scraper is optional and also requires a key. Should we skip JSearch entirely, or add it with a graceful no-key fallback like the others?
+
+> [!WARNING]
+> **Remotive Terms of Service**: Remotive's API should not be called more than 4 times/day. Our 30-min cache TTL would call it ~48 times/day on heavy usage. The plan increases cache TTL to 60 minutes and adds per-source rate limiting to stay compliant.
+
+---
+
+## Current State Summary
+
+Based on the [previous report](file:///C:/Users/rizwa/.gemini/antigravity/brain/2eae17dd-ba77-460c-bed6-95bffcb7f860/job_scraper_report.md):
+
+- **13 scrapers, 16 concurrent tasks** — but many HTML scrapers are brittle and frequently blocked
+- **2 scrapers use Playwright** (Naukri, Indeed) — heavy, ~500MB dependency, each spawns a browser
+- **1 scraper completely unused** (Himalayas — free JSON API, already coded)
+- **Single-key cache** — all queries share one cache bucket
+- **No scraper health visibility** — failures silently return `[]`
+- **No mobile job detail view** — right panel is `hidden lg:block`
+
+---
+
+## Proposed Changes
+
+### Phase 1: New Scrapers — Add 5 Free API Sources + Enable Himalayas
+
+Add reliable, free, JSON-based scrapers that don't break when sites update their HTML.
+
+---
+
+#### [NEW] [remotive.py](file:///d:/Ed-!/backend/app/services/job_scraper/scrapers/remotive.py)
+- **Source**: `https://remotive.com/api/remote-jobs`
+- **Auth**: None (free public JSON API)
+- **Method**: Simple httpx GET → JSON parse
+- **Fields**: title, company, salary, category, tags, publication date, apply URL
+- **Limit**: 50 jobs
+- **Region**: Global (remote-first)
+- **Rate limit compliance**: Max 4 calls/day — will be enforced by per-source rate limiting in the aggregator
+- **Emoji**: 🌐 | **Color**: `#157A6E`
+
+---
+
+#### [NEW] [arbeitnow.py](file:///d:/Ed-!/backend/app/services/job_scraper/scrapers/arbeitnow.py)
+- **Source**: `https://www.arbeitnow.com/api/job-board-api`
+- **Auth**: None (completely free, no key)
+- **Method**: httpx GET → JSON parse (paginated with `?page=1`)
+- **Fields**: title, company_name, location, remote, tags, url, description, created_at
+- **Limit**: 50 jobs
+- **Region**: Global (European-heavy)
+- **Emoji**: 🇪🇺 | **Color**: `#3B82F6`
+
+---
+
+#### [NEW] [jobicy.py](file:///d:/Ed-!/backend/app/services/job_scraper/scrapers/jobicy.py)
+- **Source**: `https://jobicy.com/api/v2/remote-jobs`
+- **Auth**: None (free public API)
+- **Method**: httpx GET → JSON parse
+- **Fields**: title, companyName, location, salary range, jobType, pubDate, url
+- **Limit**: 50 jobs
+- **Region**: Global remote
+- **Emoji**: 🏢 | **Color**: `#E11D48`
+
+---
+
+#### [NEW] [devitjobs.py](file:///d:/Ed-!/backend/app/services/job_scraper/scrapers/devitjobs.py)
+- **Source**: `https://devitjobs.com/api/jobslight` (or their public JSON endpoint)
+- **Auth**: None
+- **Method**: httpx GET → JSON parse
+- **Fields**: title, company, technologies, salary (transparent), location
+- **Limit**: 50 jobs
+- **Region**: Global (tech-focused)
+- **Emoji**: 💻 | **Color**: `#8B5CF6`
+
+---
+
+#### [MODIFY] [himalayas.py](file:///d:/Ed-!/backend/app/services/job_scraper/scrapers/himalayas.py)
+- **Change**: No code changes needed — file is already complete and working
+- **Action**: Import and enable in the aggregator (currently unused)
+
+---
+
+### Phase 2: Upgrade Existing Scrapers
+
+---
+
+#### [MODIFY] [linkedin.py](file:///d:/Ed-!/backend/app/services/job_scraper/scrapers/linkedin.py)
+Switch from the standard `/jobs/search` endpoint to the **guest API** endpoint which is more reliable:
+- **New URL**: `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search`
+- **Pagination**: Support `start` parameter (increment by 25)
+- **Benefits**: More structured HTML, less likely to be blocked, supports pagination
+- **Anti-bot**: Keep random user-agent, random delays, realistic headers
+
+---
+
+#### [MODIFY] [yc_jobs.py](file:///d:/Ed-!/backend/app/services/job_scraper/scrapers/yc_jobs.py)
+- Upgrade CSS selectors based on current site structure
+- Add better error handling with fallback selector strategies
+- Try to extract more metadata (company stage, funding, team size) from available HTML
+
+---
+
+#### [MODIFY] [glassdoor.py](file:///d:/Ed-!/backend/app/services/job_scraper/scrapers/glassdoor.py) — Wellfound section
+- Upgrade `fetch_wellfound()` selectors
+- Add cookie-based session handling for better success rate
+- Extract salary/equity ranges when available
+
+---
+
+#### [MODIFY] [naukri.py](file:///d:/Ed-!/backend/app/services/job_scraper/scrapers/naukri.py) — **Replace Playwright with httpx**
+- Naukri has an internal JSON API at `/jobapi/v3/search` that returns structured data
+- Switch from Playwright browser rendering to direct httpx requests with correct headers/cookies
+- **Impact**: Eliminates Playwright dependency for Naukri
+- **Fallback**: If `httpx` version returns nothing, log warning (can add Playwright back later if needed)
+
+---
+
+#### [MODIFY] [indeed.py](file:///d:/Ed-!/backend/app/services/job_scraper/scrapers/indeed.py) — **Replace Playwright with httpx**
+- Use the Indeed mobile/API endpoint or standard HTML scraping with httpx
+- Add better anti-bot headers (Accept-Encoding, sec-ch-ua, etc.)
+- **Impact**: Eliminates Playwright dependency for Indeed
+- **Fallback**: Same approach — graceful degradation if blocked
+
+---
+
+### Phase 3: Aggregator Upgrades
+
+#### [MODIFY] [aggregator.py](file:///d:/Ed-!/backend/app/services/job_scraper/aggregator.py)
+
+**3a. Per-Query Caching**
+```python
+# Before: Single cache key
+_CACHE: dict = {"jobs": [], "cached_at": 0.0}
+
+# After: Per-query cache buckets
+_CACHE: dict[str, dict] = {}  # {"software": {"jobs": [...], "cached_at": 123.0}, ...}
+CACHE_TTL = 60 * 60  # 60 minutes (up from 30)
+MAX_CACHE_BUCKETS = 10  # LRU eviction
+```
+
+**3b. Per-Source Rate Limiting**
+- Track last-call timestamps per scraper
+- Enforce minimum intervals: Remotive (6h), others (10min)
+- Prevents ToS violations on rate-limited APIs
+
+**3c. Scraper Health Tracking**
+```python
+_HEALTH: dict[str, dict] = {}
+# Example: {"remoteok": {"last_success": 123.0, "last_count": 45, "last_error": None, "consecutive_failures": 0}}
+```
+- Track success/failure/count per scraper per refresh cycle
+- Expose via new API endpoint `/opportunities/health`
+
+**3d. Better Deduplication**
+- Use fuzzy matching (Levenshtein distance) on titles instead of just `title[:40]`
+- Normalize company names (strip Inc, Ltd, etc.)
+- Prefer listings with more data (salary > no salary, description > no description)
+
+**3e. Updated Task List**
+Add new scrapers to the concurrent task list:
+```python
+tasks = [
+    # Tier 1: Free APIs / RSS (most reliable)
+    safe("remoteok",       remoteok.fetch(...)),
+    safe("weworkremotely", weworkremotely.fetch(...)),
+    safe("himalayas",      himalayas.fetch(...)),      # NEW: enable unused scraper
+    safe("remotive",       remotive.fetch(...)),       # NEW
+    safe("arbeitnow",      arbeitnow.fetch(...)),      # NEW
+    safe("jobicy",         jobicy.fetch(...)),          # NEW
+    safe("devitjobs",      devitjobs.fetch(...)),       # NEW
+
+    # Tier 1: Greenhouse JSON boards
+    safe("greenhouse",     greenhouse.fetch(...)),
+
+    # Tier 2: HTML scrapers (improved)
+    safe("linkedin",       linkedin.fetch(...)),        # UPGRADED: guest API
+    safe("instahyre",      instahyre.fetch(...)),
+    safe("yc_jobs",        yc_jobs.fetch(...)),         # UPGRADED
+    safe("naukri",         naukri.fetch(...)),           # UPGRADED: no Playwright
+    safe("internshala",    internshala.fetch(...)),
+    safe("indeed_india",   indeed.fetch(...)),           # UPGRADED: no Playwright
+    safe("indeed_remote",  indeed.fetch(...)),           # UPGRADED: no Playwright
+    safe("glassdoor",      glassdoor.fetch(...)),
+    safe("wellfound",      glassdoor.fetch_wellfound(...)), # UPGRADED
+
+    # Tier 3: API-keyed
+    safe("adzuna_in",      adzuna.fetch(...)),
+    safe("adzuna_gb",      adzuna.fetch(...)),
+    safe("adzuna_us",      adzuna.fetch(...)),
+    safe("reed",           reed.fetch(...)),
+]
+```
+**Total**: 21 concurrent tasks from 18+ platforms (up from 16 tasks / 13 scrapers)
+
+---
+
+### Phase 4: API Layer Updates
+
+#### [MODIFY] [routes_opportunities.py](file:///d:/Ed-!/backend/app/api/routes_opportunities.py)
+
+- **New endpoint**: `GET /opportunities/health` — returns per-scraper health status (last success, count, errors)
+  ```json
+  {
+    "scrapers": {
+      "remoteok": {"status": "ok", "last_count": 45, "last_success": "2026-04-07T02:00:00Z"},
+      "linkedin": {"status": "warn", "last_count": 0, "consecutive_failures": 3}
+    }
+  }
+  ```
+- **New filter**: `platform` query parameter — filter by specific source platform
+- **Better pagination metadata**: include `has_next`, `total_pages` in response
+
+---
+
+### Phase 5: Frontend Overhaul
+
+#### [MODIFY] [Opportunities.tsx](file:///d:/Ed-!/frontend/src/pages/Opportunities.tsx)
+
+**5a. Mobile Job Detail View**
+- Replace `hidden lg:block` right panel with a **slide-up drawer/modal** on mobile
+- When a job card is tapped on mobile, show full details in a bottom sheet
+
+**5b. Platform Filter Chips**
+- Add a horizontal scrollable row of platform logos/icons
+- Filter by LinkedIn, YC, Greenhouse, Naukri, etc.
+- Show platform count badge on each chip
+
+**5c. Infinite Scroll / Load More**
+- Replace current "load all 200" approach with paginated infinite scroll
+- Load 50 jobs at a time, fetch more as user scrolls
+
+**5d. Scraper Health Indicator**
+- Small status bar showing: "Aggregated from X platforms · Last updated Y minutes ago"
+- Optional expandable panel showing per-scraper health (for power users)
+
+**5e. Visual Polish**
+- Animated skeleton loaders with shimmer effect
+- Staggered card entrance animations
+- Glassmorphism on filter bar
+- Gradient accents on job type badges
+- Hover micro-interactions on cards (slight elevation + border glow)
+
+**5f. Enhanced Job Cards**
+- Show company logo placeholder (first letter avatar with brand color)
+- Better salary display with currency icon
+- "New" badge for jobs posted < 24h ago
+- Tag overflow with "+N more" indicator
+
+#### [MODIFY] [api.ts](file:///d:/Ed-!/frontend/src/lib/api.ts)
+- Add `platform` filter parameter to `opportunitiesApi.getJobs()`
+- Add `opportunitiesApi.getHealth()` method
+- Add `has_next` and `total_pages` to `OpportunitiesResponse` type
+
+---
+
+## Open Questions
+
+> [!IMPORTANT]
+> 1. **Playwright removal** — Should we fully remove the Playwright dependency, or keep it as an optional fallback for Naukri/Indeed? Removing it saves ~500MB in Docker image size.
+
+> [!IMPORTANT]
+> 2. **JSearch (RapidAPI)** — Worth adding as an optional Tier 3 API-keyed scraper? It aggregates from Google Jobs and can pull from many sources, but requires a RapidAPI key.
+
+3. **Background refresh** — Should we add a periodic background task (e.g. every 60 min) that pre-fills the cache, instead of only refreshing on user requests? This would make first-load instant.
+
+4. **Company logos** — Should we try to fetch real company logos (e.g. from Clearbit Logo API `https://logo.clearbit.com/{domain}`) or stick with emoji/letter avatars?
+
+---
+
+## Verification Plan
+
+### Automated Tests
+
+1. **Unit test each new scraper** independently:
+   ```bash
+   cd d:\Ed-!\backend
+   python -m pytest tests/test_scrapers.py -v
+   ```
+   - Mock httpx responses with sample JSON from each API
+   - Verify correct `JobListing` model output
+
+2. **Integration test the aggregator**:
+   - Test per-query caching works (different queries → different cache buckets)
+   - Test deduplication with fuzzy matching
+   - Test scraper health tracking
+
+3. **API endpoint tests**:
+   - Test `/opportunities/health` returns correct structure
+   - Test `platform` filter parameter works
+   - Test pagination with `has_next`
+
+### Manual Verification
+
+4. **Start both servers** and verify:
+   ```bash
+   cd d:\Ed-!\backend && python -m uvicorn app.main:app --reload
+   cd d:\Ed-!\frontend && npm run dev
+   ```
+   - Browse the Opportunities page
+   - Check that new platforms appear in the feed
+   - Verify mobile responsive layout (resize browser)
+   - Test all filter combinations
+   - Verify scraper health indicator shows accurate data
+
+5. **Browser recording** — Record a demo walkthrough of the new Opportunities page
+
+### Scraper Reliability Matrix (Expected)
+
+| Scraper | Method | Reliability | Expected Jobs |
+|---|---|---|---|
+| RemoteOK | JSON API | ⭐⭐⭐⭐ | 40–60 |
+| WeWorkRemotely | RSS | ⭐⭐⭐⭐ | 20–40 |
+| **Himalayas** | JSON API | ⭐⭐⭐⭐ | 30–50 |
+| **Remotive** | JSON API | ⭐⭐⭐⭐ | 30–50 |
+| **Arbeitnow** | JSON API | ⭐⭐⭐⭐ | 30–50 |
+| **Jobicy** | JSON API | ⭐⭐⭐⭐ | 20–40 |
+| **DevItJobs** | JSON API | ⭐⭐⭐ | 20–40 |
+| Greenhouse (×40) | JSON API | ⭐⭐⭐⭐⭐ | 100–200 |
+| LinkedIn (guest) | HTML scrape | ⭐⭐⭐ | 20–50 |
+| InstaHyre | HTML scrape | ⭐⭐⭐ | 20–40 |
+| YC Jobs | HTML scrape | ⭐⭐ | 10–30 |
+| Naukri (httpx) | HTML/JSON | ⭐⭐⭐ | 30–60 |
+| Internshala | HTML scrape | ⭐⭐⭐ | 30–50 |
+| Indeed (httpx) | HTML scrape | ⭐⭐ | 15–40 |
+| Glassdoor | HTML scrape | ⭐⭐ | 10–30 |
+| Wellfound | HTML scrape | ⭐⭐ | 10–20 |
+| Adzuna (×3) | REST API | ⭐⭐⭐⭐⭐ | 30–50 |
+| Reed | REST API | ⭐⭐⭐⭐⭐ | 10–15 |
+| **Total Expected** | | | **~400–900 unique jobs** |

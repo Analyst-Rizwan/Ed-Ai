@@ -409,6 +409,53 @@ export const opportunitiesApi = {
 };
 
 // ============================================================
+// PROFILE TYPES & API
+// ============================================================
+export interface ProfileStats {
+  total_problems: number;
+  solved: number;
+  completion_percentage: number;
+}
+
+export const profileApi = {
+  /** Upload avatar image (multipart/form-data) */
+  uploadAvatar: async (file: File): Promise<User> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const headers: Record<string, string> = {};
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+
+    const response = await fetch(`${API_URL}/profile/avatar`, {
+      method: "POST",
+      headers, // No Content-Type — browser sets multipart boundary
+      body: formData,
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ detail: "Upload failed" }));
+      throw new Error(err.detail || "Upload failed");
+    }
+
+    return response.json();
+  },
+
+  /** Remove avatar */
+  deleteAvatar: async (): Promise<User> => {
+    return fetchWithAuth("/profile/avatar", { method: "DELETE" });
+  },
+
+  /** Get profile stats (problems solved, etc.) */
+  getStats: async (): Promise<ProfileStats> => {
+    return fetchWithAuth("/profile/stats");
+  },
+};
+
+
+// ============================================================
 // GITHUB TYPES & API
 // ============================================================
 export interface GitHubStatus {
@@ -557,6 +604,7 @@ export default {
   leetcode: leetcodeApi,
   dashboard: dashboardApi,
   opportunities: opportunitiesApi,
+  profile: profileApi,
   github: githubApi,
   interview: interviewApi,
   code: codeApi,
