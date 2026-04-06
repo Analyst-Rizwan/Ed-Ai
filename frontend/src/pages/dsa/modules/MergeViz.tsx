@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, Log, Badge, useStepGuide } from "../shared";
+import { Btn, Side, SLabel, LogSection, Badge, useStepGuide } from "../shared";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function MergeViz(){
@@ -61,7 +61,7 @@ export default function MergeViz(){
           }, 3, 3);
           setLeftInput("3 8 14 21 35");setRightInput("1 6 10 18 28 42");setTimeout(buildSteps,50);
         }} variant="yellow" full>⚡ Learn Merge</Btn>
-        <SLabel>Log</SLabel><Log entries={log}/>
+        <LogSection entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
           <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"16px 12px",position:"relative",overflowY:"auto",overflowX:"hidden"}}>

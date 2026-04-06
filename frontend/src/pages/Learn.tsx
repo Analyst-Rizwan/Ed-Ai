@@ -8,6 +8,8 @@ import {
   SUBJECT_COLORS, SUBJECT_ICONS, SUBJECT_LABELS,
   type Lesson,
 } from "@/data/learnData";
+import { useIsMobile } from "@/hooks/use-mobile";
+import LearnMobile from "./LearnMobile";
 
 // Lazy-loaded CodeViz modules
 const SortingViz    = lazy(() => import("./dsa/modules/SortingViz"));
@@ -86,6 +88,7 @@ interface ChatMsg { id: string; role: "user"|"ai"; text: string; }
 // Main Component
 // ════════════════════════════════════════════════════════════════════════════
 const Learn: React.FC = () => {
+  const isMobile = useIsMobile();
   const [tab, setTab] = useState<"lessons"|"concepts"|"notes"|"tutor"|"visualize">("lessons");
 
   // ── Lessons state ──────────────────────────────────────────────────────
@@ -317,8 +320,9 @@ const Learn: React.FC = () => {
   };
 
   // ────────────────────────────────────────────────────────────────────────
-  // JSX
+  // JSX — mobile renders dedicated LearnMobile component
   // ────────────────────────────────────────────────────────────────────────
+  if (isMobile) return <LearnMobile />;
   return (
     <div style={S.page}>
       {/* TOP BAR */}
@@ -416,7 +420,7 @@ const Learn: React.FC = () => {
               </div>
             )}
 
-            {/* Right panel */}
+            {/* Right panel — hidden on mobile */}
             <div style={{ width:240, minWidth:240, borderLeft:"1px solid var(--border)", padding:16, display:"flex", flexDirection:"column", gap:14, overflowY:"auto" }}>
               <div>
                 <div style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>Up Next</div>

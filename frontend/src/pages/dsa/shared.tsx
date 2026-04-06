@@ -73,9 +73,17 @@ export const Log = ({entries}:{entries:{m:string,t:string}[]})=>{
   </div>;
 };
 
+/* ── Log Section (hidden on mobile to maximise viz space) ── */
+export const LogSection = ({entries}:{entries:{m:string,t:string}[]})=>(
+  <div className="hidden md:block">
+    <SLabel>Log</SLabel>
+    <Log entries={entries}/>
+  </div>
+);
+
 /* ── Sidebar Panel ── */
 export const Side = ({children}:{children:any})=>(
-  <div className="w-full max-h-[42vh] md:max-h-none md:w-56 md:min-w-[224px] border-b md:border-b-0 md:border-r p-3 md:p-4 flex flex-col gap-2.5 md:gap-4 overflow-y-auto shrink-0" style={{borderColor:T.border, background:T.bg}}>
+  <div className="w-full max-h-[28vh] md:max-h-none md:w-56 md:min-w-[224px] border-b md:border-b-0 md:border-r p-3 md:p-4 flex flex-col gap-2.5 md:gap-4 overflow-y-auto shrink-0" style={{borderColor:T.border, background:T.bg}}>
     {children}
   </div>
 );

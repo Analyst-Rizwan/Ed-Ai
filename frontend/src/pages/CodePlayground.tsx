@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { codeApi, ExecuteResponse } from "@/lib/api";
 import { useTheme } from "@/context/ThemeContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import "./CodePlayground.css";
 
 // ─── Language definitions ──────────────────────────────────────────────────
@@ -170,6 +171,7 @@ function getStatusInfo(statusId: number): { label: string; kind: RunStatus } {
 const CodePlayground = () => {
   const { theme } = useTheme();
   const monacoTheme = theme === "light" ? "vs-light" : "vs-dark";
+  const isMobile = useIsMobile();
 
   const [selectedLang, setSelectedLang] = useState<Language>(LANGUAGES[0]);
   const [code, setCode] = useState<string>(LANGUAGES[0].boilerplate);
@@ -380,7 +382,7 @@ const CodePlayground = () => {
         <PanelGroup direction="vertical">
 
           {/* ── Monaco Editor Panel ──────────────────────────────────── */}
-          <Panel defaultSize={62} minSize={25} id="editor-panel">
+          <Panel defaultSize={isMobile ? 55 : 62} minSize={20} id="editor-panel">
             <div className="pg-editor-panel" style={{ height: "100%" }}>
               {/* Editor tab bar */}
               <div className="pg-editor-tabs">
@@ -403,12 +405,13 @@ const CodePlayground = () => {
                   onChange={(val) => setCode(val ?? "")}
                   theme={monacoTheme === "vs-dark" ? "vs-dark" : "light"}
                   options={{
-                    fontSize: 14,
+                    fontSize: isMobile ? 12 : 14,
                     fontFamily: "'JetBrains Mono', 'Fira Code', 'Space Mono', monospace",
                     fontLigatures: true,
                     minimap: { enabled: false },
                     scrollBeyondLastLine: false,
-                    padding: { top: 14, bottom: 14 },
+                    padding: { top: isMobile ? 8 : 14, bottom: isMobile ? 8 : 14 },
+                    lineNumbers: isMobile ? "off" : "on",
                     lineHeight: 1.7,
                     renderWhitespace: "selection",
                     smoothScrolling: true,
@@ -433,7 +436,7 @@ const CodePlayground = () => {
           <PanelResizeHandle id="main-resize-handle" />
 
           {/* ── Output Panel ─────────────────────────────────────────── */}
-          <Panel defaultSize={38} minSize={15} id="output-panel">
+          <Panel defaultSize={isMobile ? 45 : 38} minSize={15} id="output-panel">
             <div className="pg-output-panel" style={{ height: "100%" }}>
               {/* Output tab bar */}
               <div className="pg-output-header">

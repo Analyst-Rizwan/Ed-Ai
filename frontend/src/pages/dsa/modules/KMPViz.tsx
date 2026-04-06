@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, Log, Input, Badge, useStepGuide, useAnimation, Controls } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, LogSection, Input, Badge, useStepGuide, useAnimation, Controls } from "../shared";
 
 type CharState = "idle" | "match" | "mismatch" | "active" | "skip" | "found";
 
@@ -34,7 +34,7 @@ export default function KMPViz() {
   const [patStates, setPatStates] = useState<CharState[]>([]);
   const [matches, setMatches] = useState<number[]>([]);
   const [label, setLabel] = useState("Enter text & pattern, then press ▶ Run");
-  const [log, setLog] = useState<{ m: string; t: string }[]>([]);
+  const [LogSection, setLog] = useState<{ m: string; t: string }[]>([]);
   const addLog = (m: string, t = "info") => setLog(l => [...l.slice(-28), { m, t }]);
   const guide = useStepGuide();
 
@@ -213,7 +213,7 @@ export default function KMPViz() {
         <div><SLabel>Pattern</SLabel><div style={{ marginTop: 6 }}><Input value={pattern} onChange={setPattern} placeholder="e.g. ABABC" mono /></div></div>
         <Controls anim={anim} run={run} reset={reset} />
         <div><SLabel>Speed</SLabel><div style={{ marginTop: 6 }}><SpeedRow speed={speed} setSpeed={setSpeed} /></div></div>
-        <SLabel>Log</SLabel><Log entries={log} />
+        <LogSection entries={log}/>
       </Side>
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>

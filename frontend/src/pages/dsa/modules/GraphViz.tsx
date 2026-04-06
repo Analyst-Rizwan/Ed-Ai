@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, Log, Badge, Select, useStepGuide, useAnimation, Controls } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, LogSection, Badge, Select, useStepGuide, useAnimation, Controls } from "../shared";
 
 const GRAPH_PRESET = {
   nodes: [
@@ -39,7 +39,7 @@ export default function GraphViz() {
   const [pathNodes, setPathNodes] = useState(new Set<string>());
   const [queue, setQueue] = useState<string[]>([]);
   const [dist, setDist] = useState<Record<string, number>>({});
-  const [log, setLog] = useState<{ m: string; t: string }[]>([]);
+  const [LogSection, setLog] = useState<{ m: string; t: string }[]>([]);
   const anim = useAnimation();
   const [speed, setSpeed] = useState(500);
   const [label, setLabel] = useState("Press Run to start");
@@ -328,7 +328,7 @@ export default function GraphViz() {
         {algo === "bfs" && queue.length > 0 && (
           <div><SLabel>Queue</SLabel><div style={{ display: "flex", gap: 4, marginTop: 6, flexWrap: "wrap" }}>{queue.map((n, i) => <Badge key={i} color={T.yellow}>{n}</Badge>)}</div></div>
         )}
-        <SLabel>Log</SLabel><Log entries={log} />
+        <LogSection entries={log}/>
       </Side>
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>

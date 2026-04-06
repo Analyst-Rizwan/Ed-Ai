@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, Log, Select, useStepGuide, useAnimation, Controls } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, LogSection, Select, useStepGuide, useAnimation, Controls } from "../shared";
 import { motion } from "framer-motion";
 
 function genArr(n=16){return Array.from({length:n},(_,i)=>({id:`id-${Date.now()}-${i}`,val:Math.floor(Math.random()*90+8),state:"idle"}));}
@@ -230,7 +230,7 @@ export default function SortingViz(){
             </div>
           ))}
         </div>
-        <SLabel>Log</SLabel><Log entries={log}/>
+        <LogSection entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0,overflow:"hidden",position:"relative"}}>
         <guide.Overlay/>

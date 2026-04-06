@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, Log, Input, useStepGuide } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, LogSection, Input, useStepGuide } from "../shared";
 
 type N={val:number,left:N|null,right:N|null};
 function ins(root:N|null,v:number):N{if(!root)return{val:v,left:null,right:null};if(v<root.val)root.left=ins(root.left,v);else if(v>root.val)root.right=ins(root.right,v);return root;}
@@ -58,7 +58,7 @@ export default function BSTViz(){
         <Btn onClick={remove} variant="red" full>⊖ Delete</Btn>
         <Btn onClick={loadExample} variant="yellow" full>⚡ Learn BST</Btn>
         <Btn onClick={()=>{setRoot(null);addLog("reset","info")}} variant="ghost" full>↺ Reset</Btn>
-        <SLabel>Log</SLabel><Log entries={log}/>
+        <LogSection entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>
         <div style={{flex:1,display:"flex",alignItems:"flex-start",justifyContent:"center",overflow:"auto",position:"relative"}}>

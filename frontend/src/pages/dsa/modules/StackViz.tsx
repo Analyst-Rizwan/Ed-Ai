@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T, sleep } from "../theme";
-import { Btn, Side, SLabel, Log, Input, useStepGuide } from "../shared";
+import { Btn, Side, SLabel, LogSection, Input, useStepGuide } from "../shared";
 
 export default function StackViz(){
   const [stack,setStack]=useState<number[]>([]);
@@ -127,7 +127,7 @@ export default function StackViz(){
         <Btn onClick={peek} variant="teal" disabled={!stack.length} full>👁 Peek</Btn>
         <Btn onClick={runDemo} variant="yellow" full>⚡ Learn Stack</Btn>
         <Btn onClick={()=>{setStack([]);addLog("reset","info")}} variant="ghost" full>↺ Reset</Btn>
-        <SLabel>Log</SLabel><Log entries={log}/>
+        <LogSection entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>
         <div style={{flex:1,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:28,position:"relative"}}>

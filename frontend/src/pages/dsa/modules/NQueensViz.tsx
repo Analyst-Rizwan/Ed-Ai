@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, Log, Select, useStepGuide, useAnimation, Controls } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, LogSection, Select, useStepGuide, useAnimation, Controls } from "../shared";
 
 type Cell = "empty" | "queen" | "conflict" | "safe" | "backtrack" | "placed";
 
@@ -31,7 +31,7 @@ export default function NQueensViz() {
   const anim = useAnimation();
   const [board, setBoard] = useState<Cell[][]>([]);
   const [label, setLabel] = useState("Press ▶ Run to start backtracking");
-  const [log, setLog] = useState<{ m: string; t: string }[]>([]);
+  const [LogSection, setLog] = useState<{ m: string; t: string }[]>([]);
   const [solutions, setSolutions] = useState(0);
   const [stats, setStats] = useState({ placements: 0, backtracks: 0 });
   const statsRef = useRef({ placements: 0, backtracks: 0 });
@@ -199,7 +199,7 @@ export default function NQueensViz() {
             </div>
           ))}
         </div>
-        <SLabel>Log</SLabel><Log entries={log} />
+        <LogSection entries={log}/>
       </Side>
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, Log, Input, Select, Badge, useStepGuide } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, LogSection, Input, Select, Badge, useStepGuide } from "../shared";
 
 export default function DPViz(){
   const [dpType,setDpType]=useState("fib");
@@ -102,7 +102,7 @@ export default function DPViz(){
           else{setWeights("1 3 4 5");setValues("1 4 5 7");setCapacity("7");setTimeout(build,50);}
         }} variant="yellow" full>⚡ Learn DP</Btn>
 
-        <SLabel>Log</SLabel><Log entries={log}/>
+        <LogSection entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
         <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",gap:12,padding:"20px 24px",position:"relative"}}>

@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, Log, Input, useStepGuide, useAnimation, Controls } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, LogSection, Input, useStepGuide, useAnimation, Controls } from "../shared";
 
 export default function HeapViz(){
   const [heap,setHeap]=useState<number[]>([]);
@@ -110,7 +110,7 @@ export default function HeapViz(){
         <Btn onClick={()=>{setHeap([]);setHighlighted([]);addLog("reset","info");anim.reset();}} variant="ghost" disabled={anim.running} full>↺ Clear Tree</Btn>
         <div><SLabel>Speed</SLabel><div style={{marginTop:6}}><SpeedRow speed={speed} setSpeed={setSpeed}/></div></div>
 
-        <SLabel>Log</SLabel><Log entries={log}/>
+        <LogSection entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>
         <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>

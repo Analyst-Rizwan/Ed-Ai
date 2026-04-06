@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { QUESTIONS, FEEDBACK_TEMPLATES, ALL_QUESTIONS, DEFAULT_STORIES, COMPANIES } from "./interview-prep/data";
 import type { CompanyData } from "./interview-prep/data";
 import { interviewApi } from "@/lib/api";
+import { useIsMobile } from "@/hooks/use-mobile";
+import InterviewPrepMobile from "./InterviewPrepMobile";
 
 // ── Types ────────────────────────────────────────────────
 type Difficulty = "easy" | "medium" | "hard";
@@ -43,6 +45,7 @@ function scoreColor(s: number) { return s >= 80 ? "text-emerald-400" : s >= 65 ?
 // ══════════════════════════════════════════════════════════
 const InterviewPrep = () => {
     const { toast } = useToast();
+    const isMobile = useIsMobile();
     const [activeTab, setActiveTab] = useState<Tab>("bank");
 
     // ── QUESTION BANK STATE ────────────────────────────────
@@ -247,6 +250,8 @@ const InterviewPrep = () => {
     // ══════════════════════════════════════════════════════
     // RENDER
     // ══════════════════════════════════════════════════════
+    // ── MOBILE: render purpose-built mobile layout ─────────
+    if (isMobile) return <InterviewPrepMobile />;
     return (
         <div className="space-y-0 h-full flex flex-col overflow-hidden animate-in">
 

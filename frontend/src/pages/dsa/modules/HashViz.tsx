@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, Log, Input, Badge, Select, useStepGuide, useAnimation, Controls } from "../shared";
+import { Btn, Side, SLabel, LogSection, Input, Badge, Select, useStepGuide, useAnimation, Controls } from "../shared";
 
 export default function HashViz(){
   const SIZE=11;
@@ -138,7 +138,7 @@ export default function HashViz(){
         )}
         <Btn onClick={runDemo} variant="yellow" disabled={anim.running} full>⚡ Learn Hashing</Btn>
         <Btn onClick={()=>{reset();anim.reset();}} variant="ghost" disabled={anim.running} full>↺ Reset Table</Btn>
-        <SLabel>Log</SLabel><Log entries={log}/>
+        <LogSection entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>
         <div style={{flex:1,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"28px 20px",overflowY:"auto",position:"relative"}}>

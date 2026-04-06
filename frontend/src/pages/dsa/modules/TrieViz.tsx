@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, SpeedRow, Log, Input, Badge, useStepGuide, useAnimation, Controls } from "../shared";
+import { Btn, Side, SLabel, SpeedRow, LogSection, Input, Badge, useStepGuide, useAnimation, Controls } from "../shared";
 
 type TN = { children: Record<string, TN>; end: boolean; id: number };
 let _id = 0;
@@ -60,7 +60,7 @@ export default function TrieViz() {
   const [trie] = useState<TN>(() => newNode());
   const [word, setWord] = useState("");
   const [results, setResults] = useState<string[]>([]);
-  const [log, setLog] = useState<{ m: string; t: string }[]>([]);
+  const [LogSection, setLog] = useState<{ m: string; t: string }[]>([]);
   const [label, setLabel] = useState("Insert words to build the trie");
   const [ver, setVer] = useState(0);
   // Visual state: map from node id → color mode
@@ -284,7 +284,7 @@ export default function TrieViz() {
             </div>
           ))}
         </div>
-        <SLabel>Log</SLabel><Log entries={log} />
+        <LogSection entries={log}/>
       </Side>
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <div style={{ flex: 1, display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "auto", padding: 24, position: "relative" }}>

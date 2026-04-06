@@ -24,8 +24,13 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(
         os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7")
     )
-    # === Cookie domain (set to ".eduaiajk.in" in prod for cross-subdomain cookies) ===
-    COOKIE_DOMAIN: str | None = os.getenv("COOKIE_DOMAIN")  # None = browser default (localhost dev)
+    # === Cookie domain ===
+    # Auto-derived: production → ".eduaiajk.in" so cookies work across Vercel↔Render
+    # Override via COOKIE_DOMAIN env var if using a different domain
+    COOKIE_DOMAIN: str | None = os.getenv(
+        "COOKIE_DOMAIN",
+        ".eduaiajk.in" if os.getenv("APP_ENV") == "production" else None
+    )
 
     # === AI provider selection ===
     AI_PROVIDER: str = os.getenv("AI_PROVIDER", "gemini")  # "gemini" or "openai"
@@ -81,7 +86,8 @@ class Settings(BaseSettings):
 
     # === Judge0 (Code Execution) ===
     JUDGE0_API_KEY: str | None = os.getenv("JUDGE0_API_KEY")
-    JUDGE0_API_HOST: str = os.getenv("JUDGE0_API_HOST", "judge0-ce.p.rapidapi.com")
+    # Default to free public Judge0 CE instance (no API key needed)
+    JUDGE0_API_HOST: str = os.getenv("JUDGE0_API_HOST", "ce.judge0.com")
 
     # Pydantic v2 settings config
     model_config = SettingsConfigDict(

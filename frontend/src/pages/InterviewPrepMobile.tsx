@@ -92,7 +92,7 @@ const InterviewPrepMobile = () => {
     try { const s = localStorage.getItem("eduai_star_stories"); return s ? JSON.parse(s) : [...DEFAULT_STORIES]; } catch { return [...DEFAULT_STORIES]; }
   });
   const [activeStory, setActiveStory] = useState(0);
-  const [polished, setPolished] = useState("Tap "✦ Polish" to generate an interview-ready version.");
+  const [polished, setPolished] = useState('Tap "✦ Polish" to generate an interview-ready version.');
   const [showStoriesList, setShowStoriesList] = useState(false);
   const [showPolished, setShowPolished] = useState(false);
 
@@ -414,7 +414,7 @@ const InterviewPrepMobile = () => {
             {showStoriesList && (
               <div className="bg-card border border-border/40 rounded-2xl overflow-hidden -mt-2">
                 {stories.map((s, i) => (
-                  <button key={i} onClick={() => { setActiveStory(i); setShowStoriesList(false); setPolished("Tap "✦ Polish" to generate an interview-ready version."); setShowPolished(false); }}
+                  <button key={i} onClick={() => { setActiveStory(i); setShowStoriesList(false); setPolished('Tap "✦ Polish" to generate an interview-ready version.'); setShowPolished(false); }}
                     className={`w-full text-left px-4 py-3 border-b border-border/30 last:border-b-0 transition-colors ${
                       i === activeStory ? "bg-primary/10" : "active:bg-muted/30"
                     }`}>
@@ -425,7 +425,7 @@ const InterviewPrepMobile = () => {
                 <button onClick={() => {
                   setStories(prev => [...prev, { title: "New Story", theme: "General", status: "Draft", s: "", t: "", a: "", r: "" }]);
                   setActiveStory(stories.length); setShowStoriesList(false);
-                  setPolished("Fill in the STAR fields below, then tap "✦ Polish".");
+                  setPolished('Fill in the STAR fields below, then tap "✦ Polish".');
                 }}
                   className="w-full text-left px-4 py-3 text-sm text-primary font-medium">
                   + New Story

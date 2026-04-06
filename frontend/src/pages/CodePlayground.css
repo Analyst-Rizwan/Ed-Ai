@@ -450,11 +450,165 @@
   100% { background-position: -200% center; }
 }
 
-/* ─── Mobile ────────────────────────────────────────────────────── */
-@media (max-width: 640px) {
-  .pg-header { padding: 0 10px; gap: 8px; height: 48px; min-height: 48px; }
-  .pg-lang-select { min-width: 130px; font-size: 12px; }
-  .pg-run-btn span { display: none; }
-  .pg-run-btn { padding: 0 12px; }
-  .pg-status-badge { display: none; }
+/* ─── Tablet (641px–900px) ──────────────────────────────────── */
+@media (max-width: 900px) and (min-width: 641px) {
+  .pg-header { padding: 0 12px; gap: 10px; }
+  .pg-lang-select { min-width: 180px; font-size: 12px; }
+  .pg-run-btn { padding: 0 14px; }
+  .pg-run-btn span { font-size: 12px; }
 }
+
+/* ─── Mobile (≤640px) ──────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Header becomes compact 2-row layout */
+  .pg-header {
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    gap: 8px;
+    height: auto;
+    min-height: auto;
+  }
+
+  /* Logo stays small */
+  .pg-logo {
+    font-size: 14px;
+    gap: 6px;
+    margin-right: 0;
+  }
+
+  .pg-divider { display: none; }
+
+  /* Spacer pushes run button to the right on first row */
+  .pg-spacer { flex: 1; min-width: 0; }
+
+  /* Language selector — full-width on its own row */
+  .pg-lang-select {
+    min-width: 0;
+    width: 100%;
+    order: 10;
+    font-size: 13px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  /* The wrapper around the select also needs full width */
+  .pg-header > div:has(.pg-lang-select) {
+    order: 10;
+    width: 100%;
+  }
+
+  /* Status badge — hide on mobile */
+  .pg-status-badge { display: none; }
+
+  /* Icon buttons — compact */
+  .pg-icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  /* Run button — icon only */
+  .pg-run-btn {
+    padding: 0 14px;
+    height: 36px;
+    border-radius: 10px;
+  }
+  .pg-run-btn span { display: none; }
+
+  /* Body — let panels stack properly */
+  .pg-body { overflow: hidden; }
+
+  /* Editor tab bar */
+  .pg-editor-tabs {
+    padding: 0 12px;
+    height: 32px;
+    min-height: 32px;
+  }
+  .pg-editor-tab {
+    padding: 0 10px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  /* Monaco editor: smaller font, smaller padding */
+  .pg-editor-wrap {
+    min-height: 150px;
+  }
+
+  /* Output panel */
+  .pg-output-header {
+    padding: 0 10px 0 6px;
+    height: 32px;
+    min-height: 32px;
+  }
+  .pg-output-tab {
+    padding: 0 10px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  /* Terminal output */
+  .pg-terminal {
+    padding: 10px 14px;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .pg-terminal-idle {
+    font-size: 12px;
+    gap: 8px;
+  }
+
+  .pg-terminal-prompt { font-size: 10px; }
+
+  /* Meta chips */
+  .pg-meta-chip {
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+
+  /* Resize handle — bigger touch target on mobile */
+  [data-panel-group-direction="vertical"] [data-resize-handle] {
+    height: 12px;
+  }
+  [data-panel-group-direction="vertical"] [data-resize-handle]::after {
+    width: 48px;
+    height: 4px;
+  }
+
+  /* Stdin */
+  .pg-stdin-header {
+    padding: 4px 12px;
+    font-size: 11px;
+  }
+  .pg-stdin-textarea {
+    font-size: 12px;
+    padding: 10px 14px;
+  }
+
+  /* Shortcut card */
+  .pg-shortcut-card {
+    min-width: 280px;
+    max-width: calc(100vw - 32px);
+    padding: 16px 18px;
+    font-size: 12px;
+    border-radius: 16px;
+  }
+  .pg-kbd {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  /* Loading bar */
+  .pg-loading-bar { height: 3px; }
+}
+
+/* ─── Very small phones (≤380px) ───────────────────────────── */
+@media (max-width: 380px) {
+  .pg-header { padding: 6px 8px; gap: 6px; }
+  .pg-logo span:last-child { display: none; }
+  .pg-icon-btn { width: 32px; height: 32px; }
+  .pg-run-btn { padding: 0 12px; height: 32px; }
+  .pg-lang-select { height: 34px; font-size: 12px; }
+}
+

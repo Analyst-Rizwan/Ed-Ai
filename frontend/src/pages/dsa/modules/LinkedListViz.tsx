@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { T } from "../theme";
-import { Btn, Side, SLabel, Log, Input, useStepGuide, useAnimation, Controls } from "../shared";
+import { Btn, Side, SLabel, LogSection, Input, useStepGuide, useAnimation, Controls } from "../shared";
 
 export default function LinkedListViz(){
   const [nodes,setNodes]=useState<{val:number,id:number}[]>([]);
@@ -151,7 +151,7 @@ export default function LinkedListViz(){
           <Controls anim={anim} run={() => {}} reset={() => { anim.reset(); setSearchHL(-1); }} />
         )}
         <Btn onClick={()=>{setNodes([]);addLog("reset","info");anim.reset();}} variant="ghost" disabled={anim.running} full>↺ Reset</Btn>
-        <SLabel>Log</SLabel><Log entries={log}/>
+        <LogSection entries={log}/>
       </Side>
       <div style={{flex:1,display:"flex",flexDirection:"column"}}>
         <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:28,overflowX:"auto",position:"relative"}}>
