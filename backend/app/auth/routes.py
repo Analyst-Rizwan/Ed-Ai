@@ -17,7 +17,7 @@ from app.core.config import settings
 from app.auth.utils import get_password_hash
 from app.schemas.user import UserCreate, UserOut, UserUpdate
 from app.core.rate_limit import limiter
-from app.services.email_service import send_otp_email
+from app.services.email_service import send_otp_email, send_welcome_email
 
 router = APIRouter()
 
@@ -268,6 +268,10 @@ def register_user(
     db.add(user_progress)
     db.commit()
     db.refresh(user)
+
+    # Send welcome email (fire-and-forget, don't fail registration)
+    send_welcome_email(user.email, user.username)
+
     return user
 
 

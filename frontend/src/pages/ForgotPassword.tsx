@@ -1,4 +1,20 @@
 import { useState } from "react";
+
+const EyeIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+        <circle cx="12" cy="12" r="3" />
+    </svg>
+);
+
+const EyeOffIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+        <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+        <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+);
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -36,6 +52,8 @@ const ForgotPassword = () => {
     const [otp, setOtp] = useState(["", "", "", "", "", ""]);
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
@@ -298,31 +316,65 @@ const ForgotPassword = () => {
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                             <label style={{ fontSize: 13, fontWeight: 500, color: "#e8e8e8" }}>New Password</label>
-                            <input
-                                type="password"
-                                placeholder="••••••••"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                required
-                                minLength={6}
-                                style={inputStyle}
-                                onFocus={(e) => { e.currentTarget.style.borderColor = "#7c5cfc"; }}
-                                onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.11)"; }}
-                            />
+                            <div style={{ position: "relative" }}>
+                                <input
+                                    type={showNewPassword ? "text" : "password"}
+                                    placeholder="••••••••"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    required
+                                    minLength={6}
+                                    style={{ ...inputStyle, paddingRight: 42 }}
+                                    onFocus={(e) => { e.currentTarget.style.borderColor = "#7c5cfc"; }}
+                                    onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.11)"; }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                    aria-label={showNewPassword ? "Hide password" : "Show password"}
+                                    style={{
+                                        position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+                                        background: "none", border: "none", cursor: "pointer",
+                                        color: "#888", padding: 4, display: "flex", alignItems: "center",
+                                        opacity: 0.6, transition: "opacity 0.2s",
+                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.6"; }}
+                                >
+                                    {showNewPassword ? <EyeOffIcon /> : <EyeIcon />}
+                                </button>
+                            </div>
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                             <label style={{ fontSize: 13, fontWeight: 500, color: "#e8e8e8" }}>Confirm Password</label>
-                            <input
-                                type="password"
-                                placeholder="••••••••"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                required
-                                minLength={6}
-                                style={inputStyle}
-                                onFocus={(e) => { e.currentTarget.style.borderColor = "#7c5cfc"; }}
-                                onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.11)"; }}
-                            />
+                            <div style={{ position: "relative" }}>
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    placeholder="••••••••"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required
+                                    minLength={6}
+                                    style={{ ...inputStyle, paddingRight: 42 }}
+                                    onFocus={(e) => { e.currentTarget.style.borderColor = "#7c5cfc"; }}
+                                    onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.11)"; }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                                    style={{
+                                        position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+                                        background: "none", border: "none", cursor: "pointer",
+                                        color: "#888", padding: 4, display: "flex", alignItems: "center",
+                                        opacity: 0.6, transition: "opacity 0.2s",
+                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.6"; }}
+                                >
+                                    {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
+                                </button>
+                            </div>
                         </div>
                         <button type="submit" disabled={loading} style={{
                             padding: "12px 18px", borderRadius: 100, fontSize: 14, fontWeight: 600,

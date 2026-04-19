@@ -69,12 +69,9 @@ class Settings(BaseSettings):
     PORT: int = int(os.getenv("PORT", "8000"))
     WORKERS: int = int(os.getenv("WORKERS", "4"))
 
-    # === SMTP (for OTP emails) ===
-    SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
-    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
-    SMTP_USER: str = os.getenv("SMTP_USER", "")
-    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
-    SMTP_FROM: str = os.getenv("SMTP_FROM", "")
+    # === Resend (transactional emails) ===
+    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
+    RESEND_FROM_EMAIL: str = os.getenv("RESEND_FROM_EMAIL", "EduAI <noreply@eduaiajk.in>")
 
     # === Debug / logging ===
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"  # Was True — now defaults off
