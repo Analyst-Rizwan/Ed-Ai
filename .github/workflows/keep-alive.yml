@@ -1,0 +1,62 @@
+# ============================================================
+# Keep-Alive Cron — Prevents cold starts on Render & Supabase
+# Runs every 10 minutes via GitHub Actions
+# ============================================================
+
+name: Keep Alive
+
+on:
+  schedule:
+    # Every 10 minutes
+    - cron: "*/10 * * * *"
+  workflow_dispatch: # Allow manual trigger for testing
+
+jobs:
+  ping-services:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Ping Render Backend
+        # Hits the /api/ping endpoint which also warms the DB connection pool
+        run: |
+          echo "🔄 Pinging Render backend..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 30 \
+            "${{ secrets.RENDER_BACKEND_URL }}/api/ping")
+          echo "Render response: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "✅ Render backend is alive"
+          else
+            echo "⚠️ Render returned $HTTP_STATUS (may be waking from cold start)"
+          fi
+
+      - name: Ping Supabase
+        # Hits Supabase REST API to keep the project from pausing
+        run: |
+          echo "🔄 Pinging Supabase..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 30 \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/?limit=0")
+          echo "Supabase response: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "✅ Supabase is alive"
+          else
+            echo "⚠️ Supabase returned $HTTP_STATUS"
+          fi
+
+      - name: Ping Supabase Health
+        # Alternative health check via Supabase's built-in health endpoint
+        run: |
+          echo "🔄 Checking Supabase health..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 30 \
+            "${{ secrets.SUPABASE_URL }}/auth/v1/health")
+          echo "Supabase Auth health: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "✅ Supabase Auth is healthy"
+          else
+            echo "⚠️ Supabase Auth returned $HTTP_STATUS"
+          fi
