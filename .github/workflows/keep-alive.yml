@@ -14,29 +14,40 @@ on:
 jobs:
   ping-services:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 3
 
     steps:
       - name: Ping Render Backend
-        # Hits the /api/ping endpoint which also warms the DB connection pool
+        # Render free tier can take 50s+ to wake from cold start — that's the whole point.
+        # continue-on-error so a slow/cold Render doesn't block Supabase pings.
+        continue-on-error: true
         run: |
+          if [ -z "${{ secrets.RENDER_BACKEND_URL }}" ]; then
+            echo "⚠️ RENDER_BACKEND_URL secret not set — skipping"
+            exit 0
+          fi
           echo "🔄 Pinging Render backend..."
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            --max-time 30 \
+            --max-time 60 \
             "${{ secrets.RENDER_BACKEND_URL }}/api/ping")
           echo "Render response: $HTTP_STATUS"
           if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
             echo "✅ Render backend is alive"
           else
-            echo "⚠️ Render returned $HTTP_STATUS (may be waking from cold start)"
+            echo "⚠️ Render returned $HTTP_STATUS (may still be waking — that's ok)"
           fi
 
-      - name: Ping Supabase
+      - name: Ping Supabase REST
         # Hits Supabase REST API to keep the project from pausing
+        continue-on-error: true
         run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "⚠️ SUPABASE_URL secret not set — skipping"
+            exit 0
+          fi
           echo "🔄 Pinging Supabase..."
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            --max-time 30 \
+            --max-time 15 \
             -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
             "${{ secrets.SUPABASE_URL }}/rest/v1/?limit=0")
@@ -47,12 +58,17 @@ jobs:
             echo "⚠️ Supabase returned $HTTP_STATUS"
           fi
 
-      - name: Ping Supabase Health
-        # Alternative health check via Supabase's built-in health endpoint
+      - name: Ping Supabase Auth Health
+        # Supabase built-in health endpoint
+        continue-on-error: true
         run: |
-          echo "🔄 Checking Supabase health..."
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "⚠️ SUPABASE_URL secret not set — skipping"
+            exit 0
+          fi
+          echo "🔄 Checking Supabase Auth health..."
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            --max-time 30 \
+            --max-time 15 \
             "${{ secrets.SUPABASE_URL }}/auth/v1/health")
           echo "Supabase Auth health: $HTTP_STATUS"
           if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
