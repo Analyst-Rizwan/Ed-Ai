@@ -1103,7 +1103,7 @@ const LandingPage: React.FC = () => {
           <li><a href="#transformation">Compare</a></li>
           <li><a href="#progress">Progress</a></li>
           <li>
-            <button className="nav-cta" onClick={() => navigate('/register')}>
+            <button className="nav-cta" onClick={() => navigate('/login')}>
               Get Started
             </button>
           </li>
@@ -1129,7 +1129,7 @@ const LandingPage: React.FC = () => {
         </p>
 
         <div className="hero-cta">
-          <button className="btn-primary" onClick={() => navigate('/register')}>
+          <button className="btn-primary" onClick={() => navigate('/login')}>
             Start Learning Free
           </button>
           <a href="#features" className="btn-ghost">Explore Features →</a>

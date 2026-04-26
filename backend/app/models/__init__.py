@@ -7,3 +7,4 @@ from app.models.refresh_token import RefreshToken  # noqa: F401
 from app.models.otp_code import OTPCode  # noqa: F401
 from app.models.roadmap import Roadmap  # noqa: F401
 from app.models.leetcode_sync import LeetCodeSync  # noqa: F401
+from app.models.playground_settings import PlaygroundSettings  # noqa: F401

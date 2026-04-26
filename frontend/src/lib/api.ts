@@ -594,6 +594,36 @@ export const codeApi = {
 };
 
 // ============================================================
+// PLAYGROUND SETTINGS TYPES & API
+// ============================================================
+export interface PlaygroundSettings {
+  layout_mode: "stacked" | "side-by-side" | "editor-only";
+  editor_panel_size: number;
+  output_panel_size: number;
+  font_size: number;
+  font_family: string;
+  tab_size: number;
+  show_minimap: boolean;
+  show_line_numbers: boolean;
+  word_wrap: "off" | "on";
+  show_whitespace: "none" | "selection" | "all";
+  last_language_id: number;
+}
+
+export const settingsApi = {
+  getPlayground: async (): Promise<PlaygroundSettings> => {
+    return fetchWithAuth("/settings/playground");
+  },
+
+  updatePlayground: async (data: Partial<PlaygroundSettings>): Promise<PlaygroundSettings> => {
+    return fetchWithAuth("/settings/playground", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
+};
+
+// ============================================================
 // EXPORT DEFAULT
 // ============================================================
 export default {
@@ -608,4 +638,5 @@ export default {
   github: githubApi,
   interview: interviewApi,
   code: codeApi,
+  settings: settingsApi,
 };

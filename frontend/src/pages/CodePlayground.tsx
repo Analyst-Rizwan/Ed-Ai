@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import Editor from "@monaco-editor/react";
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { Panel, PanelGroup, PanelResizeHandle, ImperativePanelHandle } from "react-resizable-panels";
 import {
   Play, Zap, ChevronDown, ChevronRight, Clock, Cpu, RotateCcw,
   Terminal, Settings2, Copy, Check, Keyboard,
+  Rows3, Columns3, Maximize2, ChevronUp, RotateCw,
 } from "lucide-react";
 import { codeApi, ExecuteResponse } from "@/lib/api";
 import { useTheme } from "@/context/ThemeContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePlaygroundSettings, LAYOUT_PRESETS, FONT_FAMILIES } from "@/hooks/usePlaygroundSettings";
 import "./CodePlayground.css";
 
 // ─── Language definitions ──────────────────────────────────────────────────
@@ -172,9 +174,11 @@ const CodePlayground = () => {
   const { theme } = useTheme();
   const monacoTheme = theme === "light" ? "vs-light" : "vs-dark";
   const isMobile = useIsMobile();
+  const { settings, updateSettings, resetSettings, applyPreset, syncing } = usePlaygroundSettings();
 
-  const [selectedLang, setSelectedLang] = useState<Language>(LANGUAGES[0]);
-  const [code, setCode] = useState<string>(LANGUAGES[0].boilerplate);
+  const initialLang = LANGUAGES.find(l => l.id === settings.last_language_id) || LANGUAGES[0];
+  const [selectedLang, setSelectedLang] = useState<Language>(initialLang);
+  const [code, setCode] = useState<string>(initialLang.boilerplate);
   const [stdin, setStdin] = useState("");
   const [stdinOpen, setStdinOpen] = useState(false);
   const [result, setResult] = useState<ExecuteResponse | null>(null);
@@ -182,8 +186,15 @@ const CodePlayground = () => {
   const [activeOutputTab, setActiveOutputTab] = useState<"output" | "stdin">("output");
   const [copied, setCopied] = useState(false);
   const [showShortcut, setShowShortcut] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
+  const editorPanelRef = useRef<ImperativePanelHandle>(null);
+  const outputPanelRef = useRef<ImperativePanelHandle>(null);
   const isRunning = runStatus === "running";
+
+  // Effective layout mode — force stacked on mobile
+  const layoutMode = isMobile ? "stacked" : settings.layout_mode;
 
   // ─── Language change ─────────────────────────────────────────────────
   const handleLangChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -193,6 +204,7 @@ const CodePlayground = () => {
       setCode(lang.boilerplate);
       setResult(null);
       setRunStatus("idle");
+      updateSettings({ last_language_id: lang.id });
     }
   };
 
@@ -310,6 +322,42 @@ const CodePlayground = () => {
           {statusInfo.label}
         </div>
 
+        {/* Layout toggle */}
+        <div className="pg-layout-toggle">
+          <button
+            className={`pg-layout-toggle-btn ${layoutMode === "stacked" ? "active" : ""}`}
+            onClick={() => updateSettings({ layout_mode: "stacked" })}
+            title="Stacked layout"
+          >
+            <Rows3 size={14} />
+          </button>
+          <button
+            className={`pg-layout-toggle-btn ${layoutMode === "side-by-side" ? "active" : ""}`}
+            onClick={() => updateSettings({ layout_mode: "side-by-side" })}
+            title="Side-by-side layout"
+          >
+            <Columns3 size={14} />
+          </button>
+          <button
+            className={`pg-layout-toggle-btn ${layoutMode === "editor-only" ? "active" : ""}`}
+            onClick={() => updateSettings({ layout_mode: "editor-only" })}
+            title="Editor only (output in drawer)"
+          >
+            <Maximize2 size={14} />
+          </button>
+        </div>
+
+        {/* Settings */}
+        <button
+          className={`pg-icon-btn ${showSettings ? "active" : ""}`}
+          onClick={() => setShowSettings((p) => !p)}
+          title="Playground settings"
+          id="settings-btn"
+          style={showSettings ? { color: "var(--accent)", borderColor: "var(--accent)" } : {}}
+        >
+          <Settings2 size={15} />
+        </button>
+
         {/* Icon actions */}
         <button
           className="pg-icon-btn"
@@ -377,12 +425,156 @@ const CodePlayground = () => {
         </div>
       )}
 
+      {/* ── Settings popover ─────────────────────────────────────────── */}
+      {showSettings && (
+        <>
+          <div className="pg-settings-overlay" onClick={() => setShowSettings(false)} />
+          <div className="pg-settings-popover" onClick={(e) => e.stopPropagation()}>
+            <div className="pg-settings-title">
+              <Settings2 size={14} />
+              Playground Settings
+              {syncing && (
+                <span className="pg-sync-indicator"><span className="pg-sync-dot" /> Syncing</span>
+              )}
+            </div>
+
+            {/* ── Layout Presets ──────────────────────── */}
+            <div className="pg-settings-section">
+              <div className="pg-settings-section-title">Layout Presets</div>
+              <div className="pg-presets-grid">
+                {LAYOUT_PRESETS.map((preset) => {
+                  const isActive =
+                    settings.layout_mode === preset.layout_mode &&
+                    settings.editor_panel_size === preset.editor_panel_size;
+                  return (
+                    <button
+                      key={preset.id}
+                      className={`pg-preset-card ${isActive ? "active" : ""}`}
+                      onClick={() => {
+                        applyPreset(preset.id);
+                        // Resize panels imperatively
+                        setTimeout(() => {
+                          editorPanelRef.current?.resize(preset.editor_panel_size);
+                          outputPanelRef.current?.resize(preset.output_panel_size);
+                        }, 50);
+                      }}
+                    >
+                      <span className="pg-preset-card-icon">{preset.icon}</span>
+                      <span className="pg-preset-card-label">{preset.label}</span>
+                      <span className="pg-preset-card-desc">{preset.description}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── Editor Settings ─────────────────────── */}
+            <div className="pg-settings-section">
+              <div className="pg-settings-section-title">Editor</div>
+
+              {/* Font Size */}
+              <div className="pg-setting-row">
+                <span className="pg-setting-label">Font Size</span>
+                <div className="pg-font-size-control">
+                  <input
+                    type="range"
+                    min={10}
+                    max={24}
+                    value={settings.font_size}
+                    onChange={(e) => updateSettings({ font_size: parseInt(e.target.value) })}
+                  />
+                  <span className="pg-font-size-value">{settings.font_size}px</span>
+                </div>
+              </div>
+
+              {/* Font Family */}
+              <div className="pg-setting-row">
+                <span className="pg-setting-label">Font</span>
+                <select
+                  className="pg-setting-select"
+                  value={settings.font_family}
+                  onChange={(e) => updateSettings({ font_family: e.target.value })}
+                >
+                  {FONT_FAMILIES.map((f) => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Tab Size */}
+              <div className="pg-setting-row">
+                <span className="pg-setting-label">Tab Size</span>
+                <div className="pg-tab-toggle">
+                  {[2, 4].map((n) => (
+                    <button
+                      key={n}
+                      className={`pg-tab-toggle-btn ${settings.tab_size === n ? "active" : ""}`}
+                      onClick={() => updateSettings({ tab_size: n })}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Word Wrap */}
+              <div className="pg-setting-row">
+                <span className="pg-setting-label">Word Wrap</span>
+                <div
+                  className={`pg-toggle ${settings.word_wrap === "on" ? "on" : ""}`}
+                  onClick={() => updateSettings({ word_wrap: settings.word_wrap === "on" ? "off" : "on" })}
+                />
+              </div>
+
+              {/* Minimap */}
+              <div className="pg-setting-row">
+                <span className="pg-setting-label">Minimap</span>
+                <div
+                  className={`pg-toggle ${settings.show_minimap ? "on" : ""}`}
+                  onClick={() => updateSettings({ show_minimap: !settings.show_minimap })}
+                />
+              </div>
+
+              {/* Line Numbers */}
+              <div className="pg-setting-row">
+                <span className="pg-setting-label">Line Numbers</span>
+                <div
+                  className={`pg-toggle ${settings.show_line_numbers ? "on" : ""}`}
+                  onClick={() => updateSettings({ show_line_numbers: !settings.show_line_numbers })}
+                />
+              </div>
+
+              {/* Whitespace */}
+              <div className="pg-setting-row">
+                <span className="pg-setting-label">Whitespace</span>
+                <select
+                  className="pg-setting-select"
+                  value={settings.show_whitespace}
+                  onChange={(e) => updateSettings({ show_whitespace: e.target.value as any })}
+                >
+                  <option value="none">None</option>
+                  <option value="selection">Selection</option>
+                  <option value="all">All</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Reset */}
+            <button className="pg-reset-settings-btn" onClick={resetSettings}>
+              <RotateCw size={11} style={{ display: "inline", verticalAlign: "-2px", marginRight: 4 }} />
+              Reset to Defaults
+            </button>
+          </div>
+        </>
+      )}
+
       {/* ── Body (editor + output) ───────────────────────────────────── */}
-      <div className="pg-body">
-        <PanelGroup direction="vertical">
+      <div className={`pg-body ${layoutMode === "side-by-side" ? "side-by-side" : ""}`}>
+        {layoutMode !== "editor-only" ? (
+        <PanelGroup direction={layoutMode === "side-by-side" ? "horizontal" : "vertical"}>
 
           {/* ── Monaco Editor Panel ──────────────────────────────────── */}
-          <Panel defaultSize={isMobile ? 55 : 62} minSize={20} id="editor-panel">
+          <Panel defaultSize={isMobile ? 55 : settings.editor_panel_size} minSize={20} id="editor-panel" ref={editorPanelRef}>
             <div className="pg-editor-panel" style={{ height: "100%" }}>
               {/* Editor tab bar */}
               <div className="pg-editor-tabs">
@@ -405,15 +597,17 @@ const CodePlayground = () => {
                   onChange={(val) => setCode(val ?? "")}
                   theme={monacoTheme === "vs-dark" ? "vs-dark" : "light"}
                   options={{
-                    fontSize: isMobile ? 12 : 14,
-                    fontFamily: "'JetBrains Mono', 'Fira Code', 'Space Mono', monospace",
+                    fontSize: isMobile ? 12 : settings.font_size,
+                    fontFamily: `'${settings.font_family}', 'Fira Code', 'Space Mono', monospace`,
                     fontLigatures: true,
-                    minimap: { enabled: false },
+                    minimap: { enabled: settings.show_minimap },
                     scrollBeyondLastLine: false,
                     padding: { top: isMobile ? 8 : 14, bottom: isMobile ? 8 : 14 },
-                    lineNumbers: isMobile ? "off" : "on",
+                    lineNumbers: isMobile ? "off" : (settings.show_line_numbers ? "on" : "off"),
                     lineHeight: 1.7,
-                    renderWhitespace: "selection",
+                    renderWhitespace: settings.show_whitespace,
+                    wordWrap: settings.word_wrap,
+                    tabSize: settings.tab_size,
                     smoothScrolling: true,
                     cursorBlinking: "smooth",
                     cursorSmoothCaretAnimation: "on",
@@ -436,7 +630,7 @@ const CodePlayground = () => {
           <PanelResizeHandle id="main-resize-handle" />
 
           {/* ── Output Panel ─────────────────────────────────────────── */}
-          <Panel defaultSize={isMobile ? 45 : 38} minSize={15} id="output-panel">
+          <Panel defaultSize={isMobile ? 45 : settings.output_panel_size} minSize={15} id="output-panel" ref={outputPanelRef}>
             <div className="pg-output-panel" style={{ height: "100%" }}>
               {/* Output tab bar */}
               <div className="pg-output-header">
@@ -553,6 +747,133 @@ const CodePlayground = () => {
             </div>
           </Panel>
         </PanelGroup>
+        ) : (
+          /* ── Editor-only mode ─────────────────────────────────────── */
+          <>
+            <div className="pg-editor-panel" style={{ flex: 1 }}>
+              <div className="pg-editor-tabs">
+                <div className="pg-editor-tab active">
+                  <Settings2 size={12} />
+                  {selectedLang.name}
+                </div>
+                <div className="pg-spacer" />
+                <div style={{ fontSize: 11, color: "var(--muted)", paddingRight: 4 }}>
+                  Ctrl+Enter to run
+                </div>
+              </div>
+              <div className="pg-editor-wrap">
+                <Editor
+                  height="100%"
+                  language={selectedLang.monacoLang}
+                  value={code}
+                  onChange={(val) => setCode(val ?? "")}
+                  theme={monacoTheme === "vs-dark" ? "vs-dark" : "light"}
+                  options={{
+                    fontSize: settings.font_size,
+                    fontFamily: `'${settings.font_family}', 'Fira Code', 'Space Mono', monospace`,
+                    fontLigatures: true,
+                    minimap: { enabled: settings.show_minimap },
+                    scrollBeyondLastLine: false,
+                    padding: { top: 14, bottom: 14 },
+                    lineNumbers: settings.show_line_numbers ? "on" : "off",
+                    lineHeight: 1.7,
+                    renderWhitespace: settings.show_whitespace,
+                    wordWrap: settings.word_wrap,
+                    tabSize: settings.tab_size,
+                    smoothScrolling: true,
+                    cursorBlinking: "smooth",
+                    cursorSmoothCaretAnimation: "on",
+                    bracketPairColorization: { enabled: true },
+                    scrollbar: { verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
+                    overviewRulerLanes: 0,
+                    hideCursorInOverviewRuler: true,
+                    renderLineHighlight: "gutter",
+                    roundedSelection: true,
+                    glyphMargin: false,
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Drawer trigger */}
+            <div className="pg-output-drawer-trigger" onClick={() => setDrawerOpen(!drawerOpen)}>
+              {drawerOpen ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+              <Terminal size={13} />
+              <span>{result ? `Output — ${getStatusInfo(result.status?.id ?? 0).label}` : "Output"}</span>
+            </div>
+
+            {/* Slide-up output drawer */}
+            {drawerOpen && (
+              <div style={{
+                position: "fixed", bottom: 36, left: 0, right: 0,
+                height: "40vh", zIndex: 60,
+                background: "var(--surface)", borderTop: "1px solid var(--border)",
+                display: "flex", flexDirection: "column",
+                animation: "pg-popover-in 0.2s ease-out",
+              }}>
+                <div className="pg-output-header">
+                  <button
+                    className={`pg-output-tab ${activeOutputTab === "output" ? "active" : ""}`}
+                    onClick={() => setActiveOutputTab("output")}
+                  >
+                    <Terminal size={12} /> Output
+                  </button>
+                  <button
+                    className={`pg-output-tab ${activeOutputTab === "stdin" ? "active" : ""}`}
+                    onClick={() => setActiveOutputTab("stdin")}
+                  >
+                    <ChevronRight size={12} /> Stdin
+                  </button>
+                  <div className="pg-spacer" />
+                  {result && result.time && (
+                    <div className="pg-meta-row">
+                      <div className="pg-meta-chip"><Clock size={10} />{result.time}s</div>
+                      {result.memory && (
+                        <div className="pg-meta-chip"><Cpu size={10} />{(result.memory / 1024).toFixed(1)} MB</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {activeOutputTab === "output" && (
+                  <div className="pg-terminal" ref={terminalRef}>
+                    {!result && !isRunning && (
+                      <div className="pg-terminal-idle">
+                        <span className="pg-cursor" />
+                        Press <strong style={{ color: "var(--accent)" }}>Run Code</strong> or <strong style={{ color: "var(--accent)" }}>Ctrl+Enter</strong>
+                      </div>
+                    )}
+                    {isRunning && (
+                      <div className="pg-terminal-idle"><span className="pg-cursor" /> Executing {selectedLang.name}…</div>
+                    )}
+                    {result && !isRunning && (
+                      <>
+                        <div className="pg-terminal-prompt">$ {selectedLang.name} · {result.status?.description}</div>
+                        {result.compile_output && <div className="pg-terminal-compile">{result.compile_output}</div>}
+                        {result.stdout && <div className="pg-terminal-stdout">{result.stdout}</div>}
+                        {result.stderr && <div className="pg-terminal-stderr">{result.stderr}</div>}
+                        {!result.stdout && !result.stderr && !result.compile_output && (
+                          <div className="pg-terminal-info">(program produced no output)</div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+                {activeOutputTab === "stdin" && (
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    <textarea
+                      className="pg-stdin-textarea"
+                      style={{ flex: 1 }}
+                      value={stdin}
+                      onChange={(e) => setStdin(e.target.value)}
+                      placeholder={"Enter stdin here…"}
+                      spellCheck={false}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* ── Inline styles for extras ─────────────────────────────────── */}

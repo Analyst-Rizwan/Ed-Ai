@@ -26,6 +26,7 @@ const PortfolioBuilder = lazy(() => import("./pages/PortfolioBuilder"));
 const DSAVisualizer = lazy(() => import("./pages/DSAVisualizer"));
 const Learn = lazy(() => import("./pages/Learn"));
 const CodePlayground = lazy(() => import("./pages/CodePlayground"));
+const SystemDesignSimulator = lazy(() => import("./pages/SystemDesignSimulator"));
 import LandingPage from "./pages/LandingPage";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
@@ -82,6 +83,14 @@ const App = () => {
                     element={
                       <Suspense fallback={<div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "var(--bg)" }}><div style={{ width: 32, height: 32, border: "2px solid var(--accent)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /></div>}>
                         <CodePlayground />
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="system-design"
+                    element={
+                      <Suspense fallback={<div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "var(--bg)" }}><div style={{ width: 32, height: 32, border: "2px solid var(--accent)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /></div>}>
+                        <SystemDesignSimulator />
                       </Suspense>
                     }
                   />
