@@ -1,0 +1,710 @@
+/* ─── System Design Simulator ─────────────────────────────────────── */
+.sds-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', 'Space Grotesk', sans-serif;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+.sds-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  height: 48px;
+  min-height: 48px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 20;
+}
+
+.sds-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-family: 'Space Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.sds-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.sds-spacer { flex: 1; }
+
+.sds-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.sds-icon-btn:hover {
+  background: var(--surface2);
+  color: var(--text);
+  border-color: var(--border2);
+}
+.sds-icon-btn.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.sds-sim-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  flex-shrink: 0;
+}
+.sds-sim-btn.run {
+  background: linear-gradient(135deg, var(--green, #22c55e), #16a34a);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(34,197,94,0.25);
+}
+.sds-sim-btn.run:hover { filter: brightness(1.1); }
+.sds-sim-btn.stop {
+  background: linear-gradient(135deg, var(--red, #ef4444), #dc2626);
+  color: #fff;
+}
+.sds-sim-btn.chaos {
+  background: linear-gradient(135deg, var(--orange, #f97316), #ea580c);
+  color: #fff;
+}
+
+/* ── Body ───────────────────────────────────────────────────────────── */
+.sds-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Toolbox (left panel, categorized) ──────────────────────────────── */
+.sds-toolbox {
+  width: 240px;
+  min-width: 240px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 10;
+}
+.sds-toolbox-section {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.sds-toolbox-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+}
+.sds-toolbox-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.sds-toolbox-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: grab;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+  user-select: none;
+  text-align: center;
+  min-height: 60px;
+  justify-content: center;
+}
+.sds-toolbox-item:hover {
+  background: var(--surface2);
+  border-color: var(--border);
+}
+.sds-toolbox-item:active {
+  cursor: grabbing;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.sds-toolbox-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.sds-toolbox-label {
+  font-size: 9.5px;
+  line-height: 1.2;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Canvas ─────────────────────────────────────────────────────────── */
+.sds-canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+  cursor: default;
+}
+.sds-canvas-wrap.tool-hand {
+  cursor: grab;
+}
+.sds-canvas-wrap.tool-hand:active {
+  cursor: grabbing;
+}
+.sds-canvas-wrap.tool-connect {
+  cursor: crosshair;
+}
+.sds-canvas-wrap.tool-line {
+  cursor: crosshair;
+}
+.sds-canvas-wrap.tool-text {
+  cursor: text;
+}
+.sds-canvas-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 0 0;
+}
+.sds-grid {
+  position: absolute;
+  pointer-events: none;
+  width: 10000px;
+  height: 10000px;
+  top: -5000px;
+  left: -5000px;
+  background-image:
+    radial-gradient(circle, var(--border) 1.2px, transparent 1.2px);
+  background-size: 38px 38px;
+  opacity: 0.5;
+}
+
+/* ── Canvas Toolbar (floating) ─────────────────────────────────────── */
+.sds-canvas-toolbar {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  background: rgba(18, 18, 30, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  z-index: 30;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+}
+.sds-canvas-toolbar .sds-tb-sep {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+.sds-canvas-tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 15px;
+  position: relative;
+}
+.sds-canvas-tool-btn:hover {
+  background: rgba(124, 92, 252, 0.12);
+  color: var(--text);
+}
+.sds-canvas-tool-btn.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(124, 92, 252, 0.4);
+}
+.sds-canvas-tool-btn .tool-key {
+  position: absolute;
+  bottom: 1px;
+  right: 3px;
+  font-size: 7px;
+  font-weight: 700;
+  color: inherit;
+  opacity: 0.5;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ── Zoom controls ─────────────────────────────────────────────────── */
+.sds-zoom-controls {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background: rgba(18, 18, 30, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  z-index: 30;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.sds-zoom-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+.sds-zoom-btn:hover {
+  background: rgba(124, 92, 252, 0.12);
+  color: var(--text);
+}
+.sds-zoom-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 42px;
+  text-align: center;
+  user-select: none;
+}
+
+/* ── Canvas line elements ──────────────────────────────────────────── */
+.sds-canvas-line {
+  stroke: var(--accent);
+  stroke-width: 2;
+  cursor: pointer;
+  transition: stroke 0.15s;
+}
+.sds-canvas-line:hover {
+  stroke: var(--text);
+  stroke-width: 3;
+}
+.sds-canvas-line.selected {
+  stroke: var(--accent);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px var(--accent));
+}
+
+/* ── Canvas text elements ──────────────────────────────────────────── */
+.sds-canvas-text {
+  position: absolute;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  cursor: move;
+  user-select: none;
+  z-index: 4;
+  min-width: 20px;
+  min-height: 20px;
+  white-space: pre-wrap;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.sds-canvas-text:hover {
+  border-color: var(--border);
+}
+.sds-canvas-text.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.sds-canvas-text-input {
+  position: absolute;
+  padding: 4px 8px;
+  background: var(--surface);
+  border: 1.5px solid var(--accent);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  z-index: 35;
+  min-width: 120px;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 4px 16px rgba(0,0,0,0.2);
+}
+
+/* ── Nodes ──────────────────────────────────────────────────────────── */
+.sds-node {
+  position: absolute;
+  min-width: 120px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: move;
+  user-select: none;
+  transition: box-shadow 0.15s, border-color 0.15s;
+  z-index: 5;
+}
+.sds-node:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 4px 16px rgba(0,0,0,0.15);
+}
+.sds-node.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 4px 20px rgba(124,92,252,0.2);
+}
+.sds-node.bottleneck {
+  border-color: var(--red, #ef4444);
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.2), 0 4px 20px rgba(239,68,68,0.15);
+  animation: sds-pulse-red 1.5s ease-in-out infinite;
+}
+@keyframes sds-pulse-red {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(239,68,68,0.2); }
+  50% { box-shadow: 0 0 0 6px rgba(239,68,68,0.1), 0 0 20px rgba(239,68,68,0.2); }
+}
+.sds-node-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.sds-node-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.sds-node-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+.sds-node-type {
+  font-size: 10px;
+  color: var(--muted);
+}
+.sds-node-stats {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.sds-node-stat {
+  font-size: 10px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.sds-node-stat .val {
+  color: var(--text);
+  font-weight: 600;
+}
+.sds-node-delete {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--red, #ef4444);
+  color: #fff;
+  border: 2px solid var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+}
+.sds-node:hover .sds-node-delete { opacity: 1; }
+
+/* ── Connection ports ───────────────────────────────────────────────── */
+.sds-port {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  cursor: crosshair;
+  z-index: 11;
+  transition: transform 0.12s;
+}
+.sds-port:hover { transform: scale(1.4); }
+.sds-port.out { right: -5px; top: 50%; transform: translateY(-50%); }
+.sds-port.in  { left: -5px;  top: 50%; transform: translateY(-50%); }
+
+/* ── SVG connections ────────────────────────────────────────────────── */
+.sds-connections {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.sds-connection {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+.sds-connection.active {
+  opacity: 1;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 4px var(--accent));
+}
+.sds-connection-flow {
+  fill: var(--accent);
+  opacity: 0;
+}
+.sds-connection-flow.active {
+  opacity: 1;
+  animation: sds-flow 1.5s linear infinite;
+}
+@keyframes sds-flow {
+  0% { offset-distance: 0%; }
+  100% { offset-distance: 100%; }
+}
+
+/* ── Properties panel (right) ───────────────────────────────────────── */
+.sds-props {
+  width: 260px;
+  min-width: 260px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 10;
+}
+.sds-props-title {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 14px 14px 10px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.sds-props-section {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.sds-props-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.sds-props-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+.sds-props-key {
+  font-size: 12px;
+  color: var(--muted);
+}
+.sds-props-input {
+  width: 80px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 12px;
+  text-align: right;
+}
+.sds-props-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ── Metrics bar (bottom) ───────────────────────────────────────────── */
+.sds-metrics {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+  height: 36px;
+  min-height: 36px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  z-index: 20;
+}
+.sds-metric {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.sds-metric .val {
+  color: var(--text);
+  font-weight: 600;
+}
+.sds-metric .good { color: var(--green, #22c55e); }
+.sds-metric .warn { color: var(--orange, #f97316); }
+.sds-metric .bad  { color: var(--red, #ef4444); }
+
+/* ── Templates panel ────────────────────────────────────────────────── */
+.sds-templates-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sds-templates-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%;
+  max-width: 640px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.sds-templates-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+.sds-template-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sds-template-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.sds-template-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.sds-template-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.sds-template-desc {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ── Empty state ────────────────────────────────────────────────────── */
+.sds-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  pointer-events: none;
+  z-index: 3;
+}
+.sds-empty-icon {
+  font-size: 40px;
+  opacity: 0.3;
+}
+.sds-empty-text {
+  font-size: 14px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────── */
+.sds-toolbox::-webkit-scrollbar,
+.sds-props::-webkit-scrollbar {
+  width: 4px;
+}
+.sds-toolbox::-webkit-scrollbar-thumb,
+.sds-props::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .sds-toolbox { display: none; }
+  .sds-props { display: none; }
+}
