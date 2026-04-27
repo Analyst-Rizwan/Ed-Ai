@@ -42,6 +42,19 @@ class MCQRequest(BaseModel):
     count: Optional[int] = 5
 
 
+class ContextualChatPayload(BaseModel):
+    """
+    Extended chat payload that includes workspace context (code, language, system design state)
+    for the inline AI tutor embedded in the Playground and System Design Simulator.
+    """
+    message: str
+    conversation_id: Optional[int] = None
+    context_type: Optional[str] = None  # "playground" or "system_design"
+    code: Optional[str] = None
+    language: Optional[str] = None
+    system_design_state: Optional[Dict[str, Any]] = None
+
+
 class CodeExecRequest(BaseModel):
     language: str
     code: str
@@ -219,6 +232,134 @@ async def chat_stream(
         headers={
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",   # Disable nginx/Render proxy buffering
+            "Connection": "keep-alive",
+        },
+    )
+
+
+# ---------------------------
+# Context-aware streaming (for inline AI tutor in Playground & System Design)
+# ---------------------------
+
+
+def _build_contextual_system_prompt(req: ContextualChatPayload) -> str:
+    """Build a rich system prompt that includes workspace context."""
+    base = (
+        "You are EduAI, an expert coding tutor embedded directly in the student's workspace. "
+        "You can see their current code or system design. Be concise, helpful, and educational. "
+        "Use markdown formatting. When showing code, use fenced code blocks with the correct language tag. "
+        "If the student's code has errors, explain them clearly and suggest fixes."
+    )
+
+    if req.context_type == "playground" and req.code:
+        lang = req.language or "unknown"
+        code_snippet = req.code[:4000]  # limit context size
+        base += (
+            f"\n\n--- STUDENT'S CURRENT CODE ({lang}) ---\n"
+            f"```{lang}\n{code_snippet}\n```\n"
+            "--- END CODE ---\n"
+            "Reference this code when answering. If they ask to debug, analyze the code above."
+        )
+
+    elif req.context_type == "system_design" and req.system_design_state:
+        state = req.system_design_state
+        nodes = state.get("nodes", [])
+        connections = state.get("connections", [])
+        node_summary = ", ".join(
+            f"{n.get('label', n.get('type', '?'))} ({n.get('type', '?')})"
+            for n in nodes[:20]
+        )
+        conn_summary = f"{len(connections)} connections"
+        base += (
+            f"\n\n--- STUDENT'S SYSTEM DESIGN ---\n"
+            f"Components ({len(nodes)}): {node_summary}\n"
+            f"Connections: {conn_summary}\n"
+        )
+        # Include metrics if simulation is running
+        if any(n.get("metrics", {}).get("rps", 0) > 0 for n in nodes):
+            metrics_lines = []
+            for n in nodes[:15]:
+                m = n.get("metrics", {})
+                metrics_lines.append(
+                    f"  {n.get('label','?')}: {m.get('rps',0)} rps, {m.get('latency',0)}ms latency, "
+                    f"{m.get('cpu',0)}% CPU, {m.get('errorRate',0)}% errors"
+                )
+            base += "Live Metrics:\n" + "\n".join(metrics_lines) + "\n"
+        base += (
+            "--- END DESIGN ---\n"
+            "Reference this design when answering. Help with architecture decisions, "
+            "bottleneck analysis, scaling strategies, and system design interview concepts."
+        )
+
+    return base
+
+
+@router.post("/chat/stream/contextual", summary="Context-aware streaming chat for inline AI tutor")
+@limiter.limit("10/minute")
+async def chat_stream_contextual(
+    request: Request,
+    req: ContextualChatPayload,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Context-aware streaming chat endpoint for the inline AI tutor.
+    Accepts additional context (code, language, system design state) and injects
+    it into the system prompt so the AI can give contextual assistance.
+    """
+    try:
+        conv_id = req.conversation_id
+        if conv_id is None:
+            conv = tutor_service.create_conversation(db, user_id=getattr(user, "id", None))
+            conv_id = conv.id
+
+        tutor_service.add_message(db, conv_id, "user", req.message)
+
+        # Build contextual system prompt
+        system_prompt = _build_contextual_system_prompt(req)
+        messages = tutor_service.build_contextual_messages(
+            db, conv_id, req.message, extra_system=system_prompt
+        )
+
+    except Exception as e:
+        logger.exception("chat_stream_contextual setup error: %s", e)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+    async def event_generator() -> AsyncIterator[str]:
+        yield f"data: {json.dumps({'type': 'conv', 'conversation_id': conv_id})}\n\n"
+
+        full_text_parts = []
+        try:
+            async for evt in stream_ai(messages=messages, temperature=0.7, max_tokens=2048):
+                if await request.is_disconnected():
+                    break
+
+                if evt.get("type") == "delta":
+                    text = evt.get("text", "")
+                    full_text_parts.append(text)
+                    yield f"data: {json.dumps({'type': 'delta', 'text': text})}\n\n"
+
+                elif evt.get("type") == "done":
+                    full_text = "".join(full_text_parts).strip()
+                    if full_text:
+                        tutor_service.add_message(db, conv_id, "assistant", full_text)
+                    yield f"data: {json.dumps({'type': 'done', 'full_text': full_text})}\n\n"
+
+        except asyncio.CancelledError:
+            logger.info("SSE client disconnected for contextual conv_id=%s", conv_id)
+            partial = "".join(full_text_parts).strip()
+            if partial:
+                tutor_service.add_message(db, conv_id, "assistant", partial)
+        except Exception as e:
+            logger.exception("contextual stream_ai error: %s", e)
+            yield f"data: {json.dumps({'type': 'error', 'message': 'AI streaming error'})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
             "Connection": "keep-alive",
         },
     )

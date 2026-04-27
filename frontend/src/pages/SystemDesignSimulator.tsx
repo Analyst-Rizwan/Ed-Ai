@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Zap, Play, Square, Flame, Trash2, FolderOpen, X, Plus, Minus, AlertTriangle, Download, Activity, MousePointer2, Hand, Lock, Unlock } from "lucide-react";
+import { Zap, Play, Square, Flame, Trash2, FolderOpen, X, Plus, Minus, AlertTriangle, Download, Activity, MousePointer2, Hand, Lock, Unlock, Sparkles } from "lucide-react";
+import InlineAITutor from "@/components/InlineAITutor";
+import "@/components/InlineAITutor.css";
 import "./SystemDesignSimulator.css";
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -476,6 +478,7 @@ const SystemDesignSimulator = () => {
   const simInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const chaosTick = useRef(0);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [aiTutorOpen, setAiTutorOpen] = useState(false);
 
   // ── Tool state ──────────────────────────────────────────────────────
   const [activeTool, setActiveTool] = useState<ToolType>("select");
@@ -1057,6 +1060,14 @@ const SystemDesignSimulator = () => {
             <Activity size={15} />
           </button>
         )}
+        <button
+          className={`sds-icon-btn ${aiTutorOpen ? 'active' : ''}`}
+          onClick={() => setAiTutorOpen(p => !p)}
+          title="AI Tutor"
+          style={aiTutorOpen ? { color: 'var(--accent)', borderColor: 'var(--accent)' } : {}}
+        >
+          <Sparkles size={15} />
+        </button>
         <div className="sds-spacer" />
 
         {/* Chaos controls */}
@@ -1576,6 +1587,41 @@ const SystemDesignSimulator = () => {
           </div>
         </div>
       )}
+
+      {/* ── Inline AI Tutor ──────────────────────────────────── */}
+      {!aiTutorOpen && (
+        <button
+          className="iat-fab"
+          onClick={() => setAiTutorOpen(true)}
+          title="Open AI Tutor"
+        >
+          <Sparkles size={20} />
+          <span className="iat-fab-label">✨ AI Tutor</span>
+        </button>
+      )}
+
+      <InlineAITutor
+        open={aiTutorOpen}
+        onToggle={() => setAiTutorOpen(p => !p)}
+        contextType="system_design"
+        systemDesignState={{
+          nodes: nodes.map(n => ({
+            type: n.type,
+            label: n.label,
+            config: n.config,
+            health: n.health,
+            metrics: n.metrics,
+          })),
+          connections: connections.map(c => ({
+            from: nodes.find(n => n.id === c.from)?.label || c.from,
+            to: nodes.find(n => n.id === c.to)?.label || c.to,
+            partitioned: c.partitioned,
+            cbState: c.cbState,
+          })),
+          simRunning,
+          activeChaos,
+        }}
+      />
     </div>
   );
 };

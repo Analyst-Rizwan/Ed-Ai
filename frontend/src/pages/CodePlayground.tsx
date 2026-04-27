@@ -5,12 +5,14 @@ import { Panel, PanelGroup, PanelResizeHandle, ImperativePanelHandle } from "rea
 import {
   Play, Zap, ChevronDown, ChevronRight, Clock, Cpu, RotateCcw,
   Terminal, Settings2, Copy, Check, Keyboard,
-  Rows3, Columns3, Maximize2, ChevronUp, RotateCw,
+  Rows3, Columns3, Maximize2, ChevronUp, RotateCw, Sparkles,
 } from "lucide-react";
 import { codeApi, ExecuteResponse } from "@/lib/api";
 import { useTheme } from "@/context/ThemeContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePlaygroundSettings, LAYOUT_PRESETS, FONT_FAMILIES } from "@/hooks/usePlaygroundSettings";
+import InlineAITutor from "@/components/InlineAITutor";
+import "@/components/InlineAITutor.css";
 import "./CodePlayground.css";
 
 // ─── Language definitions ──────────────────────────────────────────────────
@@ -188,6 +190,7 @@ const CodePlayground = () => {
   const [showShortcut, setShowShortcut] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [aiTutorOpen, setAiTutorOpen] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
   const editorPanelRef = useRef<ImperativePanelHandle>(null);
   const outputPanelRef = useRef<ImperativePanelHandle>(null);
@@ -384,6 +387,17 @@ const CodePlayground = () => {
           id="reset-code-btn"
         >
           <RotateCcw size={15} />
+        </button>
+
+        {/* AI Tutor toggle */}
+        <button
+          className={`pg-icon-btn ${aiTutorOpen ? "active" : ""}`}
+          onClick={() => setAiTutorOpen(p => !p)}
+          title="AI Tutor"
+          id="ai-tutor-btn"
+          style={aiTutorOpen ? { color: "var(--accent)", borderColor: "var(--accent)" } : {}}
+        >
+          <Sparkles size={15} />
         </button>
 
         {/* Run button */}
@@ -911,6 +925,26 @@ const CodePlayground = () => {
         .monaco-editor .margin { background: transparent !important; }
         .monaco-editor-background { background: var(--bg) !important; }
       `}</style>
+
+      {/* ── Inline AI Tutor ─────────────────────────────────────── */}
+      {!aiTutorOpen && (
+        <button
+          className="iat-fab"
+          onClick={() => setAiTutorOpen(true)}
+          title="Open AI Tutor"
+        >
+          <Sparkles size={20} />
+          <span className="iat-fab-label">✨ AI Tutor</span>
+        </button>
+      )}
+
+      <InlineAITutor
+        open={aiTutorOpen}
+        onToggle={() => setAiTutorOpen(p => !p)}
+        contextType="playground"
+        code={code}
+        language={selectedLang.monacoLang}
+      />
     </div>
   );
 };
