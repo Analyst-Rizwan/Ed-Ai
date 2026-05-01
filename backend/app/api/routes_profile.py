@@ -171,7 +171,7 @@ def get_profile_stats(
 
     solved = db.query(Progress).filter(
         Progress.user_id == current_user.id,
-        Progress.completed == True
+        Progress.solved == True
     ).count()
 
     percentage = (solved / total_problems * 100) if total_problems > 0 else 0

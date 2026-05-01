@@ -75,5 +75,5 @@ class UserOut(UserBase):
     id: int
     role: str = "user"
     class Config:
-        orm_mode = True
+        from_attributes = True
 

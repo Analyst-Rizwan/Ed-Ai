@@ -38,33 +38,47 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
 
   let response = await doFetch();
 
-  // Handle 401 (Unauthorized) -> Try Refresh
+  // Handle 401 (Unauthorized) -> Try Refresh (with one retry)
   if (response.status === 401) {
     // Prevent infinite loop if refresh endpoint itself allows 401
     if (!url.includes("/auth/refresh")) {
-      try {
-        const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        });
-
-        if (refreshResponse.ok) {
-          const data = await refreshResponse.json();
-          setAccessToken(data.access_token);
-          // Update header with new token
-          (headers as any)["Authorization"] = `Bearer ${data.access_token}`;
-          // Retry original request
-          response = await fetch(`${API_URL}${url}`, {
-            ...options,
-            headers,
+      const attemptRefresh = async (): Promise<boolean> => {
+        try {
+          const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             credentials: "include",
           });
-        } else {
-          // Refresh failed - forbid access
-          setAccessToken(null);
+
+          if (refreshResponse.ok) {
+            const data = await refreshResponse.json();
+            setAccessToken(data.access_token);
+            (headers as any)["Authorization"] = `Bearer ${data.access_token}`;
+            return true;
+          }
+          return false;
+        } catch {
+          return false;
         }
-      } catch (e) {
+      };
+
+      // First attempt
+      let refreshed = await attemptRefresh();
+      if (!refreshed) {
+        // Retry once after a short delay (handles transient network issues)
+        await new Promise((r) => setTimeout(r, 1000));
+        refreshed = await attemptRefresh();
+      }
+
+      if (refreshed) {
+        // Retry original request with new token
+        response = await fetch(`${API_URL}${url}`, {
+          ...options,
+          headers,
+          credentials: "include",
+        });
+      } else {
+        // Both refresh attempts failed — user is genuinely logged out
         setAccessToken(null);
       }
     }

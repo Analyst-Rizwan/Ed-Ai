@@ -437,42 +437,97 @@ def create_conversation(user=Depends(get_current_user), db: Session = Depends(ge
 
 
 @router.get("/conversations", summary="List user conversations")
-def list_conversations(user=Depends(get_current_user), db: Session = Depends(get_db)):
+def list_conversations(
+    limit: int = 20,
+    offset: int = 0,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """
-    Returns all conversations for the current user, ordered by most recent first.
+    Returns paginated conversations for the current user, ordered by most recent first.
     Each includes a preview snippet and message count.
+
+    Optimized: single query with subqueries instead of N+1 pattern.
     """
     from app.db.models_tutor import Conversation, TutorMessage
-    from sqlalchemy import func
+    from sqlalchemy import func, select
 
     user_id = getattr(user, "id", None)
-    convs = (
-        db.query(Conversation)
+
+    # Clamp pagination params
+    limit = min(max(limit, 1), 50)
+    offset = max(offset, 0)
+
+    # Subquery: message count per conversation
+    msg_count_sq = (
+        select(
+            TutorMessage.conversation_id,
+            func.count(TutorMessage.id).label("msg_count"),
+        )
+        .group_by(TutorMessage.conversation_id)
+        .subquery()
+    )
+
+    # Subquery: first user message per conversation (for preview)
+    # Use ROW_NUMBER to pick the earliest user message per conversation
+    first_msg_sq = (
+        select(
+            TutorMessage.conversation_id,
+            TutorMessage.content,
+            func.row_number()
+            .over(
+                partition_by=TutorMessage.conversation_id,
+                order_by=TutorMessage.created_at.asc(),
+            )
+            .label("rn"),
+        )
+        .where(TutorMessage.role == "user")
+        .subquery()
+    )
+    first_user_msg = (
+        select(first_msg_sq.c.conversation_id, first_msg_sq.c.content)
+        .where(first_msg_sq.c.rn == 1)
+        .subquery()
+    )
+
+    # Main query — single pass with LEFT JOINs
+    rows = (
+        db.query(
+            Conversation.id,
+            Conversation.topic,
+            Conversation.created_at,
+            func.coalesce(msg_count_sq.c.msg_count, 0).label("message_count"),
+            first_user_msg.c.content.label("preview_content"),
+        )
+        .outerjoin(msg_count_sq, msg_count_sq.c.conversation_id == Conversation.id)
+        .outerjoin(first_user_msg, first_user_msg.c.conversation_id == Conversation.id)
         .filter(Conversation.user_id == user_id)
         .order_by(Conversation.created_at.desc())
+        .limit(limit)
+        .offset(offset)
         .all()
     )
 
+    # Total count for pagination metadata
+    total = (
+        db.query(func.count(Conversation.id))
+        .filter(Conversation.user_id == user_id)
+        .scalar()
+    )
+
     result = []
-    for c in convs:
-        msg_count = db.query(func.count(TutorMessage.id)).filter(TutorMessage.conversation_id == c.id).scalar()
-        # Get the first user message as preview
-        first_msg = (
-            db.query(TutorMessage)
-            .filter(TutorMessage.conversation_id == c.id, TutorMessage.role == "user")
-            .order_by(TutorMessage.created_at.asc())
-            .first()
-        )
-        preview = (first_msg.content[:80] + "...") if first_msg and len(first_msg.content) > 80 else (first_msg.content if first_msg else "")
+    for row in rows:
+        content = row.preview_content or ""
+        preview = (content[:80] + "...") if len(content) > 80 else content
         result.append({
-            "id": c.id,
-            "topic": c.topic,
+            "id": row.id,
+            "topic": row.topic,
             "preview": preview,
-            "message_count": msg_count,
-            "created_at": c.created_at.isoformat() if c.created_at else None,
+            "message_count": row.message_count,
+            "created_at": row.created_at.isoformat() if row.created_at else None,
         })
 
-    return {"conversations": result}
+    return {"conversations": result, "total": total, "limit": limit, "offset": offset}
 
 
 @router.get("/conversations/{conv_id}", summary="Get conversation messages")

@@ -54,6 +54,44 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+
+# ============================================================
+# STARTUP SCHEMA VALIDATION
+# ============================================================
+@app.on_event("startup")
+def check_schema():
+    """
+    Validate critical DB tables/columns exist at startup.
+    Logs CRITICAL errors immediately rather than waiting for user-triggered 500s.
+    """
+    from sqlalchemy import text
+    from app.db.session import engine
+
+    checks = [
+        ("playground_settings", "SELECT 1 FROM playground_settings LIMIT 1"),
+        ("progress.solved", "SELECT solved FROM progress LIMIT 1"),
+        ("tutor_conversations", "SELECT 1 FROM tutor_conversations LIMIT 1"),
+    ]
+    with engine.connect() as conn:
+        for name, sql in checks:
+            try:
+                conn.execute(text(sql))
+                logger.info("Schema check OK: %s", name)
+            except Exception as e:
+                logger.critical("Schema check FAILED for '%s': %s", name, e)
+
+        # Ensure critical indexes exist (idempotent CREATE INDEX IF NOT EXISTS)
+        index_statements = [
+            "CREATE INDEX IF NOT EXISTS idx_tutor_conversations_user_id ON tutor_conversations(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_tutor_messages_conversation_id ON tutor_messages(conversation_id)",
+        ]
+        for idx_sql in index_statements:
+            try:
+                conn.execute(text(idx_sql))
+                conn.commit()
+            except Exception as e:
+                logger.warning("Index creation skipped: %s", e)
+
 # ============================================================
 # CORS CONFIGURATION
 # ============================================================

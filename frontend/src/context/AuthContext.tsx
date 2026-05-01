@@ -33,25 +33,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(userData);
         } catch {
             // In-memory token missing (page refresh / new tab) → try cookie-based refresh
-            try {
-                const API_URL = import.meta.env.VITE_API_URL || "/api";
-                const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include", // sends the HttpOnly refresh_token cookie
-                });
-                if (refreshResponse.ok) {
-                    const data = await refreshResponse.json();
-                    // Restore the access token in memory
-                    setAccessToken(data.access_token);
-                    // Now fetch user profile with the fresh token
-                    const userData = await authApi.getCurrentUser();
-                    setUser(userData);
-                } else {
-                    // Refresh also failed — user is genuinely logged out
-                    setUser(null);
+            const tryRefresh = async (): Promise<boolean> => {
+                try {
+                    const API_URL = import.meta.env.VITE_API_URL || "/api";
+                    const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include", // sends the HttpOnly refresh_token cookie
+                    });
+                    if (refreshResponse.ok) {
+                        const data = await refreshResponse.json();
+                        setAccessToken(data.access_token);
+                        const userData = await authApi.getCurrentUser();
+                        setUser(userData);
+                        return true;
+                    }
+                    return false;
+                } catch {
+                    return false;
                 }
-            } catch {
+            };
+
+            // First attempt
+            let success = await tryRefresh();
+            if (!success) {
+                // Retry once after delay (handles Render cold start / transient network)
+                await new Promise((r) => setTimeout(r, 1500));
+                success = await tryRefresh();
+            }
+            if (!success) {
                 setUser(null);
             }
         } finally {
